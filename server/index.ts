@@ -5,8 +5,8 @@ import { createServer, type IncomingMessage } from 'node:http';
 import { WebSocketServer } from 'ws';
 import type { RawData } from 'ws';
 import { appSettings } from '../shared/app-settings.ts';
-import { normalizeMsdpVariableMap } from '../shared/mud.ts';
-import type { ClientMessage } from '../shared/mud.ts';
+import { normalizeMsdpVariableMap, terminalDimensionBounds } from '../shared/mud.ts';
+import type { ClientMessage, TerminalDimensions } from '../shared/mud.ts';
 import { ActiveConnectionCounter } from './connection-accounting.ts';
 import { MudSession } from './mud-session.ts';
 import { SlidingWindowRateLimiter } from './rate-limiter.ts';
@@ -14,6 +14,8 @@ import { SlidingWindowRateLimiter } from './rate-limiter.ts';
 const HTTP_RATE_LIMIT_WINDOW_MS = 10_000;
 const HTTP_RATE_LIMIT_MAX_REQUESTS = 25;
 const WS_CONNECTION_LIMIT_PER_IP = 4;
+const INVALID_BROWSER_MESSAGE_DETAIL = 'Received an invalid browser message.';
+const INVALID_RESIZE_MESSAGE_DETAIL = 'Received invalid terminal resize dimensions.';
 const app = express();
 const server = createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
@@ -52,9 +54,10 @@ wss.on('connection', (socket, request) => {
   const session = new MudSession(socket);
 
   socket.on('message', (data) => {
-    const message = parseClientMessage(data);
+    const parsedMessage = parseClientMessage(data);
+    const message = parsedMessage.message;
     if (!message) {
-      session.sendStatus('error', 'Received an invalid browser message.');
+      session.sendStatus('error', parsedMessage.errorDetail);
       return;
     }
 
@@ -75,6 +78,14 @@ wss.on('connection', (socket, request) => {
 
     if (message.type === 'msdp-config') {
       session.updateMsdpVariables(normalizeMsdpVariableMap(message.msdpVariables));
+      return;
+    }
+
+    if (message.type === 'resize') {
+      session.updateTerminalDimensions({
+        columns: message.columns,
+        rows: message.rows,
+      });
       return;
     }
 
@@ -146,16 +157,26 @@ function getRemoteAddress(request: IncomingMessage | express.Request) {
   return request.socket.remoteAddress ?? 'unknown';
 }
 
-function parseClientMessage(data: RawData): ClientMessage | null {
+type ClientMessageParseResult =
+  | {
+      errorDetail: string;
+      message: null;
+    }
+  | {
+      errorDetail: null;
+      message: ClientMessage;
+    };
+
+function parseClientMessage(data: RawData): ClientMessageParseResult {
   const text = dataToString(data);
   if (!text) {
-    return null;
+    return invalidClientMessage();
   }
 
   try {
     const parsed: unknown = JSON.parse(text);
     if (!parsed || typeof parsed !== 'object') {
-      return null;
+      return invalidClientMessage();
     }
 
     const message = parsed as Record<string, unknown>;
@@ -165,33 +186,86 @@ function parseClientMessage(data: RawData): ClientMessage | null {
       typeof message.host === 'string' &&
       typeof message.port === 'number'
     ) {
-      return {
+      return validClientMessage({
         type: 'connect',
         host: message.host,
         port: message.port,
         msdpVariables: normalizeMsdpVariableMap(message.msdpVariables),
-      };
+      });
     }
 
     if (message.type === 'disconnect') {
-      return { type: 'disconnect' };
+      return validClientMessage({ type: 'disconnect' });
     }
 
     if (message.type === 'input' && typeof message.text === 'string') {
-      return { type: 'input', text: message.text };
+      return validClientMessage({ type: 'input', text: message.text });
     }
 
     if (message.type === 'msdp-config') {
-      return {
+      return validClientMessage({
         type: 'msdp-config',
         msdpVariables: normalizeMsdpVariableMap(message.msdpVariables),
-      };
+      });
     }
 
-    return null;
+    if (message.type === 'resize') {
+      const dimensions = parseTerminalDimensions(message);
+      if (!dimensions) {
+        return invalidClientMessage(INVALID_RESIZE_MESSAGE_DETAIL);
+      }
+
+      return validClientMessage({
+        type: 'resize',
+        columns: dimensions.columns,
+        rows: dimensions.rows,
+      });
+    }
+
+    return invalidClientMessage();
   } catch {
+    return invalidClientMessage();
+  }
+}
+
+function validClientMessage(message: ClientMessage): ClientMessageParseResult {
+  return {
+    errorDetail: null,
+    message,
+  };
+}
+
+function invalidClientMessage(errorDetail = INVALID_BROWSER_MESSAGE_DETAIL): ClientMessageParseResult {
+  return {
+    errorDetail,
+    message: null,
+  };
+}
+
+function parseTerminalDimensions(message: Record<string, unknown>): TerminalDimensions | null {
+  if (
+    !isValidTerminalDimension(
+      message.columns,
+      terminalDimensionBounds.columns.min,
+      terminalDimensionBounds.columns.max,
+    ) ||
+    !isValidTerminalDimension(
+      message.rows,
+      terminalDimensionBounds.rows.min,
+      terminalDimensionBounds.rows.max,
+    )
+  ) {
     return null;
   }
+
+  return {
+    columns: message.columns,
+    rows: message.rows,
+  };
+}
+
+function isValidTerminalDimension(value: unknown, min: number, max: number): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max;
 }
 
 function dataToString(data: RawData) {

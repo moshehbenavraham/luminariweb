@@ -1,5 +1,6 @@
 import { StringDecoder } from 'node:string_decoder';
-import type { MudValue } from '../shared/mud.ts';
+import { terminalDimensionBounds } from '../shared/mud.ts';
+import type { MudValue, TerminalDimensions } from '../shared/mud.ts';
 
 export const IAC = 255;
 export const DONT = 254;
@@ -29,6 +30,11 @@ export const WEB_CLIENT_VERSION = '0.1.0';
 export const DEFAULT_COLUMNS = 120;
 export const DEFAULT_ROWS = 40;
 
+const DEFAULT_TERMINAL_DIMENSIONS: TerminalDimensions = {
+  columns: DEFAULT_COLUMNS,
+  rows: DEFAULT_ROWS,
+};
+
 const CONTROL_BYTES = new Set([
   MSDP_VAR,
   MSDP_VAL,
@@ -57,6 +63,8 @@ export class TelnetParser {
   private readonly sbBuffer: number[] = [];
   private pendingCommand = 0;
   private currentSbOption = 0;
+  private terminalDimensions = DEFAULT_TERMINAL_DIMENSIONS;
+  private nawsSupported = false;
   private readonly transport: TelnetTransport;
   private readonly callbacks: TelnetParserCallbacks;
 
@@ -78,8 +86,28 @@ export class TelnetParser {
     this.sbBuffer.length = 0;
     this.pendingCommand = 0;
     this.currentSbOption = 0;
+    this.terminalDimensions = DEFAULT_TERMINAL_DIMENSIONS;
+    this.nawsSupported = false;
     this.state = 'data';
     this.decoder.end();
+  }
+
+  updateTerminalSize(dimensions: TerminalDimensions) {
+    const normalizedDimensions = normalizeTerminalDimensions(dimensions);
+    if (
+      normalizedDimensions.columns === this.terminalDimensions.columns &&
+      normalizedDimensions.rows === this.terminalDimensions.rows
+    ) {
+      return;
+    }
+
+    this.terminalDimensions = normalizedDimensions;
+
+    if (!this.nawsSupported) {
+      return;
+    }
+
+    this.sendNaws(this.terminalDimensions);
   }
 
   private consume(byte: number) {
@@ -196,7 +224,8 @@ export class TelnetParser {
 
       if (option === TELOPT_NAWS) {
         this.sendNegotiation(WILL, option);
-        this.sendNaws(DEFAULT_COLUMNS, DEFAULT_ROWS);
+        this.nawsSupported = true;
+        this.sendNaws(this.terminalDimensions);
         return;
       }
 
@@ -232,13 +261,38 @@ export class TelnetParser {
     this.transport.write(Buffer.from([IAC, command, option]));
   }
 
-  private sendNaws(columns: number, rows: number) {
-    const width = Buffer.from([columns >> 8, columns & 0xff]);
-    const height = Buffer.from([rows >> 8, rows & 0xff]);
+  private sendNaws(dimensions: TerminalDimensions) {
+    const width = Buffer.from([dimensions.columns >> 8, dimensions.columns & 0xff]);
+    const height = Buffer.from([dimensions.rows >> 8, dimensions.rows & 0xff]);
     this.transport.write(
       Buffer.concat([Buffer.from([IAC, SB, TELOPT_NAWS]), width, height, Buffer.from([IAC, SE])]),
     );
   }
+}
+
+function normalizeTerminalDimensions(dimensions: TerminalDimensions): TerminalDimensions {
+  return {
+    columns: normalizeTerminalDimension(
+      dimensions.columns,
+      terminalDimensionBounds.columns.min,
+      terminalDimensionBounds.columns.max,
+      DEFAULT_TERMINAL_DIMENSIONS.columns,
+    ),
+    rows: normalizeTerminalDimension(
+      dimensions.rows,
+      terminalDimensionBounds.rows.min,
+      terminalDimensionBounds.rows.max,
+      DEFAULT_TERMINAL_DIMENSIONS.rows,
+    ),
+  };
+}
+
+function normalizeTerminalDimension(value: number, min: number, max: number, fallback: number) {
+  if (!Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(min, Math.floor(value)));
 }
 
 export function parseMsdpPayload(payload: Buffer): Array<[string, MudValue]> {

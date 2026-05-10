@@ -1,8 +1,20 @@
 import net from 'node:net';
-import { defaultMsdpVariables, normalizeMsdpVariableMap } from '../shared/mud.ts';
-import type { ConnectionStatus, MsdpVariableMap, MudState, ServerMessage } from '../shared/mud.ts';
+import {
+  defaultMsdpVariables,
+  normalizeMsdpVariableMap,
+  terminalDimensionBounds,
+} from '../shared/mud.ts';
+import type {
+  ConnectionStatus,
+  MsdpVariableMap,
+  MudState,
+  ServerMessage,
+  TerminalDimensions,
+} from '../shared/mud.ts';
 import { getConfiguredMsdpVariables, mapMsdpUpdate } from '../shared/msdp-state.ts';
 import {
+  DEFAULT_COLUMNS,
+  DEFAULT_ROWS,
   IAC,
   MSDP_VAL,
   MSDP_VAR,
@@ -18,6 +30,10 @@ import { SlidingWindowRateLimiter } from './rate-limiter.ts';
 const WS_COMMAND_RATE_LIMIT_WINDOW_MS = 10_000;
 const WS_COMMAND_RATE_LIMIT_MAX_INPUTS = 20;
 const BROWSER_SOCKET_OPEN_STATE = 1;
+const DEFAULT_TERMINAL_DIMENSIONS: TerminalDimensions = {
+  columns: DEFAULT_COLUMNS,
+  rows: DEFAULT_ROWS,
+};
 
 export type BrowserSocket = {
   readonly readyState: number;
@@ -50,6 +66,7 @@ export class MudSession {
   private mudSocket: MudSocket | null = null;
   private parser: TelnetParser | null = null;
   private state: MudState = {};
+  private terminalDimensions: TerminalDimensions = DEFAULT_TERMINAL_DIMENSIONS;
   private msdpInitialized = false;
   private msdpVariables: MsdpVariableMap = normalizeMsdpVariableMap(defaultMsdpVariables);
   private lastDisconnectedStatusKey: string | null = null;
@@ -112,6 +129,21 @@ export class MudSession {
     this.applyMsdpConfiguration();
   }
 
+  updateTerminalDimensions(dimensions: TerminalDimensions) {
+    const normalizedDimensions = normalizeTerminalDimensions(dimensions);
+    if (
+      normalizedDimensions.columns === this.terminalDimensions.columns &&
+      normalizedDimensions.rows === this.terminalDimensions.rows
+    ) {
+      return;
+    }
+
+    this.terminalDimensions = normalizedDimensions;
+    this.applyTerminalDimensionsToParser(
+      'Connection error. Unable to send terminal size to the MUD.',
+    );
+  }
+
   disconnect(detail: string) {
     this.cleanupActiveSocket({ destroySocket: true });
     this.resetMudState();
@@ -154,7 +186,7 @@ export class MudSession {
   }
 
   private createParser(mudSocket: MudSocket) {
-    return new TelnetParser(mudSocket, {
+    const parser = new TelnetParser(mudSocket, {
       onText: (text) => {
         if (!this.isCurrentSocket(mudSocket)) {
           return;
@@ -184,6 +216,9 @@ export class MudSession {
         this.initializeMsdp();
       },
     });
+
+    parser.updateTerminalSize(this.terminalDimensions);
+    return parser;
   }
 
   private registerSocketHandlers(mudSocket: MudSocket, host: string, port: number) {
@@ -279,6 +314,21 @@ export class MudSession {
     this.requestStateRefresh();
   }
 
+  private applyTerminalDimensionsToParser(failureDetail: string) {
+    const mudSocket = this.mudSocket;
+    if (!mudSocket || mudSocket.destroyed || !this.parser) {
+      return;
+    }
+
+    try {
+      this.parser.updateTerminalSize(this.terminalDimensions);
+    } catch {
+      this.cleanupCurrentSocket(mudSocket);
+      this.destroySocket(mudSocket);
+      this.sendStatus('error', failureDetail);
+    }
+  }
+
   private writeToActiveSocket(chunk: string | Buffer, failureDetail: string) {
     const mudSocket = this.mudSocket;
     if (!mudSocket || mudSocket.destroyed) {
@@ -356,6 +406,31 @@ export class MudSession {
 
 function createNetMudSocket(address: MudSocketAddress): MudSocket {
   return net.createConnection({ host: address.host, port: address.port });
+}
+
+function normalizeTerminalDimensions(dimensions: TerminalDimensions): TerminalDimensions {
+  return {
+    columns: normalizeTerminalDimension(
+      dimensions.columns,
+      terminalDimensionBounds.columns.min,
+      terminalDimensionBounds.columns.max,
+      DEFAULT_TERMINAL_DIMENSIONS.columns,
+    ),
+    rows: normalizeTerminalDimension(
+      dimensions.rows,
+      terminalDimensionBounds.rows.min,
+      terminalDimensionBounds.rows.max,
+      DEFAULT_TERMINAL_DIMENSIONS.rows,
+    ),
+  };
+}
+
+function normalizeTerminalDimension(value: number, min: number, max: number, fallback: number) {
+  if (!Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(min, Math.floor(value)));
 }
 
 function isValidHost(host: string) {

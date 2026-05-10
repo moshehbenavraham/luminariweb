@@ -3,7 +3,12 @@ import { IAC, MSDP_VAL, MSDP_VAR, SB, SE, TELOPT_MSDP, WILL } from '../../server
 import { MudSession } from '../../server/mud-session.ts';
 import type { BrowserSocket, MudSocket, MudSocketAddress } from '../../server/mud-session.ts';
 import { defaultMsdpVariables, normalizeMsdpVariableMap } from '../../shared/mud.ts';
-import type { ServerMessage } from '../../shared/mud.ts';
+import type { ServerMessage, TerminalDimensions } from '../../shared/mud.ts';
+import {
+  assertNawsDimensions,
+  assertNoNawsDimensions,
+  getNawsDimensionsFromWrites,
+} from './naws-packets.ts';
 
 const BROWSER_SOCKET_OPEN_STATE = 1;
 const BROWSER_SOCKET_CLOSED_STATE = 3;
@@ -107,6 +112,10 @@ export class FakeMudSocket extends EventEmitter implements MudSocket {
   getWrittenText() {
     return Buffer.concat(this.writtenChunks).toString('utf8');
   }
+
+  getWrittenNawsDimensions() {
+    return getNawsDimensionsFromWrites(this.writtenChunks);
+  }
 }
 
 export function createProxyLifecycleHarness() {
@@ -157,6 +166,17 @@ export function msdpScalarPacket(variable: string, value: string | number) {
 
 export function getStatusDetails(browser: FakeBrowserSocket) {
   return browser.statusMessages.map((message) => `${message.status}:${message.detail}`);
+}
+
+export function assertMudSocketNawsDimensions(
+  socket: FakeMudSocket,
+  expectedDimensions: readonly TerminalDimensions[],
+) {
+  assertNawsDimensions(socket.writtenChunks, expectedDimensions);
+}
+
+export function assertMudSocketHasNoNawsDimensions(socket: FakeMudSocket) {
+  assertNoNawsDimensions(socket.writtenChunks);
 }
 
 function getLastMudSocket(sockets: readonly FakeMudSocket[]) {

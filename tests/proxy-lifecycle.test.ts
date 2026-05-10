@@ -2,11 +2,14 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ActiveConnectionCounter } from '../server/connection-accounting.ts';
 import {
+  assertMudSocketHasNoNawsDimensions,
+  assertMudSocketNawsDimensions,
   createProxyLifecycleHarness,
   getStatusDetails,
   msdpReadyPacket,
   msdpScalarPacket,
 } from './helpers/proxy-lifecycle-harness.ts';
+import { doNawsPacket } from './helpers/naws-packets.ts';
 
 test('manual disconnect emits one disconnected status and ignores the resulting socket close', (t) => {
   const harness = createProxyLifecycleHarness();
@@ -213,4 +216,53 @@ test('reconnect after MSDP state ignores stale callbacks and stale state', (t) =
     harness.browser.stateMessages.map((message) => message.state),
     [{ psp: 7 }],
   );
+});
+
+test('terminal resize before connect and before NAWS negotiation uses latest dimensions', (t) => {
+  const harness = createProxyLifecycleHarness();
+  t.after(() => harness.cleanup());
+
+  harness.session.updateTerminalDimensions({ columns: 140, rows: 50 });
+  const mudSocket = harness.connect();
+  mudSocket.emitConnect();
+  assertMudSocketHasNoNawsDimensions(mudSocket);
+
+  harness.session.updateTerminalDimensions({ columns: 141, rows: 51 });
+  assertMudSocketHasNoNawsDimensions(mudSocket);
+
+  mudSocket.emitData(doNawsPacket());
+
+  assertMudSocketNawsDimensions(mudSocket, [{ columns: 141, rows: 51 }]);
+});
+
+test('terminal resize after NAWS negotiation stops on disconnect and refreshes after reconnect', (t) => {
+  const harness = createProxyLifecycleHarness();
+  t.after(() => harness.cleanup());
+
+  const firstSocket = harness.connect();
+  firstSocket.emitConnect();
+  firstSocket.emitData(doNawsPacket());
+  harness.session.updateTerminalDimensions({ columns: 132, rows: 42 });
+
+  assertMudSocketNawsDimensions(firstSocket, [
+    { columns: 120, rows: 40 },
+    { columns: 132, rows: 42 },
+  ]);
+
+  harness.session.disconnect('Disconnected.');
+  const firstWriteCountAfterDisconnect = firstSocket.writtenChunks.length;
+  harness.session.updateTerminalDimensions({ columns: 133, rows: 43 });
+  firstSocket.emitData(doNawsPacket());
+
+  assert.equal(firstSocket.writtenChunks.length, firstWriteCountAfterDisconnect);
+  assertMudSocketNawsDimensions(firstSocket, [
+    { columns: 120, rows: 40 },
+    { columns: 132, rows: 42 },
+  ]);
+
+  const secondSocket = harness.connect();
+  assertMudSocketHasNoNawsDimensions(secondSocket);
+  secondSocket.emitData(doNawsPacket());
+
+  assertMudSocketNawsDimensions(secondSocket, [{ columns: 133, rows: 43 }]);
 });

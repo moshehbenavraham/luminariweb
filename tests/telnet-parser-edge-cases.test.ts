@@ -27,6 +27,13 @@ import {
   WONT,
   parseMsdpPayload,
 } from '../server/telnet-parser.ts';
+import {
+  assertNawsDimensions,
+  assertNoNawsDimensions,
+  doNawsPacket,
+  nawsSubnegotiationPacket,
+  willNawsPacket,
+} from './helpers/naws-packets.ts';
 import { createCapturedTelnetTransport } from './helpers/telnet-test-socket.ts';
 import type { MudValue } from '../shared/mud.ts';
 
@@ -170,18 +177,8 @@ test('captures TTYPE SEND, NAWS, and unsupported-option negotiation responses', 
         [IAC, SB, TELOPT_TTYPE, TTYPE_IS],
         WEB_CLIENT_NAME,
         [IAC, SE],
-        [IAC, WILL, TELOPT_NAWS],
-        [
-          IAC,
-          SB,
-          TELOPT_NAWS,
-          DEFAULT_COLUMNS >> 8,
-          DEFAULT_COLUMNS & 0xff,
-          DEFAULT_ROWS >> 8,
-          DEFAULT_ROWS & 0xff,
-          IAC,
-          SE,
-        ],
+        willNawsPacket(),
+        nawsSubnegotiationPacket({ columns: DEFAULT_COLUMNS, rows: DEFAULT_ROWS }),
         [IAC, DONT, TELOPT_MCCP],
         [IAC, WONT, TELOPT_CHARSET],
         [IAC, DONT, 99],
@@ -189,6 +186,43 @@ test('captures TTYPE SEND, NAWS, and unsupported-option negotiation responses', 
       ),
     ),
   );
+});
+
+test('sends custom initial NAWS dimensions after negotiation', () => {
+  const harness = createHarness();
+
+  harness.parser.updateTerminalSize({ columns: 132, rows: 44 });
+  harness.parser.push(doNawsPacket());
+
+  assert.deepEqual(
+    harness.transport.getBytes(),
+    Array.from(
+      packet(
+        willNawsPacket(),
+        nawsSubnegotiationPacket({
+          columns: 132,
+          rows: 44,
+        }),
+      ),
+    ),
+  );
+  assertNawsDimensions(harness.transport.getChunks(), [{ columns: 132, rows: 44 }]);
+});
+
+test('sends changed NAWS dimensions only after support is negotiated', () => {
+  const harness = createHarness();
+
+  harness.parser.updateTerminalSize({ columns: 101, rows: 31 });
+  assertNoNawsDimensions(harness.transport.getChunks());
+
+  harness.parser.push(doNawsPacket());
+  harness.parser.updateTerminalSize({ columns: 102, rows: 32 });
+  harness.parser.updateTerminalSize({ columns: 102, rows: 32 });
+
+  assertNawsDimensions(harness.transport.getChunks(), [
+    { columns: 101, rows: 31 },
+    { columns: 102, rows: 32 },
+  ]);
 });
 
 test('clears buffered parser state on close without stale re-entry callbacks', () => {

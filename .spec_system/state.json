@@ -42,7 +42,9 @@
     "phase00-session05-state-mapping-tests",
     "phase01-session01-telnet-parser-edge-case-tests",
     "phase01-session02-msdp-tables-arrays-malformed-payloads",
-    "phase01-session03-connection-lifecycle-reconnect-cleanup"
+    "phase01-session03-connection-lifecycle-reconnect-cleanup",
+    "phase01-session04-dynamic-naws-resize",
+    "phase01-session05-xterm-js-migration-spike"
   ],
   "next_session_history": [
     {
@@ -103,6 +105,26 @@
     {
       "date": "2026-05-11",
       "session": "phase01-session03-connection-lifecycle-reconnect-cleanup",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase01-session04-dynamic-naws-resize",
+      "status": "planned"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase01-session04-dynamic-naws-resize",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase01-session05-xterm-js-migration-spike",
+      "status": "planned"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase01-session05-xterm-js-migration-spike",
       "status": "completed"
     }
   ]

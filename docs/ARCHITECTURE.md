@@ -47,6 +47,12 @@ Telnet MUD server
 8. Shared fixture tests load `tests/fixtures/msdp/manifest.json` and exercise the same mapping helpers without a live MUD connection.
 9. Browser sends command input as `input` messages; the proxy writes them to the Telnet socket.
 
+## Terminal Rendering
+
+The production terminal renderer remains the escaped `ansi-to-html` HTML path. Terminal and panel rich text use shared helpers under `src/terminal/render-mud-html.ts` so XML escaping and Luminari color conversion stay centralized and testable.
+
+An xterm.js renderer spike is available only through `?terminalRenderer=xterm-spike`. It consumes the same raw terminal stream, disables xterm stdin, keeps the existing command input authoritative, and routes fit-derived dimensions through the existing resize pathway. The staged migration decision is recorded in [adr/0001-terminal-renderer.md](adr/0001-terminal-renderer.md).
+
 ## HTTP Endpoints
 
 | Endpoint            | Purpose                                                         |
@@ -68,6 +74,7 @@ WebSocket details are documented in [api/http-and-websocket.md](api/http-and-web
 | `ws`           | WebSocket transport   | Direct Node WebSocket support for browser-to-proxy messages  |
 | Node `net`     | Telnet transport      | Required to open TCP sockets from the server side            |
 | `ansi-to-html` | Terminal rendering    | Current renderer for ANSI-colored terminal text              |
+| xterm.js       | Terminal spike        | Preferred long-term renderer candidate, gated behind an opt-in spike |
 
 ## Data Layer
 

@@ -72,6 +72,22 @@ export interface MudState {
 
 export type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
 
+export type TerminalDimensions = {
+  columns: number;
+  rows: number;
+};
+
+export const terminalDimensionBounds = {
+  columns: {
+    min: 20,
+    max: 65535,
+  },
+  rows: {
+    min: 5,
+    max: 65535,
+  },
+} as const;
+
 export const defaultMsdpVariables = {
   serverId: 'SERVER_ID',
   serverTime: 'SERVER_TIME',
@@ -243,6 +259,11 @@ export type ClientMessage =
   | {
       type: 'input';
       text: string;
+    }
+  | {
+      type: 'resize';
+      columns: number;
+      rows: number;
     }
   | {
       type: 'msdp-config';

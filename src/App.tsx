@@ -1,4 +1,3 @@
-import AnsiToHtml from 'ansi-to-html';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   CSSProperties,
@@ -14,6 +13,7 @@ import {
   defaultMsdpVariables,
   normalizeMsdpVariableMap,
   overrideOnlyMsdpVariableKeys,
+  terminalDimensionBounds,
 } from '../shared/mud.ts';
 import type {
   ClientMessage,
@@ -23,7 +23,19 @@ import type {
   MudState,
   MudValue,
   ServerMessage,
+  TerminalDimensions,
 } from '../shared/mud.ts';
+import {
+  convertLuminariColorCodes,
+  createMudHtmlStreamConverter,
+  renderMudHtml,
+  renderMudStreamHtml,
+} from './terminal/render-mud-html.ts';
+import { XtermTerminalSpike } from './terminal/XtermTerminalSpike.tsx';
+import {
+  isXtermSpikeRenderer,
+  parseTerminalRendererMode,
+} from './terminal/xterm-spike-options.ts';
 import './App.css';
 
 const DEFAULT_HOST = appSettings.connection.defaultHost;
@@ -31,6 +43,14 @@ const DEFAULT_PORT = appSettings.connection.defaultPort;
 const CUSTOM_MUD_VALUE = '__custom__';
 const TERMINAL_CHUNK_LIMIT = 500;
 const COMMAND_HISTORY_LIMIT = 100;
+const DEFAULT_TERMINAL_DIMENSIONS: TerminalDimensions = {
+  columns: 120,
+  rows: 40,
+};
+const INITIAL_TERMINAL_TEXT = 'Connect to a LuminariMUD-compatible server to begin.';
+const CONNECTED_TERMINAL_TEXT = 'Connected. Waiting for room text and MSDP updates...';
+const TERMINAL_CELL_MEASUREMENT_SAMPLE = 'MMMMMMMMMM';
+const TERMINAL_RESIZE_DEBOUNCE_MS = 75;
 const AUTOMATION_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 const AUTOMATION_COOKIE_CHUNK_SIZE = 3000;
 const AUTOMATION_RECURSION_LIMIT = 10;
@@ -39,50 +59,6 @@ const ALIASES_COOKIE_NAME = 'lwc.aliases';
 const TRIGGERS_COOKIE_NAME = 'lwc.triggers';
 const CLIENT_SETTINGS_COOKIE_NAME = 'lwc.settings';
 const ANSI_ESCAPE_PATTERN = new RegExp(String.raw`\u001b\[[0-?]*[ -/]*[@-~]`, 'g');
-const LUMINARI_COLOR_CHAR = '^';
-const LUMINARI_COLOR_CODES: Record<string, string> = {
-  n: '\u001b[0;00m',
-  d: luminariRgbToAnsi('F000'),
-  D: luminariRgbToAnsi('F111'),
-  '1': luminariRgbToAnsi('F022'),
-  '2': luminariRgbToAnsi('F055'),
-  '3': luminariRgbToAnsi('F555'),
-  r: luminariRgbToAnsi('F200'),
-  R: luminariRgbToAnsi('F500'),
-  g: luminariRgbToAnsi('F020'),
-  G: luminariRgbToAnsi('F050'),
-  y: luminariRgbToAnsi('F220'),
-  Y: luminariRgbToAnsi('F550'),
-  b: luminariRgbToAnsi('F002'),
-  B: luminariRgbToAnsi('F005'),
-  m: luminariRgbToAnsi('F202'),
-  M: luminariRgbToAnsi('F505'),
-  c: luminariRgbToAnsi('F022'),
-  C: luminariRgbToAnsi('F055'),
-  w: luminariRgbToAnsi('F222'),
-  W: luminariRgbToAnsi('F555'),
-  a: luminariRgbToAnsi('F014'),
-  A: luminariRgbToAnsi('F025'),
-  j: luminariRgbToAnsi('F031'),
-  J: luminariRgbToAnsi('F142'),
-  l: luminariRgbToAnsi('F140'),
-  L: luminariRgbToAnsi('F250'),
-  o: luminariRgbToAnsi('F520'),
-  O: luminariRgbToAnsi('F530'),
-  p: luminariRgbToAnsi('F301'),
-  P: luminariRgbToAnsi('F413'),
-  s: luminariRgbToAnsi('F300'),
-  S: luminariRgbToAnsi('F411'),
-  t: luminariRgbToAnsi('F320'),
-  T: luminariRgbToAnsi('F431'),
-  v: luminariRgbToAnsi('F104'),
-  V: luminariRgbToAnsi('F215'),
-  _: '\u001b[4m',
-  '+': '\u001b[1m',
-  '-': '\u001b[5m',
-  '=': '\u001b[7m',
-  '*': '@',
-};
 const MOVEMENT_COMMANDS = new Set([
   'n',
   'north',
@@ -528,8 +504,12 @@ function App() {
   );
   const [automationNotice, setAutomationNotice] = useState<AutomationNotice | null>(null);
   const [terminalChunks, setTerminalChunks] = useState<string[]>([
-    '<span class="terminal-muted">Connect to a LuminariMUD-compatible server to begin.</span>',
+    `<span class="terminal-muted">${INITIAL_TERMINAL_TEXT}</span>`,
   ]);
+  const [terminalRawChunks, setTerminalRawChunks] = useState<string[]>([
+    INITIAL_TERMINAL_TEXT,
+  ]);
+  const [terminalResetKey, setTerminalResetKey] = useState(0);
   const [proxyReady, setProxyReady] = useState(false);
   const [status, setStatus] = useState<ConnectionStatus>('idle');
   const [statusDetail, setStatusDetail] = useState('Awaiting connection.');
@@ -539,13 +519,18 @@ function App() {
   const socketRef = useRef<WebSocket | null>(null);
   const terminalRef = useRef<HTMLDivElement | null>(null);
   const commandInputRef = useRef<HTMLInputElement | null>(null);
+  const terminalResizeTimeoutRef = useRef<number | null>(null);
+  const pendingTerminalDimensionsRef = useRef<TerminalDimensions | null>(null);
+  const lastSentTerminalDimensionsRef = useRef<TerminalDimensions | null>(null);
   const configFileInputRef = useRef<HTMLInputElement | null>(null);
   const menuBarRef = useRef<HTMLDivElement | null>(null);
-  const ansiConverterRef = useRef(createAnsiConverter());
+  const ansiConverterRef = useRef(createMudHtmlStreamConverter());
   const triggerBufferRef = useRef('');
   const statusRef = useRef<ConnectionStatus>('idle');
   const aliasesRef = useRef<AliasDefinition[]>(aliases);
   const triggersRef = useRef<TriggerDefinition[]>(triggers);
+  const terminalRendererMode = useMemo(() => parseTerminalRendererMode(window.location.search), []);
+  const useXtermSpike = isXtermSpikeRenderer(terminalRendererMode);
 
   useEffect(() => {
     document.title = uiSettings.personalization.browserTitle;
@@ -657,6 +642,93 @@ function App() {
     [sendMessage],
   );
 
+  const clearPendingTerminalResize = useCallback(() => {
+    if (terminalResizeTimeoutRef.current !== null) {
+      window.clearTimeout(terminalResizeTimeoutRef.current);
+      terminalResizeTimeoutRef.current = null;
+    }
+
+    pendingTerminalDimensionsRef.current = null;
+  }, []);
+
+  const isWebSocketOpen = useCallback(() => {
+    const socket = socketRef.current;
+    return Boolean(socket && socket.readyState === WebSocket.OPEN);
+  }, []);
+
+  const sendTerminalResize = useCallback(
+    (dimensions: TerminalDimensions) => {
+      if (!isWebSocketOpen() || areTerminalDimensionsEqual(dimensions, lastSentTerminalDimensionsRef.current)) {
+        return;
+      }
+
+      lastSentTerminalDimensionsRef.current = dimensions;
+      sendMessage({
+        type: 'resize',
+        columns: dimensions.columns,
+        rows: dimensions.rows,
+      });
+    },
+    [isWebSocketOpen, sendMessage],
+  );
+
+  const queueTerminalResize = useCallback(
+    (dimensions: TerminalDimensions, options?: { immediate?: boolean }) => {
+      const normalizedDimensions = normalizeTerminalDimensions(dimensions);
+      const pendingDimensions = pendingTerminalDimensionsRef.current;
+
+      if (
+        !options?.immediate &&
+        (areTerminalDimensionsEqual(normalizedDimensions, pendingDimensions) ||
+          (!pendingDimensions &&
+            areTerminalDimensionsEqual(
+              normalizedDimensions,
+              lastSentTerminalDimensionsRef.current,
+            )))
+      ) {
+        return;
+      }
+
+      if (options?.immediate) {
+        clearPendingTerminalResize();
+        sendTerminalResize(normalizedDimensions);
+        return;
+      }
+
+      pendingTerminalDimensionsRef.current = normalizedDimensions;
+      if (terminalResizeTimeoutRef.current !== null) {
+        return;
+      }
+
+      terminalResizeTimeoutRef.current = window.setTimeout(() => {
+        const nextDimensions = pendingTerminalDimensionsRef.current;
+        terminalResizeTimeoutRef.current = null;
+        pendingTerminalDimensionsRef.current = null;
+
+        if (nextDimensions) {
+          sendTerminalResize(nextDimensions);
+        }
+      }, TERMINAL_RESIZE_DEBOUNCE_MS);
+    },
+    [clearPendingTerminalResize, sendTerminalResize],
+  );
+
+  const measureAndQueueTerminalResize = useCallback(
+    (options?: { immediate?: boolean }) => {
+      if (!isWebSocketOpen()) {
+        return;
+      }
+
+      const terminalElement = terminalRef.current;
+      if (!terminalElement) {
+        return;
+      }
+
+      queueTerminalResize(measureTerminalDimensions(terminalElement), options);
+    },
+    [isWebSocketOpen, queueTerminalResize],
+  );
+
   const rememberCommand = useCallback((text: string) => {
     const normalized = text.trim().toLowerCase();
     if (!normalized || MOVEMENT_COMMANDS.has(normalized)) {
@@ -686,11 +758,59 @@ function App() {
   );
 
   useEffect(() => {
+    return () => {
+      clearPendingTerminalResize();
+    };
+  }, [clearPendingTerminalResize]);
+
+  useEffect(() => {
+    const terminalElement = terminalRef.current;
+    if (!terminalElement) {
+      return;
+    }
+
+    measureAndQueueTerminalResize({ immediate: true });
+
+    if (typeof ResizeObserver === 'undefined') {
+      const handleWindowResize = () => {
+        measureAndQueueTerminalResize();
+      };
+
+      window.addEventListener('resize', handleWindowResize);
+      return () => {
+        window.removeEventListener('resize', handleWindowResize);
+      };
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      measureAndQueueTerminalResize();
+    });
+    resizeObserver.observe(terminalElement);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [measureAndQueueTerminalResize]);
+
+  useEffect(() => {
+    measureAndQueueTerminalResize({ immediate: true });
+  }, [
+    clientSettings.terminal.fontSize,
+    clientSettings.terminal.lineHeight,
+    clientSettings.terminal.wrapLines,
+    measureAndQueueTerminalResize,
+    proxyReady,
+    status,
+  ]);
+
+  useEffect(() => {
     const socket = new WebSocket(getWebSocketUrl());
     socketRef.current = socket;
 
     socket.addEventListener('open', () => {
       setProxyReady(true);
+      lastSentTerminalDimensionsRef.current = null;
+      measureAndQueueTerminalResize({ immediate: true });
       setStatusDetail((current) =>
         current === 'Awaiting connection.' ? 'Proxy ready. Connect to start playing.' : current,
       );
@@ -698,6 +818,8 @@ function App() {
 
     socket.addEventListener('close', () => {
       setProxyReady(false);
+      lastSentTerminalDimensionsRef.current = null;
+      clearPendingTerminalResize();
       statusRef.current = 'error';
       setStatus('error');
       setStatusDetail('The local WebSocket proxy is unavailable.');
@@ -723,9 +845,13 @@ function App() {
           dispatchInputText(triggerCommand, { rememberInHistory: false });
         }
 
-        const html = ansiConverterRef.current.toHtml(message.text);
+        const html = renderMudStreamHtml(message.text, ansiConverterRef.current);
         setTerminalChunks((current) => {
           const next = [...current, html];
+          return next.slice(-TERMINAL_CHUNK_LIMIT);
+        });
+        setTerminalRawChunks((current) => {
+          const next = [...current, message.text];
           return next.slice(-TERMINAL_CHUNK_LIMIT);
         });
         return;
@@ -742,11 +868,11 @@ function App() {
         }
 
         if (message.status === 'connected') {
-          ansiConverterRef.current = createAnsiConverter();
+          ansiConverterRef.current = createMudHtmlStreamConverter();
           triggerBufferRef.current = '';
-          setTerminalChunks([
-            '<span class="terminal-muted">Connected. Waiting for room text and MSDP updates...</span>',
-          ]);
+          setTerminalChunks([`<span class="terminal-muted">${CONNECTED_TERMINAL_TEXT}</span>`]);
+          setTerminalRawChunks([CONNECTED_TERMINAL_TEXT]);
+          setTerminalResetKey((current) => current + 1);
         } else {
           triggerBufferRef.current = '';
         }
@@ -761,7 +887,7 @@ function App() {
       socket.close();
       socketRef.current = null;
     };
-  }, [dispatchInputText]);
+  }, [clearPendingTerminalResize, dispatchInputText, measureAndQueueTerminalResize]);
 
   useEffect(() => {
     if (terminalRef.current && clientSettings.terminal.autoScroll) {
@@ -966,6 +1092,12 @@ function App() {
         activeMsdpVariables,
       ),
     [activeMsdpVariables, mudState.affects, status],
+  );
+  const handleXtermFitDimensions = useCallback(
+    (dimensions: TerminalDimensions) => {
+      queueTerminalResize(dimensions);
+    },
+    [queueTerminalResize],
   );
 
   useEffect(() => {
@@ -1836,14 +1968,28 @@ function App() {
 
       <main className="layout">
         <section className="terminal-column panel">
-          <div
-            ref={terminalRef}
-            className="terminal-output"
-            data-prevent-command-focus
-            onClick={handleTerminalClick}
-            style={terminalOutputStyle}
-            dangerouslySetInnerHTML={{ __html: terminalChunks.join('') }}
-          />
+          {useXtermSpike ? (
+            <XtermTerminalSpike
+              autoScroll={clientSettings.terminal.autoScroll}
+              className="terminal-output"
+              fontSize={clientSettings.terminal.fontSize}
+              lineHeight={clientSettings.terminal.lineHeight}
+              onClick={handleTerminalClick}
+              onFitDimensions={handleXtermFitDimensions}
+              resetKey={`${terminalRendererMode}:${terminalResetKey}`}
+              style={terminalOutputStyle}
+              textChunks={terminalRawChunks}
+            />
+          ) : (
+            <div
+              ref={terminalRef}
+              className="terminal-output"
+              data-prevent-command-focus
+              onClick={handleTerminalClick}
+              style={terminalOutputStyle}
+              dangerouslySetInnerHTML={{ __html: terminalChunks.join('') }}
+            />
+          )}
 
           <div className="bars">
             {bars.map((bar) => (
@@ -3367,6 +3513,135 @@ function getSettingsUrl() {
   return '/api/settings';
 }
 
+function areTerminalDimensionsEqual(
+  left: TerminalDimensions,
+  right: TerminalDimensions | null,
+) {
+  return Boolean(right && left.columns === right.columns && left.rows === right.rows);
+}
+
+function measureTerminalDimensions(element: HTMLElement): TerminalDimensions {
+  const contentBox = getTerminalContentBox(element);
+  if (contentBox.width <= 0 || contentBox.height <= 0) {
+    return DEFAULT_TERMINAL_DIMENSIONS;
+  }
+
+  const cellSize = measureTerminalCell(contentBox.styles, element.ownerDocument);
+  if (cellSize.width <= 0 || cellSize.height <= 0) {
+    return DEFAULT_TERMINAL_DIMENSIONS;
+  }
+
+  return normalizeTerminalDimensions({
+    columns: contentBox.width / cellSize.width,
+    rows: contentBox.height / cellSize.height,
+  });
+}
+
+function measureTerminalCell(styles: CSSStyleDeclaration, documentRef: Document) {
+  const fallback = getFallbackTerminalCellSize(styles);
+  const sample = documentRef.createElement('span');
+  sample.textContent = TERMINAL_CELL_MEASUREMENT_SAMPLE;
+  sample.style.position = 'absolute';
+  sample.style.visibility = 'hidden';
+  sample.style.pointerEvents = 'none';
+  sample.style.whiteSpace = 'pre';
+  sample.style.fontFamily = styles.fontFamily;
+  sample.style.fontSize = styles.fontSize;
+  sample.style.fontStyle = styles.fontStyle;
+  sample.style.fontWeight = styles.fontWeight;
+  sample.style.letterSpacing = styles.letterSpacing;
+  sample.style.lineHeight = styles.lineHeight;
+
+  if (!documentRef.body) {
+    return fallback;
+  }
+
+  documentRef.body.append(sample);
+  try {
+    const sampleBounds = sample.getBoundingClientRect();
+    const measuredWidth = sampleBounds.width / TERMINAL_CELL_MEASUREMENT_SAMPLE.length;
+    const measuredHeight = getTerminalLineHeight(styles, sampleBounds.height);
+
+    return {
+      height: measuredHeight > 0 ? measuredHeight : fallback.height,
+      width: measuredWidth > 0 ? measuredWidth : fallback.width,
+    };
+  } finally {
+    sample.remove();
+  }
+}
+
+function getFallbackTerminalCellSize(styles: CSSStyleDeclaration) {
+  const fontSize = getCssPixelValue(styles.fontSize) || DEFAULT_CLIENT_SETTINGS.terminal.fontSize;
+
+  return {
+    height: getTerminalLineHeight(styles, fontSize * DEFAULT_CLIENT_SETTINGS.terminal.lineHeight),
+    width: fontSize * 0.6,
+  };
+}
+
+function getTerminalLineHeight(styles: CSSStyleDeclaration, fallback: number) {
+  const lineHeight = getCssPixelValue(styles.lineHeight);
+  if (lineHeight > 0) {
+    return lineHeight;
+  }
+
+  const fontSize = getCssPixelValue(styles.fontSize);
+  if (fontSize > 0) {
+    return fontSize * DEFAULT_CLIENT_SETTINGS.terminal.lineHeight;
+  }
+
+  return fallback;
+}
+
+function normalizeTerminalDimensions(dimensions: TerminalDimensions): TerminalDimensions {
+  return {
+    columns: normalizeTerminalDimension(
+      dimensions.columns,
+      terminalDimensionBounds.columns.min,
+      terminalDimensionBounds.columns.max,
+      DEFAULT_TERMINAL_DIMENSIONS.columns,
+    ),
+    rows: normalizeTerminalDimension(
+      dimensions.rows,
+      terminalDimensionBounds.rows.min,
+      terminalDimensionBounds.rows.max,
+      DEFAULT_TERMINAL_DIMENSIONS.rows,
+    ),
+  };
+}
+
+function normalizeTerminalDimension(value: number, min: number, max: number, fallback: number) {
+  if (!Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(min, Math.floor(value)));
+}
+
+function getTerminalContentBox(element: HTMLElement) {
+  const styles = window.getComputedStyle(element);
+  const width =
+    element.clientWidth -
+    getCssPixelValue(styles.paddingLeft) -
+    getCssPixelValue(styles.paddingRight);
+  const height =
+    element.clientHeight -
+    getCssPixelValue(styles.paddingTop) -
+    getCssPixelValue(styles.paddingBottom);
+
+  return {
+    height: Math.max(0, height),
+    styles,
+    width: Math.max(0, width),
+  };
+}
+
+function getCssPixelValue(value: string) {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function parseServerMessage(data: unknown): ServerMessage | null {
   if (typeof data !== 'string') {
     return null;
@@ -3521,72 +3796,6 @@ function findMatchingMudPresetId(
   )?.id;
 }
 
-function renderMudHtml(value: string) {
-  return new AnsiToHtml({ escapeXML: true }).toHtml(convertLuminariColorCodes(value));
-}
-
-function convertLuminariColorCodes(value: string) {
-  let converted = '';
-
-  for (let index = 0; index < value.length; index += 1) {
-    const current = value[index];
-    if (current !== LUMINARI_COLOR_CHAR) {
-      converted += current;
-      continue;
-    }
-
-    const next = value[index + 1];
-    if (!next) {
-      converted += current;
-      continue;
-    }
-
-    if (next === LUMINARI_COLOR_CHAR) {
-      converted += LUMINARI_COLOR_CHAR;
-      index += 1;
-      continue;
-    }
-
-    if (next === '[') {
-      const endIndex = value.indexOf(']', index + 2);
-      if (endIndex > index + 2) {
-        const luminariRgb = value.slice(index + 2, endIndex);
-        const ansiColor = luminariRgbToAnsi(luminariRgb);
-        if (ansiColor) {
-          converted += ansiColor;
-          index = endIndex;
-          continue;
-        }
-      }
-    }
-
-    const luminariColor = LUMINARI_COLOR_CODES[next];
-    if (luminariColor !== undefined) {
-      converted += luminariColor;
-      index += 1;
-      continue;
-    }
-
-    converted += current;
-  }
-
-  return converted;
-}
-
-function luminariRgbToAnsi(code: string) {
-  if (!/^[FfBb][0-5]{3}$/.test(code)) {
-    return '';
-  }
-
-  const isBackground = code[0].toLowerCase() === 'b';
-  const [red, green, blue] = code
-    .slice(1)
-    .split('')
-    .map((value) => Number(value) * 51);
-
-  return `\u001b[${isBackground ? 48 : 38};2;${red};${green};${blue}m`;
-}
-
 function shouldPreservePointerFocus(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
     return false;
@@ -3611,14 +3820,6 @@ function hasExpandedSelection() {
 function focusCommandInput(input: HTMLInputElement | null) {
   requestAnimationFrame(() => {
     input?.focus({ preventScroll: true });
-  });
-}
-
-function createAnsiConverter() {
-  return new AnsiToHtml({
-    escapeXML: true,
-    newline: true,
-    stream: true,
   });
 }
 
