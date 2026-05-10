@@ -1,252 +1,101 @@
 # Luminari Web
 
-Luminari Web is a web-based MUD client for **LuminariMUD-compatible** games. It combines a React frontend with a Node WebSocket/Telnet proxy so a browser can connect to a Telnet MUD while still getting live MSDP-driven HUD data.
+First-party React and Node web MUD client for LuminariMUD-compatible games, with a browser UI, WebSocket-to-Telnet proxy, and MSDP-driven HUD state.
 
-## Features
+## Quick Start
 
-- Browser terminal with ANSI-colored game output
-- Compact responsive layout optimized for smaller screens
-- Auto-collapsing header after connect, with a small show/hide toggle
-- Compact HUD with HP, PSP, movement, EXP, opponent, and tank bars
-- Tank and opponent gauges with overlaid names
-- MSDP-driven **MINIMAP** display
-- Character tab with MSDP-fed profile and ability score grid (STR/DEX/CON/INT/WIS/CHA)
-- Sidebar tabs for Character, Quests, Group, and Affects
-- Group tab formatting with per-member spacing, leader marker, and compact stat line (`Health x/y Move a/b`)
-- Quest tab HTML rendering for structured quest payloads (including JSON string/array/object data)
-  - Displays quest name, type, vnum (no commas), progress as `completed/required`, and targets as comma-separated names
-  - Hides `slot`, `time_remaining`, target IDs, and field labels
-- Affects tab rendering for nested MSDP data
-- Character title display with smart name/title composition:
-  - If `TITLE` contains the character name, shows the title only
-  - If `TITLE` is set but does not contain the character name, shows `Name Title`
-  - If `TITLE` is not set, shows the character name alone
-- Numpad movement support
-- Command history with ArrowUp / ArrowDown
-- Tab completion: pressing Tab autocompletes from the most recent matching command in history
-- Movement commands excluded from command history
-- Click-anywhere focus behavior for the command input
-- MUD preset dropdown plus manual host/port entry
-- Luminari `^` color-code rendering in non-terminal UI text
-- Shared settings file for ports, defaults, presets, and personalization
-- Node proxy that negotiates MSDP and bridges browser WebSocket traffic to the MUD
-
-## Architecture
-
-Browsers cannot talk to a Telnet MUD directly, so the app is split into two parts:
-
-1. **React + Vite frontend**
-2. **Node proxy server**
-
-The proxy:
-
-- accepts browser WebSocket connections at `/ws`
-- connects to the MUD over Telnet
-- negotiates MSDP
-- requests the variables the UI needs
-- forwards terminal output and structured MSDP updates back to the browser
-
-## Setup
-
-Install dependencies:
+Install dependencies once:
 
 ```bash
 npm install
 ```
 
-Run in development:
+Run the frontend and proxy together:
 
 ```bash
 npm run dev
 ```
 
-This starts:
+Default local services:
 
-- the Vite frontend on the client port from `shared/app-settings.ts`
-- the Node proxy on the server port from `shared/app-settings.ts`
+- Frontend: `http://localhost:5190`
+- Proxy/API server: `http://localhost:5191`
+- Health check: `http://localhost:5191/health`
 
-Vite proxies `/ws` traffic to the Node server automatically during development.
+## Repository Structure
 
-## Production build and run
-
-Build the production version:
-
-```bash
-npm run build
+```text
+.
+|-- src/                 # React browser client
+|-- server/              # Express and WebSocket-to-Telnet proxy
+|-- shared/              # Shared app settings and MUD protocol types
+|-- public/              # Static browser assets
+|-- docs/                # Project documentation
+|-- .spec_system/        # Product requirements, phase plans, and workflow state
+|-- package.json         # npm scripts and dependencies
+\-- vite.config.ts       # Vite frontend and dev proxy configuration
 ```
 
-Run the built app:
+## Documentation
 
-```bash
-npm start
-```
+- [Onboarding](docs/onboarding.md)
+- [Development Guide](docs/development.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Environments](docs/environments.md)
+- [Deployment](docs/deployment.md)
+- [API and WebSocket Contracts](docs/api/http-and-websocket.md)
+- [Contributing](CONTRIBUTING.md)
+- [Product Requirements](.spec_system/PRD/PRD.md)
 
-`npm start` serves both:
+## Current Capabilities
 
-- the built frontend
-- the WebSocket/Telnet proxy
+- Browser terminal output rendered from Telnet text and ANSI sequences.
+- React HUD and side panels for character, combat, quest, group, and affects data when matching MSDP values arrive.
+- Command input with history, tab completion, numpad movement, aliases, triggers, and import/export for client configuration.
+- Runtime app settings endpoint at `/api/settings`.
+- WebSocket endpoint at `/ws` that bridges browser messages to a Telnet MUD connection.
+- Telnet negotiation for MSDP, TTYPE, NAWS, ECHO, and SGA, with MCCP, MXP, and CHARSET currently rejected.
+- Curated MUD presets plus manual host and port input.
 
-## Running with PM2
+## Protocol Status
 
-The PM2 command that works for this app is:
+The code currently requests and maps several MSDP variables. The product plan records that some defaults, including `TITLE`, `QUEST_INFO`, save fields, and live `MINIMAP`, are not confirmed as emitted by the audited Luminari-Source server. Phase 00 is planned to align defaults with confirmed source variables and make missing data states explicit.
 
-```bash
-pm2 start dist/server/index.js --name luminari-web-client
-```
+## Tech Stack
 
-Recommended full flow:
+| Technology | Purpose |
+|------------|---------|
+| TypeScript | Shared frontend, server, and protocol typing |
+| React | Browser client UI |
+| Vite | Frontend development server and production build |
+| Express | HTTP server for health, settings, and static assets |
+| `ws` | Browser WebSocket server |
+| Node `net` | Telnet socket from proxy to MUD server |
+| `ansi-to-html` | Current terminal text rendering |
 
-```bash
-npm install
-npm run build
-pm2 start dist/server/index.js --name luminari-web-client
-```
+## Commands
 
-Useful PM2 commands:
-
-```bash
-pm2 status
-pm2 logs luminari-web-client
-pm2 restart luminari-web-client
-pm2 stop luminari-web-client
-pm2 delete luminari-web-client
-pm2 save
-pm2 startup
-```
-
-To run on the reserved production/proxy port:
-
-```bash
-PORT=5191 pm2 start dist/server/index.js --name luminari-web-client
-```
-
-An optional PM2 ecosystem file also exists:
-
-```bash
-ecosystem.config.cjs
-```
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Run frontend and proxy together |
+| `npm run dev:client` | Run Vite only |
+| `npm run dev:server` | Run the proxy server only |
+| `npm run lint` | Run ESLint |
+| `npm run build` | Type-check and build client/server output |
+| `npm run preview` | Preview built client assets |
+| `npm start` | Run the built server from `dist/server/index.js` |
 
 ## Configuration
 
-The main app settings file is:
+Primary defaults live in [shared/app-settings.ts](shared/app-settings.ts). The browser loads those settings at runtime from `/api/settings`.
 
-```ts
-shared/app-settings.ts
-```
-
-The browser now loads these settings from the server at runtime through `/api/settings`, so changes to MUD presets, defaults, and personalization are picked up after restarting the server. A full frontend rebuild is not required just to update the dropdown list or branding text.
-
-It contains:
-
-- **ports.client** - Vite dev server port
-- **ports.server** - Node proxy / production HTTP server port
-- **ports.preview** - Vite preview port
-- **connection.defaultHost** - default host shown in the client
-- **connection.defaultPort** - default port shown in the client
-- **connection.muds** - optional preset list for the MUD dropdown
-- **personalization.browserTitle** - browser tab title
-- **personalization.eyebrow** - small heading label in the UI
-- **personalization.title** - main page title
-- **personalization.subtitle** - descriptive subtitle text
-
-### Current default config values
-
-```ts
-export const appSettings = {
-  ports: {
-    client: 5190,
-    server: 5191,
-    preview: 5192,
-  },
-  connection: {
-    defaultHost: 'krynn.d20mud.com',
-    defaultPort: 4300,
-    muds: [
-      {
-        id: 'krynn',
-        name: 'Chronicles of Krynn',
-        host: 'krynn.d20mud.com',
-        port: 4300,
-        description: 'Post War of the Lance Dragonlance RP and Adventuring.',
-      },
-      {
-        id: 'luminari',
-        name: 'LuminariMUD',
-        host: 'LuminariMUD.com',
-        port: 4100,
-        description: 'MUD running the LuminariMUD codebase in the world of Lumia.',
-      },
-      {
-        id: 'faerun',
-        name: 'Faerun: A Forgotten Realms MUD',
-        host: 'faerun.d20mud.com',
-        port: 3100,
-        description: 'Forgotten Realms Adventuring in Western Faerun.',
-      },
-      {
-        id: 'starwars',
-        name: 'd20MUD: Star Wars',
-        host: 'starwars.d20mud.com',
-        port: 5500,
-        description: 'Galactic Empire Star Wars using d20-based rules.',
-      },
-    ],
-  },
-  personalization: {
-    browserTitle: 'Luminari Web',
-    eyebrow: 'LuminariMUD web client',
-    title: 'Luminari Web',
-    subtitle:
-      'A React and Node MUD client with an MSDP-driven HUD and WebSocket-to-Telnet proxy.',
-  },
-}
-```
-
-## Environment overrides
+Environment overrides:
 
 | Variable | Default | Purpose |
-| --- | --- | --- |
-| `PORT` | `shared/app-settings.ts` value | Override the server HTTP/WebSocket port |
-| `VITE_WS_URL` | same-origin `/ws` | Override the browser WebSocket target |
+|----------|---------|---------|
+| `PORT` | `5191` | HTTP/WebSocket server port |
+| `VITE_WS_URL` | same-origin `/ws` | Browser WebSocket target override |
 
-## MUD presets
+## Project Status
 
-Preset MUDs are configured in:
-
-```ts
-shared/app-settings.ts
-```
-
-Each preset uses:
-
-```ts
-{
-  id: string
-  name: string
-  host: string
-  port: number
-  description?: string
-}
-```
-
-If presets are defined, the web client shows a dropdown beside the host, port, and connect controls. The user can still switch to **Custom** and type a host and port manually.
-
-## MSDP / HUD coverage
-
-The client currently uses MSDP for these categories:
-
-- **Character:** `CHARACTER_NAME`, `TITLE`, `LEVEL`, `CLASS`, `RACE`, `POSITION`, `ALIGNMENT`, `MONEY`, `AC`, `ATTACK_BONUS`
-- **Ability scores:** `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`, `STRENGTH`, `DEXTERITY`, `CONSTITUTION`, `INTELLIGENCE`, `WISDOM`, `CHARISMA`
-- **Bars:** `HEALTH`, `HEALTH_MAX`, `PSP`, `PSP_MAX`, `MOVEMENT`, `MOVEMENT_MAX`, `EXPERIENCE`, `EXPERIENCE_MAX`, `EXPERIENCE_TNL`
-- **Combat:** `OPPONENT_NAME`, `OPPONENT_HEALTH`, `OPPONENT_HEALTH_MAX`, `TANK_NAME`, `TANK_HEALTH`, `TANK_HEALTH_MAX`
-- **Room and map:** `ROOM`, `ROOM_NAME`, `AREA_NAME`, `ROOM_VNUM`, `ROOM_EXITS`, `MINIMAP`
-- **Group and status collections:** `GROUP`, `AFFECTS`, `ACTIONS`, `QUEST_INFO`
-
-Server-level fields such as `SERVER_ID` are also requested so the bridge can validate the connection before character login completes.
-
-## Verified commands
-
-```bash
-npm run lint
-npm run build
-```
+The spec system is active. Current roadmap and phase status are tracked in [.spec_system/PRD/PRD.md](.spec_system/PRD/PRD.md) and [.spec_system/state.json](.spec_system/state.json).
