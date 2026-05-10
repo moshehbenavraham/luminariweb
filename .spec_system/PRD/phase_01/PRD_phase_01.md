@@ -4,7 +4,7 @@
 **Sessions**: 6
 **Estimated Duration**: 3-6 days
 
-**Progress**: 1/6 sessions (17%)
+**Progress**: 3/6 sessions (50%)
 
 ---
 
@@ -19,8 +19,8 @@ Make the proxy and terminal safe under real Telnet traffic, reconnects, malforme
 | Session | Name | Status | Est. Tasks | Validated |
 |---------|------|--------|------------|-----------|
 | 01 | Telnet Parser Edge-Case Tests | Completed | ~12-25 | PASS |
-| 02 | MSDP Tables, Arrays, and Malformed Payloads | Not Started | ~12-25 | - |
-| 03 | Connection Lifecycle and Reconnect Cleanup | Not Started | ~12-25 | - |
+| 02 | MSDP Tables, Arrays, and Malformed Payloads | Completed | ~12-25 | PASS |
+| 03 | Connection Lifecycle and Reconnect Cleanup | Completed | ~12-25 | PASS |
 | 04 | Dynamic NAWS Resize | Not Started | ~12-25 | - |
 | 05 | xterm.js Migration Spike | Not Started | ~12-25 | - |
 | 06 | Proxy Limits and Deployment Safety | Not Started | ~12-25 | - |
@@ -30,17 +30,16 @@ Make the proxy and terminal safe under real Telnet traffic, reconnects, malforme
 ## Completed Sessions
 
 - `phase01-session01-telnet-parser-edge-case-tests` - completed and validated on 2026-05-11.
+- `phase01-session02-msdp-tables-arrays-malformed-payloads` - completed and validated on 2026-05-11.
+- `phase01-session03-connection-lifecycle-reconnect-cleanup` - completed and validated on 2026-05-11.
 
 ---
 
 ## Upcoming Sessions
 
-- Session 02: MSDP Tables, Arrays, and Malformed Payloads
-- Session 03: Connection Lifecycle and Reconnect Cleanup
 - Session 04: Dynamic NAWS Resize
 - Session 05: xterm.js Migration Spike
 - Session 06: Proxy Limits and Deployment Safety
-
 ---
 
 ## Objectives

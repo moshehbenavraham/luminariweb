@@ -2,12 +2,21 @@ import { readFile } from 'node:fs/promises';
 import type { MudValue } from '../../shared/mud.ts';
 
 export type MsdpExpectedPair = readonly [variable: string, value: MudValue];
+export type MsdpControlToken =
+  | 'VAR'
+  | 'VAL'
+  | 'TABLE_OPEN'
+  | 'TABLE_CLOSE'
+  | 'ARRAY_OPEN'
+  | 'ARRAY_CLOSE';
+export type MsdpPayloadToken = MsdpControlToken | string;
 
 export type MsdpFixture = {
   file: string;
   id: string;
   coverage: string[];
   expectedPairs: MsdpExpectedPair[];
+  payloadTokens: MsdpPayloadToken[];
   sanitized: boolean;
 };
 
@@ -154,8 +163,17 @@ function parseFixture(file: string, value: unknown): MsdpFixture {
       readString(tag, `${file}.${id}.coverage[${index}]`),
     ),
     expectedPairs,
+    payloadTokens: readPayloadTokens(value.payloadTokens, `${file}.${id}.payloadTokens`),
     sanitized: readBoolean(value.origin.sanitized, `${file}.${id}.origin.sanitized`),
   };
+}
+
+function readPayloadTokens(value: unknown, path: string): MsdpPayloadToken[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`${path} must be an array`);
+  }
+
+  return value.map((token, index) => readString(token, `${path}[${index}]`));
 }
 
 function parseExpectedPair(value: unknown, path: string): MsdpExpectedPair {

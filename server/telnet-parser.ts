@@ -278,23 +278,46 @@ function readValue(payload: Buffer, index: number): [MudValue, number] {
     const items: MudValue[] = [];
     let cursor = index + 1;
 
-    while (cursor < payload.length && payload[cursor] !== MSDP_ARRAY_CLOSE) {
+    while (cursor < payload.length) {
+      if (payload[cursor] === MSDP_ARRAY_CLOSE) {
+        return [items, cursor + 1];
+      }
+
+      if (payload[cursor] === MSDP_TABLE_CLOSE) {
+        return [items, cursor];
+      }
+
       if (payload[cursor] === MSDP_VAL) {
         cursor += 1;
         const [value, nextCursor] = readValue(payload, cursor);
+        if (nextCursor <= cursor) {
+          cursor += 1;
+          continue;
+        }
+
         items.push(value);
         cursor = nextCursor;
         continue;
       }
 
+      if (CONTROL_BYTES.has(payload[cursor])) {
+        cursor = skipMalformedArrayToken(payload, cursor);
+        continue;
+      }
+
       const [value, nextCursor] = readScalar(payload, cursor);
+      if (nextCursor <= cursor) {
+        cursor += 1;
+        continue;
+      }
+
       if (value !== '') {
         items.push(normalizeScalar(value));
       }
       cursor = nextCursor;
     }
 
-    return [items, cursor + 1];
+    return [items, cursor];
   }
 
   if (marker === MSDP_TABLE_OPEN) {
@@ -341,6 +364,26 @@ function readScalar(payload: Buffer, index: number): [string, number] {
   }
 
   return [Buffer.from(bytes).toString('utf8'), cursor];
+}
+
+function skipMalformedArrayToken(payload: Buffer, index: number) {
+  const marker = payload[index];
+  let cursor = index + 1;
+
+  if (marker === MSDP_VAR) {
+    const [, afterKey] = readScalar(payload, cursor);
+    cursor = afterKey;
+
+    if (payload[cursor] === MSDP_VAL) {
+      const [, afterValue] = readValue(payload, cursor + 1);
+      return afterValue > cursor ? afterValue : cursor + 1;
+    }
+
+    return cursor > index ? cursor : index + 1;
+  }
+
+  const [, afterScalar] = readScalar(payload, cursor);
+  return afterScalar > cursor ? afterScalar : cursor;
 }
 
 function normalizeScalar(value: string): MudValue {

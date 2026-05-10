@@ -40,7 +40,9 @@
     "phase00-session03-unavailable-data-ux",
     "phase00-session04-msdp-fixture-corpus",
     "phase00-session05-state-mapping-tests",
-    "phase01-session01-telnet-parser-edge-case-tests"
+    "phase01-session01-telnet-parser-edge-case-tests",
+    "phase01-session02-msdp-tables-arrays-malformed-payloads",
+    "phase01-session03-connection-lifecycle-reconnect-cleanup"
   ],
   "next_session_history": [
     {
@@ -91,6 +93,16 @@
     {
       "date": "2026-05-11",
       "session": "phase01-session01-telnet-parser-edge-case-tests",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase01-session02-msdp-tables-arrays-malformed-payloads",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase01-session03-connection-lifecycle-reconnect-cleanup",
       "status": "completed"
     }
   ]
