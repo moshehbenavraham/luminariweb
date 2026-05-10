@@ -9,7 +9,7 @@
     "0": {
       "name": "Align With Real Luminari Data",
       "description": "Make the current client honest about emitted Luminari-Source MSDP data, establish baseline verification, and create fixture and mapping-test foundations.",
-      "status": "not_started",
+      "status": "in_progress",
       "session_count": 5
     },
     "1": {
@@ -33,6 +33,14 @@
       "session_count": 5
     }
   },
-  "completed_sessions": [],
-  "next_session_history": []
+  "completed_sessions": [
+    "phase00-session01-baseline-verification-and-project-hygiene"
+  ],
+  "next_session_history": [
+    {
+      "date": "2026-05-10",
+      "session": "phase00-session01-baseline-verification-and-project-hygiene",
+      "status": "completed"
+    }
+  ]
 }

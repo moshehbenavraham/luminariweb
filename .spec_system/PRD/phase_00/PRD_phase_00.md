@@ -1,10 +1,10 @@
 # PRD Phase 00: Align With Real Luminari Data
 
-**Status**: Not Started
+**Status**: In Progress
 **Sessions**: 5 (initial estimate)
 **Estimated Duration**: 2-5 days
 
-**Progress**: 0/5 sessions (0%)
+**Progress**: 1/5 sessions (20%)
 
 ---
 
@@ -18,7 +18,7 @@ Phase 00 makes the current client honest about what Luminari-Source emits today,
 
 | Session | Name | Status | Est. Tasks | Validated |
 |---------|------|--------|------------|-----------|
-| 01 | Baseline Verification and Project Hygiene | Not Started | ~12-25 | - |
+| 01 | Baseline Verification and Project Hygiene | Complete | ~12-25 | PASS |
 | 02 | MSDP Variable Map Alignment | Not Started | ~12-25 | - |
 | 03 | Unavailable Data UX | Not Started | ~12-25 | - |
 | 04 | MSDP Fixture Corpus | Not Started | ~12-25 | - |
@@ -28,13 +28,12 @@ Phase 00 makes the current client honest about what Luminari-Source emits today,
 
 ## Completed Sessions
 
-None yet.
+- Session 01: Baseline Verification and Project Hygiene
 
 ---
 
 ## Upcoming Sessions
 
-- Session 01: Baseline Verification and Project Hygiene
 - Session 02: MSDP Variable Map Alignment
 - Session 03: Unavailable Data UX
 - Session 04: MSDP Fixture Corpus
