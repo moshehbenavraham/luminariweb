@@ -1,7 +1,7 @@
 # Considerations
 
 > Institutional memory for AI assistants. Updated between phases via carryforward.
-> **Line budget**: 600 max | **Last updated**: Phase 00 (2026-05-10)
+> **Line budget**: 600 max | **Last updated**: Phase 01 (2026-05-11)
 
 ---
 
@@ -11,30 +11,23 @@ Items requiring attention in upcoming phases. Review before each session.
 
 ### Technical Debt <!-- Max 5 items -->
 
-- P00-TD1: `shared/mud.ts` default MSDP mapping still requests unconfirmed variables (`TITLE`, `FORTITUDE`, `REFLEX`, `WILLPOWER`, `MINIMAP`, `QUEST_INFO`) and does not yet request/map confirmed room/action/inventory fields. Phase 00 should align defaults and mapping with audited Luminari-Source facts.
-- P00-TD2: `src/App.tsx` is a large single component file that owns rendering, WebSocket lifecycle, aliases, triggers, imports, cookies, and many formatters. Extract only after behavior is covered, because protocol/UI coupling is currently implicit.
-- P00-TD3: `server/index.ts` combines Express routes, WebSocket session handling, Telnet parser, MSDP parser, and state mapping. Parser and mapping tests should come before major extraction.
-- P00-TD4: No committed test runner or fixtures exist yet. Parser, proxy lifecycle, and MSDP mapping changes currently rely on lint/build plus manual checks.
+- [P01] `server/index.ts` still owns proxy routes, Telnet session handling, parser setup, and lifecycle glue. Keep parser and reconnect coverage ahead of any further extraction.
+- [P01] `src/App.tsx` remains a large integration point for terminal UI, connection state, aliases, triggers, and settings persistence. Split only after the next session boundary is covered by tests.
 
 ### External Dependencies <!-- Max 5 items -->
 
-- P00-EXT1: `ansi-to-html` is the current renderer. All `dangerouslySetInnerHTML` paths rely on `escapeXML: true`; preserve that invariant until any xterm.js migration is proven.
-- P00-EXT2: Reference repositories under `EXAMPLES/` include GPL/LGPL projects. Use them for behavior and acceptance ideas only unless license strategy changes.
-- P00-EXT3: Live compatibility depends on external MUD hosts and Luminari-Source protocol behavior. Prefer fixtures over live access for repeatable tests.
+- [P01] `ansi-to-html` remains the terminal renderer. Preserve XML escaping or replace it with a fully validated renderer before changing HTML output paths.
+- [P01] Compatibility still depends on external MUD host behavior and the audited Luminari-Source protocol contract. Prefer fixtures and source audits over live-only verification.
 
 ### Performance / Security <!-- Max 5 items -->
 
-- P00-SEC1: The proxy accepts arbitrary host/port input after basic syntax and range validation. Public deployment needs allowlists, origin checks, reserved-IP blocking, quotas, and rate limits.
-- P00-SEC2: Client settings, aliases, and triggers are stored in browser cookies with `SameSite=Lax` and `path=/`, so they are sent with HTTP/WebSocket requests. Migrate to localStorage or IndexedDB before settings grow or include sensitive data.
-- P00-SEC3: Trigger and alias automation has a recursion limit, but command send rate is not limited. Add client/proxy safeguards before public deployment.
-- P00-PERF1: Terminal output is capped at 500 chunks, but rendering still joins HTML chunks into one `dangerouslySetInnerHTML` payload. Watch performance under high-output MUD bursts.
+- [P01] Public proxy exposure still requires destination allowlists, private-network blocking, origin checks, quotas, and connect/idle timeouts before production use.
+- [P01] Browser settings, aliases, and triggers are persisted in cookies. Move them to localStorage or IndexedDB before storing any sensitive preferences or growing the payload.
+- [P01] Automated regression coverage still needs WebSocket validation, unsafe-host rejection, parser edge cases, and reconnect cleanup tests.
 
 ### Architecture <!-- Max 5 items -->
 
-- P00-ARCH1: The repository is a single TypeScript app, not a monorepo. Keep shared client/server contracts in `shared/`.
-- P00-ARCH2: Runtime configuration comes from `shared/app-settings.ts` and `/api/settings`; preset or branding changes should not require rebuilding the frontend once the server restarts.
-- P00-ARCH3: NAWS currently sends fixed `120x40` dimensions from the proxy. Browser-measured resize support is planned for Phase 01.
-- P00-ARCH4: There is no database or account system. First-release persistence is browser-local only.
+- [P01] xterm.js is the preferred long-term terminal path, but the migration should stay separate from protocol work and only start after a bounded spike proves input, scrollback, resize, and copy/paste behavior.
 
 ---
 
@@ -44,28 +37,25 @@ Proven patterns and anti-patterns. Reference during implementation.
 
 ### What Worked <!-- Max 15 items -->
 
-- `normalizeMsdpVariableMap` gives one shared fallback path for browser and proxy MSDP settings.
-- Import parsing uses tolerant normalization and clear user-facing errors for aliases, triggers, and full config files.
-- `renderMudHtml` and the streaming terminal converter both set `escapeXML: true`, making current HTML rendering safer despite `dangerouslySetInnerHTML`.
-- The proxy sends partial `MudState` updates, which keeps browser state merging simple.
-- Lint and build currently pass and are the only automated quality gates.
-- `npm audit --omit=dev` reported 0 production dependency vulnerabilities on 2026-05-10.
+- [P01] Shared pure mapping helpers in `shared/msdp-state.ts` made the proxy, fixtures, and Node tests line up without starting the server.
+- [P01] Fixture corpora with manifest-verified expected pairs make MSDP parser and state tests deterministic.
+- [P01] Source-backed availability checks are clearer when the UI says why data is missing instead of treating zero values as absent.
+- [P01] Keeping `renderMudHtml()` escaping intact let the UI stay honest about optional data without opening new HTML injection paths.
+- [P01] `node --import tsx --test` was enough for focused protocol tests; no extra test framework was needed.
+- [P01] `minmax(0, 1fr)` and tight cell constraints prevented mobile overflow in the unavailable-data layouts.
 
 ### What to Avoid <!-- Max 10 items -->
 
-- Do not treat unsupported MSDP fields as reliable server data just because the current UI has slots for them.
-- Do not copy GPL reference code into this Unlicense project.
-- Do not log raw player commands or imported automation content.
-- Do not add broad parser rewrites without fixtures for split IAC, doubled IAC, tables, arrays, malformed payloads, and reconnect cleanup.
-- Do not add accounts, cloud sync, or server-side settings storage without a separate auth/privacy design.
-- Do not change terminal HTML rendering paths without preserving XML escaping or replacing the renderer entirely.
+- [P01] Do not treat unconfirmed MSDP variables as reliable defaults just because the UI has fields for them.
+- [P01] Do not log raw player commands or imported automation content by default.
+- [P01] Do not add broad parser rewrites without fixtures for split IAC, doubled IAC, tables, arrays, malformed payloads, and reconnect cleanup.
+- [P01] Do not change HTML terminal rendering without preserving XML escaping or replacing the renderer entirely.
+- [P01] Do not add account sync or cloud persistence without a separate auth/privacy design.
 
 ### Tool/Library Notes <!-- Max 5 items -->
 
-- `npm run lint` and `npm run build` passed on 2026-05-10 after the documentation audit.
-- `npm audit --omit=dev --audit-level=moderate` passed on 2026-05-10 with 0 vulnerabilities.
-- Vite development proxies `/api/settings` and `/ws` to the Node server port from `shared/app-settings.ts`.
-- `ansi-to-html` is used both for streaming terminal output and one-shot Luminari color rendering.
+- [P01] `npm run lint`, `npm run build`, and `npm test` passed by the end of phase 00.
+- [P01] The fixture loader validates manifest structure before tests trust the expected pairs.
 
 ---
 
@@ -73,8 +63,12 @@ Proven patterns and anti-patterns. Reference during implementation.
 
 Recently closed items (buffer - rotates out after 2 phases).
 
-| Phase | Item                        | Resolution                                                                                                                  |
-| ----- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| 00    | Initial documentation audit | Root and standard project docs were created or refreshed; remaining docs gaps are captured in `.spec_system/docs-audit.md`. |
+| Phase | Item | Resolution |
+|-------|------|------------|
+| P00 | Default MSDP map alignment | Default requests and server mapping were aligned to confirmed Luminari-Source variables, with unsupported values left as explicit overrides. |
+| P00 | Uncommitted test foundation | A committed `npm test` path and fixture-driven MSDP tests now exist. |
+| P00 | Source-aware unavailable-data UX | The UI now distinguishes unavailable, empty, waiting, offline, and present states without treating `0` as missing. |
+| P00 | MSDP fixture corpus | Versioned fixture sets and a manifest now support repeatable parser/state coverage. |
+| P00 | Shared state mapping extraction | Pure MSDP mapping helpers were extracted into `shared/msdp-state.ts` and imported by the proxy. |
 
 _Auto-generated by initspec. Updated by carryforward between phases._

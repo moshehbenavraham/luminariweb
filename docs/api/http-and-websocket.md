@@ -14,6 +14,8 @@ Returns proxy health:
 
 Returns `appSettings` from `shared/app-settings.ts`, including port defaults, MUD presets, and personalization text.
 
+Both HTTP endpoints are rate limited per IP. When the limit is exceeded, the server returns `429 Too Many Requests` with `Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset` headers.
+
 ## WebSocket `/ws`
 
 The browser opens a WebSocket connection to `/ws`. Message shapes are defined in `shared/mud.ts`.
@@ -51,6 +53,8 @@ Send command input:
 ```json
 { "type": "input", "text": "look" }
 ```
+
+Browser command input is throttled per WebSocket session. Excessive command bursts receive a connection-status error and are ignored until the rate window resets.
 
 Update MSDP variable mapping:
 

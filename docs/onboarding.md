@@ -22,6 +22,7 @@ Open `http://localhost:5190`.
 - [ ] `npm run dev` starts the Vite client and Node proxy.
 - [ ] `curl http://localhost:5191/health` returns `{ "ok": true }`.
 - [ ] The browser loads the app at `http://localhost:5190`.
+- [ ] `npm test` passes.
 - [ ] A selected preset or custom host can attempt a MUD connection.
 
 ## Required Secrets

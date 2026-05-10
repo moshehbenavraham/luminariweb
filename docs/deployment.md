@@ -18,6 +18,15 @@ curl http://localhost:5191/health
 
 `npm start` runs `node dist/server/index.js`. The server serves the built frontend, `/api/settings`, `/health`, and `/ws`.
 
+## Security Controls
+
+The built server now applies two lightweight public-deployment guardrails:
+
+- HTTP requests are rate limited per IP with `429 Too Many Requests` and `Retry-After` headers.
+- Browser command input sent over `/ws` is throttled per socket, and excessive concurrent WebSocket connections from one IP are rejected.
+
+These checks are intentionally local and in-memory. For public hosting, still configure CDN or reverse-proxy protections for origin allowlists, private-network blocking, banned ports, and WAF rules.
+
 ## PM2 Run
 
 ```bash

@@ -1,5 +1,19 @@
 # Documentation Audit
 
+## Current Pass
+
+**Audit Date**: 2026-05-11
+**Project**: Luminari Web
+**Audit Mode**: Phase-Focused
+
+Phase 00 was just completed, so this pass focused on documentation drift introduced by the completed sessions:
+
+- Added `npm test` to the top-level workflow and development/onboarding docs.
+- Documented the shared MSDP mapping helper in architecture and service READMEs.
+- Clarified fixture-backed MSDP test coverage in the tests documentation.
+
+## Previous Audit
+
 **Audit Date**: 2026-05-10
 **Project**: Luminari Web
 **Audit Mode**: Full Audit

@@ -1,65 +1,48 @@
 import express from 'express';
 import net from 'node:net';
 import path from 'node:path';
-import { StringDecoder } from 'node:string_decoder';
 import { fileURLToPath } from 'node:url';
-import { createServer } from 'node:http';
+import { createServer, type IncomingMessage } from 'node:http';
 import { WebSocket, WebSocketServer } from 'ws';
 import type { RawData } from 'ws';
 import { appSettings } from '../shared/app-settings.ts';
 import { defaultMsdpVariables, normalizeMsdpVariableMap } from '../shared/mud.ts';
 import { getConfiguredMsdpVariables, mapMsdpUpdate } from '../shared/msdp-state.ts';
+import {
+  IAC,
+  MSDP_VAL,
+  MSDP_VAR,
+  SB,
+  SE,
+  TELOPT_MSDP,
+  TelnetParser,
+  WEB_CLIENT_NAME,
+  WEB_CLIENT_VERSION,
+} from './telnet-parser.ts';
 import type {
   ClientMessage,
   ConnectionStatus,
   MsdpVariableMap,
   MudState,
-  MudValue,
   ServerMessage,
 } from '../shared/mud.ts';
 
-const IAC = 255;
-const DONT = 254;
-const DO = 253;
-const WONT = 252;
-const WILL = 251;
-const SB = 250;
-const SE = 240;
-const TTYPE_IS = 0;
-const TTYPE_SEND = 1;
-const TELOPT_ECHO = 1;
-const TELOPT_SGA = 3;
-const TELOPT_TTYPE = 24;
-const TELOPT_NAWS = 31;
-const TELOPT_CHARSET = 42;
-const TELOPT_MSDP = 69;
-const TELOPT_MCCP = 86;
-const TELOPT_MXP = 91;
-const MSDP_VAR = 1;
-const MSDP_VAL = 2;
-const MSDP_TABLE_OPEN = 3;
-const MSDP_TABLE_CLOSE = 4;
-const MSDP_ARRAY_OPEN = 5;
-const MSDP_ARRAY_CLOSE = 6;
-const WEB_CLIENT_NAME = 'LuminariWebClient';
-const WEB_CLIENT_VERSION = '0.1.0';
-const DEFAULT_COLUMNS = 120;
-const DEFAULT_ROWS = 40;
-const CONTROL_BYTES = new Set([
-  MSDP_VAR,
-  MSDP_VAL,
-  MSDP_TABLE_OPEN,
-  MSDP_TABLE_CLOSE,
-  MSDP_ARRAY_OPEN,
-  MSDP_ARRAY_CLOSE,
-]);
+const HTTP_RATE_LIMIT_WINDOW_MS = 10_000;
+const HTTP_RATE_LIMIT_MAX_REQUESTS = 25;
+const WS_CONNECTION_LIMIT_PER_IP = 4;
+const WS_COMMAND_RATE_LIMIT_WINDOW_MS = 10_000;
+const WS_COMMAND_RATE_LIMIT_MAX_INPUTS = 20;
 const app = express();
 const server = createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
+const httpRateLimiters = new Map<string, SlidingWindowRateLimiter>();
+const websocketConnectionsByIp = new Map<string, number>();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const clientDist = path.resolve(__dirname, '../client');
+
+app.use(rateLimitHttpRequests);
 
 app.get('/health', (_request, response) => {
   response.json({ ok: true });
@@ -75,13 +58,28 @@ app.get(/^(?!\/ws).*/, (_request, response) => {
   response.sendFile(path.join(clientDist, 'index.html'));
 });
 
-wss.on('connection', (socket) => {
+wss.on('connection', (socket, request) => {
+  const clientIp = getRemoteAddress(request);
+  const activeConnections = (websocketConnectionsByIp.get(clientIp) ?? 0) + 1;
+
+  if (activeConnections > WS_CONNECTION_LIMIT_PER_IP) {
+    socket.close(1013, 'Too many active connections.');
+    return;
+  }
+
+  websocketConnectionsByIp.set(clientIp, activeConnections);
+
   const session = new MudSession(socket);
 
   socket.on('message', (data) => {
     const message = parseClientMessage(data);
     if (!message) {
       session.sendStatus('error', 'Received an invalid browser message.');
+      return;
+    }
+
+    if (message.type === 'input' && !session.allowCommandInput()) {
+      session.sendStatus('error', 'Command rate limit exceeded. Slow down and retry.');
       return;
     }
 
@@ -104,6 +102,14 @@ wss.on('connection', (socket) => {
   });
 
   socket.on('close', () => {
+    const remainingConnections = (websocketConnectionsByIp.get(clientIp) ?? 1) - 1;
+
+    if (remainingConnections > 0) {
+      websocketConnectionsByIp.set(clientIp, remainingConnections);
+    } else {
+      websocketConnectionsByIp.delete(clientIp);
+    }
+
     session.disconnect('Disconnected.');
   });
 });
@@ -119,10 +125,18 @@ class MudSession {
   private state: MudState = {};
   private msdpInitialized = false;
   private msdpVariables: MsdpVariableMap = normalizeMsdpVariableMap(defaultMsdpVariables);
+  private readonly commandRateLimiter = new SlidingWindowRateLimiter(
+    WS_COMMAND_RATE_LIMIT_WINDOW_MS,
+    WS_COMMAND_RATE_LIMIT_MAX_INPUTS,
+  );
   private readonly browserSocket: WebSocket;
 
   constructor(browserSocket: WebSocket) {
     this.browserSocket = browserSocket;
+  }
+
+  allowCommandInput() {
+    return this.commandRateLimiter.allow().allowed;
   }
 
   connect(host: string, port: number, msdpVariables: MsdpVariableMap) {
@@ -263,6 +277,7 @@ class MudSession {
   }
 
   private cleanupSocket() {
+    this.parser?.close();
     this.parser = null;
     this.mudSocket = null;
     this.msdpInitialized = false;
@@ -277,194 +292,101 @@ class MudSession {
   }
 }
 
-type TelnetParserCallbacks = {
-  onText: (text: string) => void;
-  onMsdp: (variable: string, value: MudValue) => void;
-  onMsdpReady: () => void;
-};
+class SlidingWindowRateLimiter {
+  private windowStartMs: number;
+  private count = 0;
+  private lastSeenMs: number;
+  private readonly windowMs: number;
+  private readonly limit: number;
 
-type ParserState = 'data' | 'iac' | 'iac-command' | 'sb-option' | 'sb-data' | 'sb-iac';
-
-class TelnetParser {
-  private state: ParserState = 'data';
-  private readonly decoder = new StringDecoder('utf8');
-  private readonly textBuffer: number[] = [];
-  private readonly sbBuffer: number[] = [];
-  private pendingCommand = 0;
-  private currentSbOption = 0;
-  private readonly socket: net.Socket;
-  private readonly callbacks: TelnetParserCallbacks;
-
-  constructor(socket: net.Socket, callbacks: TelnetParserCallbacks) {
-    this.socket = socket;
-    this.callbacks = callbacks;
+  constructor(windowMs: number, limit: number, now = Date.now()) {
+    this.windowMs = windowMs;
+    this.limit = limit;
+    this.windowStartMs = now;
+    this.lastSeenMs = now;
   }
 
-  push(chunk: Buffer) {
-    for (const byte of chunk) {
-      this.consume(byte);
+  allow(now = Date.now()) {
+    this.lastSeenMs = now;
+
+    if (now - this.windowStartMs >= this.windowMs) {
+      this.windowStartMs = now;
+      this.count = 0;
     }
 
-    this.flushText();
+    if (this.count >= this.limit) {
+      return {
+        allowed: false,
+        remaining: 0,
+        resetAtMs: this.windowStartMs + this.windowMs,
+      };
+    }
+
+    this.count += 1;
+    return {
+      allowed: true,
+      remaining: this.limit - this.count,
+      resetAtMs: this.windowStartMs + this.windowMs,
+    };
   }
 
-  private consume(byte: number) {
-    if (this.state === 'data') {
-      if (byte === IAC) {
-        this.flushText();
-        this.state = 'iac';
-        return;
-      }
-
-      this.textBuffer.push(byte);
-      return;
-    }
-
-    if (this.state === 'iac') {
-      if (byte === IAC) {
-        this.textBuffer.push(IAC);
-        this.state = 'data';
-        return;
-      }
-
-      if (byte === WILL || byte === WONT || byte === DO || byte === DONT) {
-        this.pendingCommand = byte;
-        this.state = 'iac-command';
-        return;
-      }
-
-      if (byte === SB) {
-        this.state = 'sb-option';
-        return;
-      }
-
-      this.state = 'data';
-      return;
-    }
-
-    if (this.state === 'iac-command') {
-      this.handleNegotiation(this.pendingCommand, byte);
-      this.state = 'data';
-      return;
-    }
-
-    if (this.state === 'sb-option') {
-      this.currentSbOption = byte;
-      this.sbBuffer.length = 0;
-      this.state = 'sb-data';
-      return;
-    }
-
-    if (this.state === 'sb-data') {
-      if (byte === IAC) {
-        this.state = 'sb-iac';
-        return;
-      }
-
-      this.sbBuffer.push(byte);
-      return;
-    }
-
-    if (byte === SE) {
-      this.handleSubnegotiation(this.currentSbOption, Buffer.from(this.sbBuffer));
-      this.sbBuffer.length = 0;
-      this.state = 'data';
-      return;
-    }
-
-    if (byte === IAC) {
-      this.sbBuffer.push(IAC);
-    }
-
-    this.state = 'sb-data';
+  isStale(now = Date.now()) {
+    return now - this.lastSeenMs > this.windowMs * 4;
   }
+}
 
-  private flushText() {
-    if (this.textBuffer.length === 0) {
-      return;
-    }
+function rateLimitHttpRequests(
+  request: express.Request,
+  response: express.Response,
+  next: express.NextFunction,
+) {
+  const clientIp = getRemoteAddress(request);
+  const limiter = getHttpRateLimiter(clientIp);
+  const result = limiter.allow();
 
-    const text = this.decoder.write(Buffer.from(this.textBuffer));
-    this.textBuffer.length = 0;
+  response.setHeader('X-RateLimit-Limit', String(HTTP_RATE_LIMIT_MAX_REQUESTS));
+  response.setHeader('X-RateLimit-Remaining', String(result.remaining));
+  response.setHeader('X-RateLimit-Reset', String(Math.ceil(result.resetAtMs / 1000)));
 
-    if (text) {
-      this.callbacks.onText(text);
-    }
-  }
-
-  private handleNegotiation(command: number, option: number) {
-    if (command === WILL) {
-      if (option === TELOPT_MSDP) {
-        this.sendNegotiation(DO, option);
-        this.callbacks.onMsdpReady();
-        return;
-      }
-
-      if (option === TELOPT_ECHO || option === TELOPT_SGA) {
-        this.sendNegotiation(DO, option);
-        return;
-      }
-
-      if (option === TELOPT_MCCP) {
-        this.sendNegotiation(DONT, option);
-        return;
-      }
-
-      this.sendNegotiation(DONT, option);
-      return;
-    }
-
-    if (command === DO) {
-      if (option === TELOPT_TTYPE) {
-        this.sendNegotiation(WILL, option);
-        return;
-      }
-
-      if (option === TELOPT_NAWS) {
-        this.sendNegotiation(WILL, option);
-        this.sendNaws(DEFAULT_COLUMNS, DEFAULT_ROWS);
-        return;
-      }
-
-      if (option === TELOPT_CHARSET || option === TELOPT_MXP) {
-        this.sendNegotiation(WONT, option);
-        return;
-      }
-
-      this.sendNegotiation(WONT, option);
-    }
-  }
-
-  private handleSubnegotiation(option: number, payload: Buffer) {
-    if (option === TELOPT_MSDP) {
-      for (const [variable, value] of parseMsdpPayload(payload)) {
-        this.callbacks.onMsdp(variable, value);
-      }
-      return;
-    }
-
-    if (option === TELOPT_TTYPE && payload[0] === TTYPE_SEND) {
-      this.socket.write(
-        Buffer.concat([
-          Buffer.from([IAC, SB, TELOPT_TTYPE, TTYPE_IS]),
-          Buffer.from(WEB_CLIENT_NAME, 'utf8'),
-          Buffer.from([IAC, SE]),
-        ]),
-      );
-    }
-  }
-
-  private sendNegotiation(command: number, option: number) {
-    this.socket.write(Buffer.from([IAC, command, option]));
-  }
-
-  private sendNaws(columns: number, rows: number) {
-    const width = Buffer.from([columns >> 8, columns & 0xff]);
-    const height = Buffer.from([rows >> 8, rows & 0xff]);
-    this.socket.write(
-      Buffer.concat([Buffer.from([IAC, SB, TELOPT_NAWS]), width, height, Buffer.from([IAC, SE])]),
+  if (!result.allowed) {
+    response.setHeader(
+      'Retry-After',
+      String(Math.max(1, Math.ceil((result.resetAtMs - Date.now()) / 1000))),
     );
+    response.status(429).json({ error: 'Too many requests.' });
+    return;
   }
+
+  next();
+}
+
+function getHttpRateLimiter(clientIp: string) {
+  const existingLimiter = httpRateLimiters.get(clientIp);
+  if (existingLimiter) {
+    return existingLimiter;
+  }
+
+  const limiter = new SlidingWindowRateLimiter(
+    HTTP_RATE_LIMIT_WINDOW_MS,
+    HTTP_RATE_LIMIT_MAX_REQUESTS,
+  );
+  httpRateLimiters.set(clientIp, limiter);
+  pruneStaleRateLimiters();
+  return limiter;
+}
+
+function pruneStaleRateLimiters() {
+  const now = Date.now();
+
+  for (const [clientIp, limiter] of httpRateLimiters) {
+    if (limiter.isStale(now)) {
+      httpRateLimiters.delete(clientIp);
+    }
+  }
+}
+
+function getRemoteAddress(request: IncomingMessage | express.Request) {
+  return request.socket.remoteAddress ?? 'unknown';
 }
 
 function parseClientMessage(data: RawData): ClientMessage | null {
@@ -537,114 +459,4 @@ function dataToString(data: RawData) {
 
 function isValidHost(host: string) {
   return /^[a-z0-9.-]+$/i.test(host) || /^(\d{1,3}\.){3}\d{1,3}$/.test(host);
-}
-
-function parseMsdpPayload(payload: Buffer): Array<[string, MudValue]> {
-  const pairs: Array<[string, MudValue]> = [];
-  let index = 0;
-
-  while (index < payload.length) {
-    if (payload[index] !== MSDP_VAR) {
-      index += 1;
-      continue;
-    }
-
-    index += 1;
-    const [variable, nextIndex] = readScalar(payload, index);
-    index = nextIndex;
-
-    if (payload[index] !== MSDP_VAL) {
-      continue;
-    }
-
-    index += 1;
-    const [value, afterValue] = readValue(payload, index);
-    index = afterValue;
-
-    if (variable) {
-      pairs.push([variable, value]);
-    }
-  }
-
-  return pairs;
-}
-
-function readValue(payload: Buffer, index: number): [MudValue, number] {
-  const marker = payload[index];
-
-  if (marker === MSDP_ARRAY_OPEN) {
-    const items: MudValue[] = [];
-    let cursor = index + 1;
-
-    while (cursor < payload.length && payload[cursor] !== MSDP_ARRAY_CLOSE) {
-      if (payload[cursor] === MSDP_VAL) {
-        cursor += 1;
-        const [value, nextCursor] = readValue(payload, cursor);
-        items.push(value);
-        cursor = nextCursor;
-        continue;
-      }
-
-      const [value, nextCursor] = readScalar(payload, cursor);
-      if (value !== '') {
-        items.push(normalizeScalar(value));
-      }
-      cursor = nextCursor;
-    }
-
-    return [items, cursor + 1];
-  }
-
-  if (marker === MSDP_TABLE_OPEN) {
-    const table: Record<string, MudValue> = {};
-    let cursor = index + 1;
-
-    while (cursor < payload.length && payload[cursor] !== MSDP_TABLE_CLOSE) {
-      if (payload[cursor] !== MSDP_VAR) {
-        cursor += 1;
-        continue;
-      }
-
-      cursor += 1;
-      const [key, nextCursor] = readScalar(payload, cursor);
-      cursor = nextCursor;
-
-      if (payload[cursor] !== MSDP_VAL) {
-        continue;
-      }
-
-      cursor += 1;
-      const [value, afterValue] = readValue(payload, cursor);
-      cursor = afterValue;
-
-      if (key) {
-        table[key] = value;
-      }
-    }
-
-    return [table, cursor + 1];
-  }
-
-  const [value, nextIndex] = readScalar(payload, index);
-  return [normalizeScalar(value), nextIndex];
-}
-
-function readScalar(payload: Buffer, index: number): [string, number] {
-  const bytes: number[] = [];
-  let cursor = index;
-
-  while (cursor < payload.length && !CONTROL_BYTES.has(payload[cursor])) {
-    bytes.push(payload[cursor]);
-    cursor += 1;
-  }
-
-  return [Buffer.from(bytes).toString('utf8'), cursor];
-}
-
-function normalizeScalar(value: string): MudValue {
-  if (/^-?\d+$/.test(value)) {
-    return Number(value);
-  }
-
-  return value;
 }

@@ -31,7 +31,7 @@ Telnet MUD server
 
 ### Shared Protocol and Settings
 
-- **Purpose**: Define app settings, MUD presets, browser/server message types, MSDP variable mappings, and client-visible MUD state fields.
+- **Purpose**: Define app settings, MUD presets, browser/server message types, MSDP variable mappings, shared MSDP mapping helpers, and client-visible MUD state fields.
 - **Tech**: TypeScript.
 - **Location**: `shared/`
 
@@ -43,8 +43,9 @@ Telnet MUD server
 4. Server validates basic host and port shape, opens a Telnet socket, and reports connection status.
 5. Telnet parser forwards text as `terminal` messages.
 6. When MSDP is available, the server sends client identity and report requests for configured variables.
-7. Parsed MSDP updates are mapped to partial `MudState` objects and sent as `state` messages.
-8. Browser sends command input as `input` messages; the proxy writes them to the Telnet socket.
+7. Parsed MSDP updates are normalized by `shared/msdp-state.ts`, mapped to partial `MudState` objects, and sent as `state` messages.
+8. Shared fixture tests load `tests/fixtures/msdp/manifest.json` and exercise the same mapping helpers without a live MUD connection.
+9. Browser sends command input as `input` messages; the proxy writes them to the Telnet socket.
 
 ## HTTP Endpoints
 

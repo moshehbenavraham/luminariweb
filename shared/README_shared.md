@@ -6,6 +6,7 @@ Shared TypeScript module used by both the React client and Node proxy server.
 
 - `app-settings.ts` defines ports, MUD presets, and personalization text.
 - `mud.ts` defines browser/server message types, MUD state shape, default MSDP variable mappings, and mapping normalization.
+- `msdp-state.ts` defines shared configured-variable filtering and pure MSDP-to-state mapping helpers.
 
 ## Run Commands
 

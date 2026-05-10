@@ -18,6 +18,6 @@ Express and WebSocket server that bridges browser clients to Telnet MUD servers.
 - Accept WebSocket connections at `/ws`.
 - Open Telnet sockets with Node `net`.
 - Negotiate Telnet options and parse MSDP updates.
-- Map MSDP variables into partial `MudState` messages.
+- Map MSDP variables into partial `MudState` messages through `shared/msdp-state.ts`.
 
 Public deployment hardening is still planned in the PRD and is not complete in the current server implementation.

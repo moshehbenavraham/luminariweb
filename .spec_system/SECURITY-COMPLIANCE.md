@@ -1,7 +1,7 @@
 # Security & Compliance
 
 > Cumulative security posture and GDPR compliance record. Updated between phases via carryforward.
-> **Line budget**: 1000 max | **Last updated**: Phase 00 (2026-05-10)
+> **Line budget**: 1000 max | **Last updated**: Phase 01 (2026-05-11)
 
 ---
 
@@ -9,13 +9,13 @@
 
 ### Overall: NEEDS HARDENING BEFORE PUBLIC DEPLOYMENT
 
-| Metric           | Value |
-| ---------------- | ----- |
-| Open Findings    | 5     |
-| Critical/High    | 1     |
-| Medium/Low       | 4     |
-| Phases Audited   | 0     |
-| Last Clean Phase | --    |
+| Metric | Value |
+|--------|-------|
+| Open Findings | 4 |
+| Critical/High | 1 |
+| Medium/Low | 3 |
+| Phases Audited | 1 |
+| Last Clean Phase | -- |
 
 ## Open Findings
 
@@ -26,7 +26,6 @@
 ### Medium / Low
 
 - **MEDIUM P00-SEC-002: Browser settings are stored in cookies.** `src/App.tsx` stores aliases, triggers, and client settings in chunked cookies with `SameSite=Lax` and `path=/`. They are not passwords, but they are sent to the server on HTTP/WebSocket requests. Prefer localStorage or IndexedDB and keep secrets out of client persistence.
-- **MEDIUM P00-SEC-003: No command/input rate limiting.** Alias and trigger recursion is capped, but neither browser command submission nor proxy input forwarding has rate limits. Add safeguards before public deployment to reduce automation loops and abuse.
 - **LOW P00-SEC-004: HTML rendering depends on escaping invariants.** Terminal and panel rendering use `dangerouslySetInnerHTML`, currently through `ansi-to-html` with `escapeXML: true`. Preserve that invariant, and add tests around HTML escaping before renderer changes.
 - **LOW P00-SEC-005: No automated security regression tests.** Lint/build pass, but parser, WebSocket validation, reconnect cleanup, and unsafe host rejection are not covered by committed tests yet.
 
@@ -53,14 +52,14 @@ Potentially sensitive operational data:
 
 ### Compliance Checklist
 
-| Requirement                            | Status  | Notes                                                                                           |
-| -------------------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
-| Data collection has documented purpose | Partial | Browser-local settings support gameplay preferences; no server-side account data exists         |
-| Consent obtained before data storage   | Partial | Settings are saved by using app controls, but there is no explicit storage notice               |
-| Data minimization verified             | Partial | No secrets are required; cookies should be replaced for local settings                          |
-| Deletion/erasure path exists           | Partial | Users can clear browser storage/cookies; no in-app clear-all control is documented              |
-| No PII in application logs             | Pass    | Current code logs startup and settings-load errors, not command text                            |
-| Third-party transfers documented       | Partial | Commands and connection data are sent to selected MUD hosts; production policy is not finalized |
+| Requirement | Status | Notes |
+|-------------|--------|-------|
+| Data collection has documented purpose | Partial | Browser-local settings support gameplay preferences; no server-side account data exists |
+| Consent obtained before data storage | Partial | Settings are saved by using app controls, but there is no explicit storage notice |
+| Data minimization verified | Partial | No secrets are required; cookies should be replaced for local settings |
+| Deletion/erasure path exists | Partial | Users can clear browser storage/cookies; no in-app clear-all control is documented |
+| No PII in application logs | Pass | Current code logs startup and settings-load errors, not command text |
+| Third-party transfers documented | Partial | Commands and connection data are sent to selected MUD hosts; production policy is not finalized |
 
 ## Dependency Security
 
@@ -78,17 +77,17 @@ Development dependencies include Vite, TypeScript, ESLint, React plugin packages
 
 ## Resolved Findings
 
-_No resolved findings yet._
+- **MEDIUM P00-SEC-003: Command/input rate limiting implemented locally.** `server/index.ts` now rate limits HTTP requests per IP, throttles browser command input per WebSocket session, and caps concurrent WebSocket connections per IP. Public deployment still needs allowlists, origin checks, private-network blocking, and WAF policy.
 
 ## Phase History
 
-| Phase | Sessions    | Security          | GDPR                | Findings Opened | Findings Closed |
-| ----- | ----------- | ----------------- | ------------------- | --------------- | --------------- |
-| 00    | 0/5 planned | Initial code scan | Local-only baseline | 5               | 0               |
+| Phase | Sessions | Security | GDPR | Findings Opened | Findings Closed |
+|-------|----------|----------|------|-----------------|-----------------|
+| 00 | 5/5 complete | Initial code scan | Local-only baseline | 4 | 1 |
 
 ## Recommendations
 
-1. Prioritize proxy allowlist, origin, DNS/IP, quota, and rate-limit work before any public deployment.
+1. Prioritize proxy allowlist, origin, DNS/IP, and WAF work before any public deployment. The in-repo HTTP and command rate limits now cover the basic abuse path.
 2. Move browser-local settings, aliases, and triggers out of cookies before storing larger data or any sensitive values.
 3. Add tests for WebSocket message validation, host rejection, HTML escaping, parser malformed input, and reconnect cleanup.
 4. Keep command logging disabled by default.

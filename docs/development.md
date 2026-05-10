@@ -34,17 +34,19 @@ Ports are configured in `shared/app-settings.ts`.
 3. Edit React code in `src/`, proxy code in `server/`, or shared contracts in `shared/`.
 4. Run `npm run lint`.
 5. Run `npm run build`.
+6. Run `npm test` for the fixture-backed MSDP state tests.
 
 ## Testing
 
-There is no committed test script yet. Current verification commands are:
+Run the focused test suite with:
 
 ```bash
-npm run lint
-npm run build
+npm test
 ```
 
-Phase 00 is planned to add fixture and state-mapping test foundations.
+The test script uses Node's built-in `node:test` runner with the existing `tsx` loader. Current coverage focuses on MSDP variable-map normalization, configured-variable filtering, pure MSDP state mapping, and fixture-driven state-mapping checks.
+
+Phase 00 added the fixture and state-mapping test foundations. Telnet parser hardening, reconnect lifecycle coverage, and browser-level UI verification remain separate work.
 
 ## Generated Output
 

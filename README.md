@@ -44,6 +44,7 @@ Default local services:
 - [Environments](docs/environments.md)
 - [Deployment](docs/deployment.md)
 - [API and WebSocket Contracts](docs/api/http-and-websocket.md)
+- [Tests](tests/README.md)
 - [Contributing](CONTRIBUTING.md)
 - [Product Requirements](.spec_system/PRD/PRD.md)
 
@@ -55,6 +56,7 @@ Default local services:
 - Runtime app settings endpoint at `/api/settings`.
 - WebSocket endpoint at `/ws` that bridges browser messages to a Telnet MUD connection.
 - Telnet negotiation for MSDP, TTYPE, NAWS, ECHO, and SGA, with MCCP, MXP, and CHARSET currently rejected.
+- Fixture-backed MSDP mapping tests and normalized shared state helpers for parser and state coverage.
 - Curated MUD presets plus manual host and port input.
 
 ## Protocol Status
@@ -82,6 +84,7 @@ The code currently requests and maps several MSDP variables. The product plan re
 | `npm run dev:server` | Run the proxy server only                        |
 | `npm run lint`       | Run ESLint                                       |
 | `npm run build`      | Type-check and build client/server output        |
+| `npm test`           | Run focused MSDP mapping and fixture tests       |
 | `npm run preview`    | Preview built client assets                      |
 | `npm start`          | Run the built server from `dist/server/index.js` |
 

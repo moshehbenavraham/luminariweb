@@ -18,8 +18,10 @@ node --import tsx --test tests/*.test.ts
 - Configured outbound MSDP request filtering.
 - Pure MSDP variable/value mapping into `MudState` partials.
 - Fixture-driven state-mapping coverage from `tests/fixtures/msdp/manifest.json`.
+- Side-effect-free Telnet parser edge-case coverage for split IAC sequences, doubled IAC bytes,
+  negotiation boundaries, MSDP subnegotiation boundaries, malformed MSDP input, TTYPE, and NAWS.
 
-These tests import shared pure helpers directly. They do not import `server/index.ts`, start Express, open WebSocket listeners, connect TCP sockets, launch a browser, or require live MUD access.
+These tests import shared pure helpers directly from `shared/mud.ts`, `shared/msdp-state.ts`, and `server/telnet-parser.ts`. They do not import `server/index.ts`, start Express, open WebSocket listeners, connect TCP sockets, launch a browser, or require live MUD access.
 
 ## Fixture Use
 
@@ -29,4 +31,4 @@ The fixture corpus is synthetic in the current manifest and must remain free of 
 
 ## Deferred Coverage
 
-Phase 01 owns Telnet parser hardening, split and doubled IAC cases, malformed subnegotiation behavior, repeated connect and disconnect lifecycle tests, and reconnect-sensitive proxy behavior. Browser-level UI and visual regression coverage are outside this session.
+Later Phase 01 sessions own structured MSDP table and array expansion, repeated connect and disconnect lifecycle tests, reconnect-sensitive proxy behavior, dynamic NAWS resize behavior, and deployment safety. Browser-level UI and visual regression coverage are outside this session.
