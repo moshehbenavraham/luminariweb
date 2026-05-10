@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "fixtureFile": "collections",
+  "description": "Actions, inventory, affects, empty array, and simple table fixtures.",
+  "fixtures": [
+    {
+      "id": "collections.actions.array",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from PRD source protocol facts for confirmed ACTIONS.",
+        "sanitized": true
+      },
+      "description": "ACTIONS parses as an array of action labels.",
+      "coverage": ["actions", "array"],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms ACTIONS.",
+        "Session 02 keeps ACTIONS as a list-like MudValue."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "ACTIONS",
+        "VAL",
+        "ARRAY_OPEN",
+        "VAL",
+        "standard",
+        "VAL",
+        "move",
+        "VAL",
+        "swift",
+        "ARRAY_CLOSE"
+      ],
+      "expectedPairs": [
+        [
+          "ACTIONS",
+          ["standard", "move", "swift"]
+        ]
+      ],
+      "notes": [
+        "Action names are synthetic placeholders for later rendering tests."
+      ]
+    },
+    {
+      "id": "collections.inventory.table",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from PRD source protocol facts for confirmed INVENTORY.",
+        "sanitized": true
+      },
+      "description": "INVENTORY parses as a table containing an array and a nested count table.",
+      "coverage": ["inventory", "table", "array", "numeric-normalization"],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms INVENTORY.",
+        "Phase 02 plans to normalize INVENTORY once payload shape is confirmed."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "INVENTORY",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "worn",
+        "VAL",
+        "ARRAY_OPEN",
+        "VAL",
+        "practice robe",
+        "VAL",
+        "utility belt",
+        "ARRAY_CLOSE",
+        "VAR",
+        "carried",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "torch",
+        "VAL",
+        "2",
+        "VAR",
+        "ration",
+        "VAL",
+        "5",
+        "TABLE_CLOSE",
+        "TABLE_CLOSE"
+      ],
+      "expectedPairs": [
+        [
+          "INVENTORY",
+          {
+            "worn": ["practice robe", "utility belt"],
+            "carried": {
+              "torch": 2,
+              "ration": 5
+            }
+          }
+        ]
+      ],
+      "notes": [
+        "This table is a deterministic synthetic shape for parser coverage, not a claim about final INVENTORY schema."
+      ]
+    },
+    {
+      "id": "collections.affects.array",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from PRD source protocol facts for confirmed AFFECTS.",
+        "sanitized": true
+      },
+      "description": "AFFECTS parses as an array of effect tables.",
+      "coverage": ["affects", "array", "table", "numeric-normalization"],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms AFFECTS.",
+        "Phase 02 plans to render temporary effects from structured MSDP values."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "AFFECTS",
+        "VAL",
+        "ARRAY_OPEN",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "name",
+        "VAL",
+        "bless",
+        "VAR",
+        "duration",
+        "VAL",
+        "12",
+        "TABLE_CLOSE",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "name",
+        "VAL",
+        "haste",
+        "VAR",
+        "duration",
+        "VAL",
+        "3",
+        "TABLE_CLOSE",
+        "ARRAY_CLOSE"
+      ],
+      "expectedPairs": [
+        [
+          "AFFECTS",
+          [
+            {
+              "name": "bless",
+              "duration": 12
+            },
+            {
+              "name": "haste",
+              "duration": 3
+            }
+          ]
+        ]
+      ],
+      "notes": [
+        "Effect names and durations are synthetic."
+      ]
+    },
+    {
+      "id": "collections.empty.values",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from current parser array and table behavior in server/index.ts.",
+        "sanitized": true
+      },
+      "description": "Empty arrays and empty tables remain explicit values rather than missing data.",
+      "coverage": ["actions", "inventory", "affects", "empty-values", "array", "table"],
+      "sourceFacts": [
+        "Session 03 requires optional data to remain distinct from zero, empty, waiting, and unavailable states.",
+        "server/index.ts returns empty arrays and tables when open and close markers are adjacent."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "ACTIONS",
+        "VAL",
+        "ARRAY_OPEN",
+        "ARRAY_CLOSE",
+        "VAR",
+        "AFFECTS",
+        "VAL",
+        "ARRAY_OPEN",
+        "ARRAY_CLOSE",
+        "VAR",
+        "INVENTORY",
+        "VAL",
+        "TABLE_OPEN",
+        "TABLE_CLOSE"
+      ],
+      "expectedPairs": [
+        ["ACTIONS", []],
+        ["AFFECTS", []],
+        ["INVENTORY", {}]
+      ],
+      "notes": [
+        "Later mapping tests should preserve explicit empty collection values."
+      ]
+    }
+  ]
+}

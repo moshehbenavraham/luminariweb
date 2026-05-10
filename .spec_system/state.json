@@ -36,7 +36,8 @@
   "completed_sessions": [
     "phase00-session01-baseline-verification-and-project-hygiene",
     "phase00-session02-msdp-variable-map-alignment",
-    "phase00-session03-unavailable-data-ux"
+    "phase00-session03-unavailable-data-ux",
+    "phase00-session04-msdp-fixture-corpus"
   ],
   "next_session_history": [
     {
@@ -62,6 +63,16 @@
     {
       "date": "2026-05-10",
       "session": "phase00-session03-unavailable-data-ux",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-10",
+      "session": "phase00-session04-msdp-fixture-corpus",
+      "status": "planned"
+    },
+    {
+      "date": "2026-05-10",
+      "session": "phase00-session04-msdp-fixture-corpus",
       "status": "completed"
     }
   ]

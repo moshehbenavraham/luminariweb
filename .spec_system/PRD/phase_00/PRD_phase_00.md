@@ -4,7 +4,7 @@
 **Sessions**: 5 (initial estimate)
 **Estimated Duration**: 2-5 days
 
-**Progress**: 3/5 sessions (60%)
+**Progress**: 4/5 sessions (80%)
 
 ---
 
@@ -21,7 +21,7 @@ Phase 00 makes the current client honest about what Luminari-Source emits today,
 | 01 | Baseline Verification and Project Hygiene | Complete | ~12-25 | PASS |
 | 02 | MSDP Variable Map Alignment | Complete | ~12-25 | PASS |
 | 03 | Unavailable Data UX | Complete | ~12-25 | PASS |
-| 04 | MSDP Fixture Corpus | Not Started | ~12-25 | - |
+| 04 | MSDP Fixture Corpus | Complete | ~12-25 | PASS |
 | 05 | State Mapping Tests | Not Started | ~12-25 | - |
 
 ---
@@ -31,6 +31,7 @@ Phase 00 makes the current client honest about what Luminari-Source emits today,
 - Session 01: Baseline Verification and Project Hygiene
 - Session 02: MSDP Variable Map Alignment
 - Session 03: Unavailable Data UX
+- Session 04: MSDP Fixture Corpus
 
 ---
 
@@ -91,7 +92,7 @@ Phase complete when:
 - [ ] All 5 sessions completed
 - [ ] Default MSDP requests match confirmed Luminari-Source variables
 - [ ] Unsupported or uncertain data renders as deliberate unavailable states
-- [ ] Representative MSDP fixtures exist for confirmed data shapes
+- [x] Representative MSDP fixtures exist for confirmed data shapes
 - [ ] State mapping tests cover confirmed, unsupported, unknown, and override variables
 - [ ] Local lint and build commands are repeatable or failures are documented as actionable follow-up work
 

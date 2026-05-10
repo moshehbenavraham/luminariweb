@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "fixtureFile": "group-data",
+  "description": "Representative GROUP payload fixtures with member tables and partial member data.",
+  "fixtures": [
+    {
+      "id": "group.full.members",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from PRD source protocol facts for confirmed GROUP.",
+        "sanitized": true
+      },
+      "description": "GROUP parses as an array of complete member tables.",
+      "coverage": ["group", "array", "table", "numeric-normalization"],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms GROUP.",
+        "Phase 02 plans to render member names, leader markers, health, movement, and status values."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "GROUP",
+        "VAL",
+        "ARRAY_OPEN",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "name",
+        "VAL",
+        "Leader One",
+        "VAR",
+        "leader",
+        "VAL",
+        "1",
+        "VAR",
+        "health",
+        "VAL",
+        "90",
+        "VAR",
+        "healthMax",
+        "VAL",
+        "100",
+        "VAR",
+        "movement",
+        "VAL",
+        "70",
+        "VAR",
+        "status",
+        "VAL",
+        "ready",
+        "TABLE_CLOSE",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "name",
+        "VAL",
+        "Scout Two",
+        "VAR",
+        "leader",
+        "VAL",
+        "0",
+        "VAR",
+        "health",
+        "VAL",
+        "64",
+        "VAR",
+        "healthMax",
+        "VAL",
+        "80",
+        "VAR",
+        "movement",
+        "VAL",
+        "95",
+        "VAR",
+        "status",
+        "VAL",
+        "scouting",
+        "TABLE_CLOSE",
+        "ARRAY_CLOSE"
+      ],
+      "expectedPairs": [
+        [
+          "GROUP",
+          [
+            {
+              "name": "Leader One",
+              "leader": 1,
+              "health": 90,
+              "healthMax": 100,
+              "movement": 70,
+              "status": "ready"
+            },
+            {
+              "name": "Scout Two",
+              "leader": 0,
+              "health": 64,
+              "healthMax": 80,
+              "movement": 95,
+              "status": "scouting"
+            }
+          ]
+        ]
+      ],
+      "notes": [
+        "Member names are synthetic and not live player names.",
+        "The parser currently returns numeric leader flags as numbers, not booleans."
+      ]
+    },
+    {
+      "id": "group.partial.member",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from Session 03 optional-data behavior and confirmed GROUP support.",
+        "sanitized": true
+      },
+      "description": "GROUP tolerates a member table with missing optional member fields.",
+      "coverage": ["group", "array", "table", "partial-data"],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms GROUP.",
+        "Session 03 requires missing optional data to render deliberately rather than break UI state."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "GROUP",
+        "VAL",
+        "ARRAY_OPEN",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "name",
+        "VAL",
+        "Partial Member",
+        "VAR",
+        "health",
+        "VAL",
+        "42",
+        "TABLE_CLOSE",
+        "ARRAY_CLOSE"
+      ],
+      "expectedPairs": [
+        [
+          "GROUP",
+          [
+            {
+              "name": "Partial Member",
+              "health": 42
+            }
+          ]
+        ]
+      ],
+      "notes": [
+        "The fixture intentionally omits leader, healthMax, movement, and status."
+      ]
+    }
+  ]
+}

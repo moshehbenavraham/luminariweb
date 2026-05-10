@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "corpusVersion": "0.1.0",
+  "description": "Versioned MSDP fixture corpus for Luminari Web parser and state-mapping tests.",
+  "updatedAt": "2026-05-10",
+  "totals": {
+    "fixtureFiles": 7,
+    "fixtures": 25,
+    "syntheticFixtures": 25,
+    "realCaptureFixtures": 0
+  },
+  "controlTokens": {
+    "VAR": 1,
+    "VAL": 2,
+    "TABLE_OPEN": 3,
+    "TABLE_CLOSE": 4,
+    "ARRAY_OPEN": 5,
+    "ARRAY_CLOSE": 6
+  },
+  "coverageSummary": {
+    "abilities": 1,
+    "actions": 4,
+    "affects": 2,
+    "area": 1,
+    "array": 7,
+    "character": 2,
+    "combat": 1,
+    "empty-values": 2,
+    "empty-variable": 1,
+    "experience": 1,
+    "group": 2,
+    "incomplete-array": 1,
+    "incomplete-table": 1,
+    "inventory": 3,
+    "malformed": 5,
+    "marker-skipping": 1,
+    "metadata": 1,
+    "missing-marker": 1,
+    "mixed-array-table": 1,
+    "money": 1,
+    "nested-table": 1,
+    "numeric-normalization": 19,
+    "partial-data": 1,
+    "position": 1,
+    "practice": 1,
+    "resources": 1,
+    "room": 3,
+    "room-exits": 3,
+    "scalar": 11,
+    "table": 8,
+    "tank": 1,
+    "truncated": 1,
+    "world-time": 1
+  },
+  "files": [
+    {
+      "file": "core-scalars.json",
+      "fixtureCount": 4,
+      "originTypes": ["synthetic"],
+      "coverage": ["metadata", "character", "abilities", "numeric-normalization", "scalar"],
+      "fixtureIds": [
+        "core.server.metadata",
+        "core.character.identity",
+        "core.ability.scores",
+        "core.numeric.normalization"
+      ],
+      "parserExpectation": "Scalars parse into pairs and integer strings normalize to numbers."
+    },
+    {
+      "file": "combat-and-resources.json",
+      "fixtureCount": 4,
+      "originTypes": ["synthetic"],
+      "coverage": ["resources", "experience", "combat", "tank", "position", "money", "practice", "scalar"],
+      "fixtureIds": [
+        "combat.resources.current",
+        "combat.experience.progression",
+        "combat.opponent.and.tank",
+        "combat.position.money.practice"
+      ],
+      "parserExpectation": "Confirmed combat and resource variables parse as scalar strings or normalized numbers."
+    },
+    {
+      "file": "room-and-exits.json",
+      "fixtureCount": 4,
+      "originTypes": ["synthetic"],
+      "coverage": ["room", "room-exits", "area", "world-time", "table", "scalar"],
+      "fixtureIds": [
+        "room.scalar.identity",
+        "room.exits.table",
+        "room.room.table",
+        "room.world.time"
+      ],
+      "parserExpectation": "Room scalars and table-like exits preserve structured values."
+    },
+    {
+      "file": "collections.json",
+      "fixtureCount": 4,
+      "originTypes": ["synthetic"],
+      "coverage": ["actions", "inventory", "affects", "array", "table", "empty-values"],
+      "fixtureIds": [
+        "collections.actions.array",
+        "collections.inventory.table",
+        "collections.affects.array",
+        "collections.empty.values"
+      ],
+      "parserExpectation": "Collection payloads preserve array and table structure, including empty values."
+    },
+    {
+      "file": "group-data.json",
+      "fixtureCount": 2,
+      "originTypes": ["synthetic"],
+      "coverage": ["group", "array", "table", "partial-data"],
+      "fixtureIds": [
+        "group.full.members",
+        "group.partial.member"
+      ],
+      "parserExpectation": "Group payloads parse member tables and tolerate missing member fields."
+    },
+    {
+      "file": "nested-tables.json",
+      "fixtureCount": 2,
+      "originTypes": ["synthetic"],
+      "coverage": ["nested-table", "mixed-array-table", "room", "actions", "inventory"],
+      "fixtureIds": [
+        "nested.room.with.exits",
+        "nested.mixed.action.inventory"
+      ],
+      "parserExpectation": "Nested tables and mixed array/table payloads can be encoded deterministically."
+    },
+    {
+      "file": "malformed-payloads.json",
+      "fixtureCount": 5,
+      "originTypes": ["synthetic"],
+      "coverage": ["malformed", "truncated", "marker-skipping", "empty-variable", "incomplete-table", "incomplete-array"],
+      "fixtureIds": [
+        "malformed.leading-marker-skip",
+        "malformed.truncated-value",
+        "malformed.empty-variable",
+        "malformed.incomplete-table",
+        "malformed.incomplete-array"
+      ],
+      "parserExpectation": "Malformed payloads produce safe partial output or an empty pair list without crashing."
+    }
+  ]
+}

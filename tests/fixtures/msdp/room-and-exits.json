@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "fixtureFile": "room-and-exits",
+  "description": "Room, area, vnum, exits, world time, and room table fixtures.",
+  "fixtures": [
+    {
+      "id": "room.scalar.identity",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from PRD source protocol facts for confirmed room identity MSDP variables.",
+        "sanitized": true
+      },
+      "description": "Room name, area name, and room vnum parse as scalar values.",
+      "coverage": ["room", "area", "scalar", "numeric-normalization"],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms ROOM_NAME, AREA_NAME, and ROOM_VNUM.",
+        "Session 02 maps roomName, areaName, and roomVnum as first-class MudState fields."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "ROOM_NAME",
+        "VAL",
+        "Hall of Fixtures",
+        "VAR",
+        "AREA_NAME",
+        "VAL",
+        "Test Keep",
+        "VAR",
+        "ROOM_VNUM",
+        "VAL",
+        "1001"
+      ],
+      "expectedPairs": [
+        ["ROOM_NAME", "Hall of Fixtures"],
+        ["AREA_NAME", "Test Keep"],
+        ["ROOM_VNUM", 1001]
+      ],
+      "notes": [
+        "Room labels are synthetic and avoid live area capture content."
+      ]
+    },
+    {
+      "id": "room.exits.table",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from PRD source protocol facts for confirmed ROOM_EXITS.",
+        "sanitized": true
+      },
+      "description": "ROOM_EXITS parses as a table with mixed numeric destination ids and string status values.",
+      "coverage": ["room-exits", "table", "numeric-normalization"],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms ROOM_EXITS is populated by source and should support room/map work."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "ROOM_EXITS",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "north",
+        "VAL",
+        "1002",
+        "VAR",
+        "east",
+        "VAL",
+        "1003",
+        "VAR",
+        "down",
+        "VAL",
+        "closed",
+        "TABLE_CLOSE"
+      ],
+      "expectedPairs": [
+        [
+          "ROOM_EXITS",
+          {
+            "north": 1002,
+            "east": 1003,
+            "down": "closed"
+          }
+        ]
+      ],
+      "notes": [
+        "The current parser preserves table shape as an object."
+      ]
+    },
+    {
+      "id": "room.room.table",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from PRD source protocol facts for confirmed ROOM structured data.",
+        "sanitized": true
+      },
+      "description": "ROOM parses as a structured table for future raw room payload coverage.",
+      "coverage": ["room", "table", "numeric-normalization"],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms ROOM is populated by source.",
+        "Session 02 keeps structured MSDP payloads as MudValue until shapes are confirmed."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "ROOM",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "name",
+        "VAL",
+        "Hall of Fixtures",
+        "VAR",
+        "area",
+        "VAL",
+        "Test Keep",
+        "VAR",
+        "vnum",
+        "VAL",
+        "1001",
+        "VAR",
+        "terrain",
+        "VAL",
+        "stone",
+        "TABLE_CLOSE"
+      ],
+      "expectedPairs": [
+        [
+          "ROOM",
+          {
+            "name": "Hall of Fixtures",
+            "area": "Test Keep",
+            "vnum": 1001,
+            "terrain": "stone"
+          }
+        ]
+      ],
+      "notes": [
+        "Lowercase table keys are synthetic parser keys and are not a source-level shape guarantee."
+      ]
+    },
+    {
+      "id": "room.world.time",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from PRD source protocol facts for confirmed WORLD_TIME.",
+        "sanitized": true
+      },
+      "description": "WORLD_TIME parses as a string because the client currently treats it as optional text.",
+      "coverage": ["world-time", "scalar"],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms WORLD_TIME.",
+        "shared/mud.ts maps worldTime to an optional string."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "WORLD_TIME",
+        "VAL",
+        "Day 12, Month 3, Year 204"
+      ],
+      "expectedPairs": [
+        ["WORLD_TIME", "Day 12, Month 3, Year 204"]
+      ],
+      "notes": [
+        "The text value is synthetic and used only for parser and mapping coverage."
+      ]
+    }
+  ]
+}
