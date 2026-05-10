@@ -9,6 +9,11 @@ import { normalizeMsdpVariableMap, terminalDimensionBounds } from '../shared/mud
 import type { ClientMessage, TerminalDimensions } from '../shared/mud.ts';
 import { ActiveConnectionCounter } from './connection-accounting.ts';
 import { MudSession } from './mud-session.ts';
+import {
+  checkWebSocketOrigin,
+  createProxyPolicy,
+  validateProxyDestination,
+} from './proxy-policy.ts';
 import { SlidingWindowRateLimiter } from './rate-limiter.ts';
 
 const HTTP_RATE_LIMIT_WINDOW_MS = 10_000;
@@ -16,6 +21,17 @@ const HTTP_RATE_LIMIT_MAX_REQUESTS = 25;
 const WS_CONNECTION_LIMIT_PER_IP = 4;
 const INVALID_BROWSER_MESSAGE_DETAIL = 'Received an invalid browser message.';
 const INVALID_RESIZE_MESSAGE_DETAIL = 'Received invalid terminal resize dimensions.';
+const port = Number(process.env.PORT ?? appSettings.ports.server);
+const proxyPolicy = createProxyPolicy({
+  env: process.env,
+  localOriginPorts: [
+    appSettings.ports.client,
+    appSettings.ports.server,
+    appSettings.ports.preview,
+    port,
+  ],
+  presets: appSettings.connection.muds,
+});
 const app = express();
 const server = createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
@@ -43,6 +59,12 @@ app.get(/^(?!\/ws).*/, (_request, response) => {
 });
 
 wss.on('connection', (socket, request) => {
+  const originDecision = checkWebSocketOrigin(proxyPolicy, request.headers.origin);
+  if (!originDecision.allowed) {
+    socket.close(1008, originDecision.detail);
+    return;
+  }
+
   const clientIp = getRemoteAddress(request);
   const connectionLease = websocketConnectionsByIp.acquire(clientIp);
 
@@ -51,9 +73,20 @@ wss.on('connection', (socket, request) => {
     return;
   }
 
-  const session = new MudSession(socket);
+  const session = new MudSession(socket, {
+    timeouts: {
+      connectTimeoutMs: proxyPolicy.timeouts.connectTimeoutMs,
+      idleTimeoutMs: proxyPolicy.timeouts.idleTimeoutMs,
+    },
+  });
+  let activeConnectValidationToken: number | null = null;
+  let nextConnectValidationToken = 0;
 
   socket.on('message', (data) => {
+    void handleBrowserMessage(data);
+  });
+
+  async function handleBrowserMessage(data: RawData) {
     const parsedMessage = parseClientMessage(data);
     const message = parsedMessage.message;
     if (!message) {
@@ -67,11 +100,12 @@ wss.on('connection', (socket, request) => {
     }
 
     if (message.type === 'connect') {
-      session.connect(message.host, message.port, normalizeMsdpVariableMap(message.msdpVariables));
+      await handleConnectMessage(message);
       return;
     }
 
     if (message.type === 'disconnect') {
+      cancelPendingConnectValidation();
       session.disconnect('Disconnected.');
       return;
     }
@@ -90,15 +124,66 @@ wss.on('connection', (socket, request) => {
     }
 
     session.sendInput(message.text);
-  });
+  }
+
+  async function handleConnectMessage(message: Extract<ClientMessage, { type: 'connect' }>) {
+    if (activeConnectValidationToken !== null) {
+      session.sendStatus('error', 'A connection request is already in progress.');
+      return;
+    }
+
+    const connectValidationToken = nextConnectValidationToken + 1;
+    nextConnectValidationToken = connectValidationToken;
+    activeConnectValidationToken = connectValidationToken;
+
+    try {
+      const destinationDecision = await validateProxyDestination(proxyPolicy, {
+        host: message.host,
+        port: message.port,
+      });
+
+      if (activeConnectValidationToken !== connectValidationToken) {
+        return;
+      }
+
+      activeConnectValidationToken = null;
+
+      if (!destinationDecision.allowed) {
+        session.sendStatus('error', destinationDecision.detail);
+        return;
+      }
+
+      session.connect(
+        destinationDecision.value.host,
+        destinationDecision.value.port,
+        normalizeMsdpVariableMap(message.msdpVariables),
+      );
+    } catch {
+      if (activeConnectValidationToken !== connectValidationToken) {
+        return;
+      }
+
+      activeConnectValidationToken = null;
+      session.sendStatus('error', 'This MUD destination could not be verified.');
+    }
+  }
+
+  function cancelPendingConnectValidation() {
+    if (activeConnectValidationToken === null) {
+      return;
+    }
+
+    activeConnectValidationToken = null;
+    nextConnectValidationToken += 1;
+  }
 
   socket.on('close', () => {
+    cancelPendingConnectValidation();
     connectionLease.release();
     session.closeBrowser();
   });
 });
 
-const port = Number(process.env.PORT ?? appSettings.ports.server);
 server.listen(port, () => {
   console.log(`LuminariWebClient proxy listening on http://localhost:${port}`);
 });

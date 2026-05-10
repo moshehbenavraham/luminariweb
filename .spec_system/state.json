@@ -15,7 +15,7 @@
     "1": {
       "name": "Harden Terminal and Proxy",
       "description": "Make the proxy and terminal safe under real Telnet traffic, reconnects, malformed data, resize events, and deployment pressure.",
-      "status": "in_progress",
+      "status": "complete",
       "session_count": 6
     },
     "2": {
@@ -125,6 +125,16 @@
     {
       "date": "2026-05-11",
       "session": "phase01-session05-xterm-js-migration-spike",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase01-session06-proxy-limits-deployment-safety",
+      "status": "validated"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase01-session06-proxy-limits-deployment-safety",
       "status": "completed"
     }
   ]

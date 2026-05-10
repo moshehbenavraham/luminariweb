@@ -20,6 +20,8 @@ Both HTTP endpoints are rate limited per IP. When the limit is exceeded, the ser
 
 The browser opens a WebSocket connection to `/ws`. Message shapes are defined in `shared/mud.ts`.
 
+In public proxy mode, the server checks the `Origin` header before creating a proxy session. Local development origins are allowed by default. Production origins must be configured with `PROXY_ALLOWED_ORIGINS`. Missing or unexpected public-mode origins are closed before a MUD socket can be opened.
+
 ### Browser to Server
 
 Connect:
@@ -41,6 +43,20 @@ Connect:
   }
 }
 ```
+
+Connect messages are validated asynchronously before `MudSession.connect()` opens a TCP socket. Public mode accepts curated preset `host:port` pairs and server-only `PROXY_ALLOWED_DESTINATIONS` additions. Arbitrary hostnames require explicit custom routing through `PROXY_PUBLIC_MODE=false` or `PROXY_ALLOW_CUSTOM_DESTINATIONS=true`.
+
+Rejected connect attempts receive a `connection-status` message with `status: "error"` and a sanitized detail such as:
+
+- `Provide a valid MUD host and port.`
+- `This MUD destination is not allowed.`
+- `Direct IP MUD destinations are not allowed in public mode.`
+- `This MUD port is not allowed.`
+- `This MUD destination could not be verified.`
+- `This MUD destination resolves to a blocked network.`
+- `A connection request is already in progress.`
+
+Policy rejection details do not include raw DNS errors, socket errors, internal paths, or player command text.
 
 Disconnect:
 
@@ -85,6 +101,24 @@ Connection status:
 }
 ```
 
+Timeout statuses use stable text:
+
+```json
+{
+  "type": "connection-status",
+  "status": "error",
+  "detail": "Connection timed out before the MUD accepted the connection."
+}
+```
+
+```json
+{
+  "type": "connection-status",
+  "status": "disconnected",
+  "detail": "Connection closed after being idle too long."
+}
+```
+
 Terminal text:
 
 ```json
@@ -124,4 +158,4 @@ Blank MSDP mapping values are override-only slots. They are normalized and prese
 
 ## Validation
 
-The server rejects invalid JSON, unknown message types, malformed connect messages, invalid host strings, and ports outside `1..65535`. Public deployment requires stronger policy than this current baseline.
+The server rejects invalid JSON, unknown message types, malformed connect messages, invalid host strings, ports outside `1..65535`, banned service ports, disallowed destinations, unsafe direct IP literals, unsafe DNS answers, and unexpected public-mode origins. Destination failures are handled before `net.createConnection()` is called.

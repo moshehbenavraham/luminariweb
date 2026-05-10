@@ -20,12 +20,44 @@ curl http://localhost:5191/health
 
 ## Security Controls
 
-The built server now applies two lightweight public-deployment guardrails:
+The built server applies application-level proxy guardrails before opening a Telnet socket:
 
 - HTTP requests are rate limited per IP with `429 Too Many Requests` and `Retry-After` headers.
-- Browser command input sent over `/ws` is throttled per socket, and excessive concurrent WebSocket connections from one IP are rejected.
+- Browser command input sent over `/ws` is throttled per socket.
+- Excessive concurrent WebSocket connections from one IP are rejected.
+- Public proxy mode is enabled by default and allows only curated MUD presets plus server-only `PROXY_ALLOWED_DESTINATIONS` entries.
+- Unexpected WebSocket origins are rejected in public mode before quota acquisition or MUD socket creation.
+- Destinations are checked for banned service ports, unsafe direct IP literals, DNS failures, private ranges, loopback, link-local, multicast, reserved ranges, and metadata-service targets.
+- Connect and idle timeouts close the active MUD socket with sanitized status details.
+- Player command text is not intentionally logged or included in policy, socket, or timeout errors.
 
-These checks are intentionally local and in-memory. For public hosting, still configure CDN or reverse-proxy protections for origin allowlists, private-network blocking, banned ports, and WAF rules.
+Recommended public-mode environment:
+
+```bash
+PROXY_PUBLIC_MODE=true
+PROXY_ALLOWED_ORIGINS=https://play.example.com
+PROXY_ALLOWED_DESTINATIONS=extra-mud.example.com:4000
+PROXY_CONNECT_TIMEOUT_MS=10000
+PROXY_IDLE_TIMEOUT_MS=300000
+PROXY_DNS_TIMEOUT_MS=3000
+PROXY_DNS_RETRY_COUNT=1
+```
+
+`PROXY_ALLOWED_DESTINATIONS` is optional when the curated presets are the only public routes. Use comma-separated `host:port` pairs for additions. Malformed entries are ignored, and banned service ports remain blocked.
+
+Private or operator deployments can allow browser-supplied public-routable hostnames:
+
+```bash
+PROXY_PUBLIC_MODE=false
+```
+
+or, for a public-mode process that still permits custom hostnames:
+
+```bash
+PROXY_ALLOW_CUSTOM_DESTINATIONS=true
+```
+
+Custom routing does not disable private-network, reserved-network, metadata-service, DNS, or banned-port checks. For public hosting, still configure HTTPS termination, CDN or reverse-proxy protections, WAF rules, process supervision, and host-level firewall controls outside this repository.
 
 ## PM2 Run
 

@@ -266,3 +266,113 @@ test('terminal resize after NAWS negotiation stops on disconnect and refreshes a
 
   assertMudSocketNawsDimensions(secondSocket, [{ columns: 133, rows: 43 }]);
 });
+
+test('connect timeout destroys only the pending active socket and resets lifecycle state', (t) => {
+  const harness = createProxyLifecycleHarness({
+    timeouts: {
+      connectTimeoutMs: 25,
+      idleTimeoutMs: 100,
+    },
+  });
+  t.after(() => harness.cleanup());
+
+  const mudSocket = harness.connect();
+  assert.equal(harness.timers.fireNext(25), true);
+
+  assert.equal(mudSocket.destroyCount, 1);
+  assert.equal(mudSocket.destroyed, true);
+  assert.deepEqual(getStatusDetails(harness.browser), [
+    'connecting:Connecting to mud.example.test:4000...',
+    'error:Connection timed out before the MUD accepted the connection.',
+  ]);
+
+  harness.browser.clearMessages();
+  mudSocket.emitConnect();
+  mudSocket.emitData(msdpReadyPacket());
+  harness.session.sendInput('look');
+
+  assert.deepEqual(getStatusDetails(harness.browser), [
+    'error:Connect to a MUD before sending commands.',
+  ]);
+});
+
+test('idle timeout destroys only the active connected socket without leaking command text', (t) => {
+  const harness = createProxyLifecycleHarness({
+    timeouts: {
+      connectTimeoutMs: 25,
+      idleTimeoutMs: 100,
+    },
+  });
+  t.after(() => harness.cleanup());
+
+  const mudSocket = harness.connect();
+  mudSocket.emitConnect();
+  harness.session.sendInput('say secret-timeout-command');
+  harness.browser.clearMessages();
+
+  assert.equal(harness.timers.fireNext(100), true);
+
+  assert.equal(mudSocket.destroyCount, 1);
+  assert.deepEqual(getStatusDetails(harness.browser), [
+    'disconnected:Connection closed after being idle too long.',
+  ]);
+  assert.equal(harness.browser.rawMessages.join('\n').includes('secret-timeout-command'), false);
+
+  harness.session.sendInput('look');
+  assert.deepEqual(getStatusDetails(harness.browser), [
+    'disconnected:Connection closed after being idle too long.',
+    'error:Connect to a MUD before sending commands.',
+  ]);
+});
+
+test('stale connect and idle timeout callbacks are ignored after reconnect or activity', (t) => {
+  const harness = createProxyLifecycleHarness({
+    timeouts: {
+      connectTimeoutMs: 25,
+      idleTimeoutMs: 100,
+    },
+  });
+  t.after(() => harness.cleanup());
+
+  const firstSocket = harness.connect('first.example.test', 4001);
+  const staleConnectTimer = harness.timers.getLastTimer(25);
+  const secondSocket = harness.connect('second.example.test', 4002);
+  assert.equal(firstSocket.destroyCount, 1);
+  harness.browser.clearMessages();
+
+  assert.equal(harness.timers.fire(staleConnectTimer, { includeCleared: true }), true);
+  assert.equal(secondSocket.destroyed, false);
+  assert.deepEqual(harness.browser.messages, []);
+
+  secondSocket.emitConnect();
+  const firstIdleTimer = harness.timers.getLastTimer(100);
+  harness.session.sendInput('look');
+  harness.browser.clearMessages();
+
+  assert.equal(harness.timers.fire(firstIdleTimer, { includeCleared: true }), true);
+  assert.equal(secondSocket.destroyed, false);
+  assert.deepEqual(harness.browser.messages, []);
+});
+
+test('manual disconnect clears timeout callbacks without duplicate close statuses', (t) => {
+  const harness = createProxyLifecycleHarness({
+    timeouts: {
+      connectTimeoutMs: 25,
+      idleTimeoutMs: 100,
+    },
+  });
+  t.after(() => harness.cleanup());
+
+  const mudSocket = harness.connect();
+  mudSocket.emitConnect();
+  const idleTimer = harness.timers.getLastTimer(100);
+
+  harness.session.disconnect('Disconnected.');
+  harness.browser.clearMessages();
+
+  assert.equal(harness.timers.fire(idleTimer, { includeCleared: true }), true);
+  mudSocket.emitClose();
+
+  assert.equal(mudSocket.destroyCount, 1);
+  assert.deepEqual(harness.browser.messages, []);
+});

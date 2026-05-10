@@ -1,10 +1,10 @@
 # PRD Phase 01: Harden Terminal and Proxy
 
-**Status**: In Progress
+**Status**: Complete
 **Sessions**: 6
 **Estimated Duration**: 3-6 days
 
-**Progress**: 5/6 sessions (83%)
+**Progress**: 6/6 sessions (100%)
 
 ---
 
@@ -23,7 +23,7 @@ Make the proxy and terminal safe under real Telnet traffic, reconnects, malforme
 | 03 | Connection Lifecycle and Reconnect Cleanup | Completed | ~12-25 | PASS |
 | 04 | Dynamic NAWS Resize | Completed | ~12-25 | PASS |
 | 05 | xterm.js Migration Spike | Completed | ~12-25 | PASS |
-| 06 | Proxy Limits and Deployment Safety | Not Started | ~12-25 | - |
+| 06 | Proxy Limits and Deployment Safety | Complete | ~12-25 | PASS |
 
 ---
 
@@ -34,12 +34,13 @@ Make the proxy and terminal safe under real Telnet traffic, reconnects, malforme
 - `phase01-session03-connection-lifecycle-reconnect-cleanup` - completed and validated on 2026-05-11.
 - `phase01-session04-dynamic-naws-resize` - completed and validated on 2026-05-11.
 - `phase01-session05-xterm-js-migration-spike` - completed and validated on 2026-05-11.
+- `phase01-session06-proxy-limits-deployment-safety` - completed and validated on 2026-05-11.
 
 ---
 
 ## Upcoming Sessions
 
-- Session 06: Proxy Limits and Deployment Safety
+- None. Phase 01 is complete and ready for phase transition.
 ---
 
 ## Objectives
@@ -98,14 +99,14 @@ Make the proxy and terminal safe under real Telnet traffic, reconnects, malforme
 
 Phase complete when:
 
-- [ ] All 6 sessions completed and validated.
-- [ ] Telnet parser edge cases are covered by automated tests.
-- [ ] MSDP table, array, nested, empty, and malformed payload behavior is covered by tests.
-- [ ] Reconnect cleanup is verified across repeated connect/disconnect cycles.
-- [ ] Dynamic NAWS resize behavior is implemented or explicitly deferred with evidence.
-- [ ] xterm.js migration is approved with a follow-up breakdown or deferred with blocking evidence.
-- [ ] Public deployment guardrails are implemented or documented as blocking public release.
-- [ ] `npm run lint`, `npm run build`, and `npm test` pass before phase close.
+- [x] All 6 sessions completed and validated.
+- [x] Telnet parser edge cases are covered by automated tests.
+- [x] MSDP table, array, nested, empty, and malformed payload behavior is covered by tests.
+- [x] Reconnect cleanup is verified across repeated connect/disconnect cycles.
+- [x] Dynamic NAWS resize behavior is implemented or explicitly deferred with evidence.
+- [x] xterm.js migration is approved with a follow-up breakdown or deferred with blocking evidence.
+- [x] Public deployment guardrails are implemented or documented as blocking public release.
+- [x] `npm run lint`, `npm run build`, and `npm test` pass before phase close.
 
 ---
 

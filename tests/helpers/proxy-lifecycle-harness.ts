@@ -1,9 +1,15 @@
 import { EventEmitter } from 'node:events';
 import { IAC, MSDP_VAL, MSDP_VAR, SB, SE, TELOPT_MSDP, WILL } from '../../server/telnet-parser.ts';
 import { MudSession } from '../../server/mud-session.ts';
-import type { BrowserSocket, MudSocket, MudSocketAddress } from '../../server/mud-session.ts';
+import type {
+  BrowserSocket,
+  MudSessionTimerApi,
+  MudSessionTimeoutSettings,
+  MudSocket,
+  MudSocketAddress,
+} from '../../server/mud-session.ts';
 import { defaultMsdpVariables, normalizeMsdpVariableMap } from '../../shared/mud.ts';
-import type { ServerMessage, TerminalDimensions } from '../../shared/mud.ts';
+import type { MsdpVariableMap, ServerMessage, TerminalDimensions } from '../../shared/mud.ts';
 import {
   assertNawsDimensions,
   assertNoNawsDimensions,
@@ -118,23 +124,102 @@ export class FakeMudSocket extends EventEmitter implements MudSocket {
   }
 }
 
-export function createProxyLifecycleHarness() {
+export type FakeMudSessionTimer = {
+  cleared: boolean;
+  delayMs: number;
+  listener: () => void;
+};
+
+export class FakeMudSessionTimerController {
+  readonly timers: FakeMudSessionTimer[] = [];
+  readonly api: MudSessionTimerApi = {
+    clearTimeout: (handle) => {
+      if (isFakeMudSessionTimer(handle)) {
+        handle.cleared = true;
+      }
+    },
+    setTimeout: (listener, delayMs) => {
+      const timer: FakeMudSessionTimer = {
+        cleared: false,
+        delayMs,
+        listener,
+      };
+      this.timers.push(timer);
+      return timer;
+    },
+  };
+
+  get activeTimers() {
+    return this.timers.filter((timer) => !timer.cleared);
+  }
+
+  getLastTimer(delayMs?: number) {
+    const timers = delayMs
+      ? this.timers.filter((timer) => timer.delayMs === delayMs)
+      : this.timers;
+    const timer = timers.at(-1);
+    if (!timer) {
+      throw new Error('Expected a fake session timer to exist.');
+    }
+
+    return timer;
+  }
+
+  fire(timer: FakeMudSessionTimer, options: { includeCleared?: boolean } = {}) {
+    if (timer.cleared && !options.includeCleared) {
+      return false;
+    }
+
+    timer.cleared = true;
+    timer.listener();
+    return true;
+  }
+
+  fireNext(delayMs?: number) {
+    const timer = this.activeTimers.find((activeTimer) =>
+      delayMs === undefined ? true : activeTimer.delayMs === delayMs,
+    );
+    if (!timer) {
+      return false;
+    }
+
+    return this.fire(timer);
+  }
+}
+
+export type ProxyLifecycleHarnessOptions = {
+  timerController?: FakeMudSessionTimerController;
+  timeouts?: Partial<MudSessionTimeoutSettings>;
+};
+
+export function createProxyLifecycleHarness(options: ProxyLifecycleHarnessOptions = {}) {
   const browser = new FakeBrowserSocket();
   const mudSockets: FakeMudSocket[] = [];
+  const timerController = options.timerController ?? new FakeMudSessionTimerController();
   const session = new MudSession(browser, {
     createMudSocket: (address) => {
       const socket = new FakeMudSocket(address);
       mudSockets.push(socket);
       return socket;
     },
+    timerApi: timerController.api,
+    timeouts: options.timeouts,
   });
 
   return {
     browser,
     session,
     mudSockets,
+    timers: timerController,
     connect(host = 'mud.example.test', port = 4000) {
       session.connect(host, port, normalizeMsdpVariableMap(defaultMsdpVariables));
+      return getLastMudSocket(mudSockets);
+    },
+    connectDestination(
+      destination: MudSocketAddress,
+      msdpVariables: MsdpVariableMap = normalizeMsdpVariableMap(defaultMsdpVariables),
+    ) {
+      session.connect(destination.host, destination.port, msdpVariables);
       return getLastMudSocket(mudSockets);
     },
     cleanup() {
@@ -186,6 +271,16 @@ function getLastMudSocket(sockets: readonly FakeMudSocket[]) {
   }
 
   return socket;
+}
+
+function isFakeMudSessionTimer(handle: unknown): handle is FakeMudSessionTimer {
+  return (
+    !!handle &&
+    typeof handle === 'object' &&
+    'cleared' in handle &&
+    'delayMs' in handle &&
+    'listener' in handle
+  );
 }
 
 function isConnectionStatusMessage(

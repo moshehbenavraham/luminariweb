@@ -58,8 +58,25 @@ export type MudSocket = {
 
 export type MudSocketFactory = (address: MudSocketAddress) => MudSocket;
 
+export type MudSessionTimeoutSettings = {
+  connectTimeoutMs: number;
+  idleTimeoutMs: number;
+};
+
+export type MudSessionTimerApi = {
+  clearTimeout(handle: unknown): void;
+  setTimeout(listener: () => void, delayMs: number): unknown;
+};
+
 export type MudSessionOptions = {
   createMudSocket?: MudSocketFactory;
+  timerApi?: MudSessionTimerApi;
+  timeouts?: Partial<MudSessionTimeoutSettings>;
+};
+
+const DEFAULT_MUD_SESSION_TIMEOUTS: MudSessionTimeoutSettings = {
+  connectTimeoutMs: 10_000,
+  idleTimeoutMs: 300_000,
 };
 
 export class MudSession {
@@ -76,10 +93,18 @@ export class MudSession {
   );
   private readonly browserSocket: BrowserSocket;
   private readonly createMudSocket: MudSocketFactory;
+  private readonly timerApi: MudSessionTimerApi;
+  private readonly timeouts: MudSessionTimeoutSettings;
+  private connectTimeoutHandle: unknown | null = null;
+  private connectTimeoutToken = 0;
+  private idleTimeoutHandle: unknown | null = null;
+  private idleTimeoutToken = 0;
 
   constructor(browserSocket: BrowserSocket, options: MudSessionOptions = {}) {
     this.browserSocket = browserSocket;
     this.createMudSocket = options.createMudSocket ?? createNetMudSocket;
+    this.timerApi = options.timerApi ?? defaultMudSessionTimerApi;
+    this.timeouts = normalizeMudSessionTimeouts(options.timeouts);
   }
 
   allowCommandInput() {
@@ -109,6 +134,7 @@ export class MudSession {
     this.mudSocket = mudSocket;
     this.parser = this.createParser(mudSocket);
     this.registerSocketHandlers(mudSocket, host, port);
+    this.armConnectTimeout(mudSocket);
 
     try {
       mudSocket.setNoDelay(true);
@@ -156,7 +182,8 @@ export class MudSession {
   }
 
   sendInput(text: string) {
-    if (!this.mudSocket || this.mudSocket.destroyed) {
+    const mudSocket = this.mudSocket;
+    if (!mudSocket || mudSocket.destroyed) {
       this.sendStatus('error', 'Connect to a MUD before sending commands.');
       return;
     }
@@ -167,6 +194,10 @@ export class MudSession {
     );
 
     if (wroteInput) {
+      if (mudSocket && this.isCurrentSocket(mudSocket)) {
+        this.armIdleTimeout(mudSocket);
+      }
+
       this.requestStateRefresh();
     }
   }
@@ -227,6 +258,8 @@ export class MudSession {
         return;
       }
 
+      this.clearConnectTimeout();
+      this.armIdleTimeout(mudSocket);
       this.sendStatus('connected', `Connected to ${host}:${port}.`);
     });
 
@@ -234,6 +267,8 @@ export class MudSession {
       if (!this.isCurrentSocket(mudSocket)) {
         return;
       }
+
+      this.armIdleTimeout(mudSocket);
 
       try {
         this.parser?.push(chunk);
@@ -348,6 +383,7 @@ export class MudSession {
 
   private cleanupActiveSocket(options: { destroySocket: boolean }) {
     const mudSocket = this.mudSocket;
+    this.clearSocketTimers();
     this.parser?.close();
     this.parser = null;
     this.mudSocket = null;
@@ -363,6 +399,7 @@ export class MudSession {
       return false;
     }
 
+    this.clearSocketTimers();
     this.parser?.close();
     this.parser = null;
     this.mudSocket = null;
@@ -391,6 +428,61 @@ export class MudSession {
     return this.mudSocket === mudSocket;
   }
 
+  private armConnectTimeout(mudSocket: MudSocket) {
+    this.clearConnectTimeout();
+    const timeoutToken = this.connectTimeoutToken + 1;
+    this.connectTimeoutToken = timeoutToken;
+    this.connectTimeoutHandle = this.timerApi.setTimeout(() => {
+      if (this.connectTimeoutToken !== timeoutToken || !this.isCurrentSocket(mudSocket)) {
+        return;
+      }
+
+      this.cleanupCurrentSocket(mudSocket);
+      this.destroySocket(mudSocket);
+      this.sendStatus('error', 'Connection timed out before the MUD accepted the connection.');
+    }, this.timeouts.connectTimeoutMs);
+  }
+
+  private armIdleTimeout(mudSocket: MudSocket) {
+    this.clearIdleTimeout();
+    const timeoutToken = this.idleTimeoutToken + 1;
+    this.idleTimeoutToken = timeoutToken;
+    this.idleTimeoutHandle = this.timerApi.setTimeout(() => {
+      if (this.idleTimeoutToken !== timeoutToken || !this.isCurrentSocket(mudSocket)) {
+        return;
+      }
+
+      this.cleanupCurrentSocket(mudSocket);
+      this.destroySocket(mudSocket);
+      this.sendStatus('disconnected', 'Connection closed after being idle too long.');
+    }, this.timeouts.idleTimeoutMs);
+  }
+
+  private clearSocketTimers() {
+    this.clearConnectTimeout();
+    this.clearIdleTimeout();
+  }
+
+  private clearConnectTimeout() {
+    if (this.connectTimeoutHandle === null) {
+      return;
+    }
+
+    this.timerApi.clearTimeout(this.connectTimeoutHandle);
+    this.connectTimeoutHandle = null;
+    this.connectTimeoutToken += 1;
+  }
+
+  private clearIdleTimeout() {
+    if (this.idleTimeoutHandle === null) {
+      return;
+    }
+
+    this.timerApi.clearTimeout(this.idleTimeoutHandle);
+    this.idleTimeoutHandle = null;
+    this.idleTimeoutToken += 1;
+  }
+
   private send(message: ServerMessage) {
     if (this.browserSocket.readyState !== BROWSER_SOCKET_OPEN_STATE) {
       return;
@@ -406,6 +498,34 @@ export class MudSession {
 
 function createNetMudSocket(address: MudSocketAddress): MudSocket {
   return net.createConnection({ host: address.host, port: address.port });
+}
+
+const defaultMudSessionTimerApi: MudSessionTimerApi = {
+  clearTimeout: (handle) => {
+    clearTimeout(handle as ReturnType<typeof setTimeout>);
+  },
+  setTimeout: (listener, delayMs) => setTimeout(listener, delayMs),
+};
+
+function normalizeMudSessionTimeouts(
+  timeouts: Partial<MudSessionTimeoutSettings> | undefined,
+): MudSessionTimeoutSettings {
+  return {
+    connectTimeoutMs: normalizeMudSessionTimeout(
+      timeouts?.connectTimeoutMs,
+      DEFAULT_MUD_SESSION_TIMEOUTS.connectTimeoutMs,
+    ),
+    idleTimeoutMs: normalizeMudSessionTimeout(
+      timeouts?.idleTimeoutMs,
+      DEFAULT_MUD_SESSION_TIMEOUTS.idleTimeoutMs,
+    ),
+  };
+}
+
+function normalizeMudSessionTimeout(value: number | undefined, fallback: number) {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0
+    ? Math.floor(value)
+    : fallback;
 }
 
 function normalizeTerminalDimensions(dimensions: TerminalDimensions): TerminalDimensions {
@@ -434,5 +554,5 @@ function normalizeTerminalDimension(value: number, min: number, max: number, fal
 }
 
 function isValidHost(host: string) {
-  return /^[a-z0-9.-]+$/i.test(host) || /^(\d{1,3}\.){3}\d{1,3}$/.test(host);
+  return /^[a-z0-9.-]+$/i.test(host) || net.isIP(host) !== 0;
 }

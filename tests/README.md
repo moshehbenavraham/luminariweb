@@ -27,6 +27,10 @@ node --import tsx --test tests/*.test.ts
   cleanup, reconnect state reset, stale socket callback suppression, active WebSocket connection
   accounting, terminal resize routing, NAWS reconnect scoping, and 25 repeated connect/disconnect
   cycles.
+- Proxy safety coverage for banned service ports, unsafe IPv4/IPv6 ranges, IPv4-mapped IPv6
+  addresses, metadata-service targets, public allowlists, explicit custom routing, WebSocket origin
+  policy, DNS failure handling, unsafe DNS answers, connect timeouts, idle timeouts, stale timeout
+  callbacks, manual timeout/disconnect races, and command-redaction assertions.
 - Dynamic NAWS resize coverage for default dimensions, custom initial dimensions, changed
   dimensions, no unsupported-before-negotiation writes, resize before connect, resize before NAWS
   negotiation, resize after disconnect, and resize after reconnect.
@@ -56,6 +60,15 @@ Lifecycle tests use `tests/helpers/proxy-lifecycle-harness.ts` to inject fake br
 sockets. Fake socket payloads must stay synthetic and must not include passwords, tokens, private
 commands, private hosts, or captured live player transcripts.
 
+Proxy policy tests use injected DNS lookup functions and fake timers. They do not perform real DNS
+lookups, open TCP sockets, or require a live MUD. Focused commands:
+
+```sh
+node --import tsx --test tests/proxy-network.test.ts
+node --import tsx --test tests/proxy-policy.test.ts
+node --import tsx --test tests/proxy-lifecycle.test.ts
+```
+
 ## Manual Resize Notes
 
 The automated NAWS tests do not require a live MUD server or browser. When doing manual UI checks,
@@ -83,5 +96,6 @@ npm run dev
 
 ## Deferred Coverage
 
-Session 05 adds helper-level xterm spike coverage and renderer decision evidence. Browser-level
-visual regression automation remains outside this session. Session 06 owns deployment safety.
+Browser-level visual regression automation remains outside this test suite. Public infrastructure
+layers such as CDN, WAF, TLS termination, host firewalling, and cloud deployment health checks are
+deployment responsibilities and are not exercised by these Node tests.
