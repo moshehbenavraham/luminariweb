@@ -7,6 +7,7 @@ import type { AppSettings } from '../shared/app-settings.ts'
 import {
   defaultMsdpVariables,
   normalizeMsdpVariableMap,
+  overrideOnlyMsdpVariableKeys,
 } from '../shared/mud.ts'
 import type {
   ClientMessage,
@@ -206,15 +207,19 @@ const SIDEBAR_FONT_FAMILIES: Record<SidebarFontFamily, string> = {
   mono: 'var(--mono)',
   serif: 'ui-serif, Georgia, Cambria, "Times New Roman", serif',
 }
+const OVERRIDE_ONLY_MSDP_VARIABLE_KEYS = new Set<MsdpVariableKey>(overrideOnlyMsdpVariableKeys)
 const MSDP_VARIABLE_GROUPS: Array<{
   title: string
   description: string
   fields: Array<{ key: MsdpVariableKey; label: string }>
 }> = [
   {
-    title: 'Character',
-    description: 'Profile and core stat variables used in the character panel.',
+    title: 'Server and character',
+    description: 'Source-confirmed server metadata and character profile variables.',
     fields: [
+      { key: 'serverId', label: 'Server ID' },
+      { key: 'serverTime', label: 'Server time' },
+      { key: 'snippetVersion', label: 'Snippet version' },
       { key: 'characterName', label: 'Character name' },
       { key: 'title', label: 'Title' },
       { key: 'level', label: 'Level' },
@@ -223,11 +228,12 @@ const MSDP_VARIABLE_GROUPS: Array<{
       { key: 'position', label: 'Position' },
       { key: 'alignment', label: 'Alignment' },
       { key: 'money', label: 'Money' },
+      { key: 'practice', label: 'Practice' },
     ],
   },
   {
-    title: 'Status and attributes',
-    description: 'Values that drive the bars and ability score sections.',
+    title: 'Resources and attributes',
+    description: 'Source-confirmed bars, ability scores, and combat summary variables.',
     fields: [
       { key: 'health', label: 'Health' },
       { key: 'healthMax', label: 'Health max' },
@@ -248,14 +254,29 @@ const MSDP_VARIABLE_GROUPS: Array<{
       { key: 'reflex', label: 'Reflex' },
       { key: 'willpower', label: 'Willpower' },
       { key: 'attackBonus', label: 'Attack bonus' },
+      { key: 'damageBonus', label: 'Damage bonus' },
       { key: 'armorClass', label: 'Armor class' },
     ],
   },
   {
-    title: 'Panels and map',
-    description: 'Variables that populate the minimap, quest, group, and affects panels.',
+    title: 'Room and world',
+    description: 'Source-confirmed room context with minimap left as an override-only slot.',
     fields: [
+      { key: 'room', label: 'Room' },
+      { key: 'areaName', label: 'Area name' },
+      { key: 'roomName', label: 'Room name' },
+      { key: 'roomVnum', label: 'Room VNUM' },
+      { key: 'roomExits', label: 'Room exits' },
+      { key: 'worldTime', label: 'World time' },
       { key: 'minimap', label: 'Minimap' },
+    ],
+  },
+  {
+    title: 'Collections',
+    description: 'Structured source-confirmed collection variables and quest override slot.',
+    fields: [
+      { key: 'actions', label: 'Actions' },
+      { key: 'inventory', label: 'Inventory' },
       { key: 'affects', label: 'Affects' },
       { key: 'group', label: 'Group' },
       { key: 'questInfo', label: 'Quest info' },
@@ -607,7 +628,7 @@ function App() {
     [clientSettings.sidebar.fontFamily, clientSettings.sidebar.fontSize],
   )
 
-  const mapOutput = useMemo(() => buildMapOutput(mudState), [mudState])
+  const mapOutput = useMemo(() => buildMapOutput(mudState, status), [mudState, status])
   const selectedMudPreset = useMemo(
     () => uiSettings.connection.muds.find((mud) => mud.id === selectedMudId),
     [selectedMudId, uiSettings.connection.muds],
@@ -889,10 +910,10 @@ function App() {
   function updateMsdpVariable(key: MsdpVariableKey, nextValue: string) {
     setClientSettings((current) => ({
       ...current,
-      msdp: {
+      msdp: normalizeMsdpVariableMap({
         ...current.msdp,
         [key]: nextValue,
-      },
+      }),
     }))
     setAutomationNotice(null)
   }
@@ -1156,16 +1177,24 @@ function App() {
                         </div>
 
                         <div className="msdp-vars-grid">
-                          {group.fields.map((field) => (
-                            <label key={field.key}>
-                              <span>{field.label}</span>
-                              <input
-                                value={clientSettings.msdp[field.key]}
-                                onChange={(event) => updateMsdpVariable(field.key, event.target.value)}
-                                placeholder={defaultMsdpVariables[field.key]}
-                              />
-                            </label>
-                          ))}
+                          {group.fields.map((field) => {
+                            const isOverrideOnly = isOverrideOnlyMsdpVariableKey(field.key)
+
+                            return (
+                              <label key={field.key}>
+                                <span className="msdp-var-label">
+                                  {field.label}
+                                  {isOverrideOnly ? <span className="msdp-var-badge">Override</span> : null}
+                                </span>
+                                <input
+                                  aria-label={`${field.label} MSDP variable${isOverrideOnly ? ' override-only' : ''}`}
+                                  value={clientSettings.msdp[field.key]}
+                                  onChange={(event) => updateMsdpVariable(field.key, event.target.value)}
+                                  placeholder={defaultMsdpVariables[field.key] || 'Optional override'}
+                                />
+                              </label>
+                            )
+                          })}
                         </div>
                       </section>
                     ))}
@@ -1421,7 +1450,7 @@ function App() {
               </label>
 
               <button type="submit" disabled={!canConnect}>
-                {connected ? 'Disconnect' : status === 'connecting' ? 'Connecting…' : 'Connect'}
+                {connected ? 'Disconnect' : status === 'connecting' ? 'Connecting...' : 'Connect'}
               </button>
             </form>
           </header>
@@ -1467,7 +1496,7 @@ function App() {
                 setHistoryDraft(event.target.value)
               }}
               onKeyDown={handleCommandKeyDown}
-              placeholder={connected ? 'Type a command…' : 'Connect before sending commands.'}
+              placeholder={connected ? 'Type a command...' : 'Connect before sending commands.'}
               readOnly={!connected}
             />
             <button type="submit" disabled={!connected}>
@@ -1517,7 +1546,7 @@ function App() {
                         __html: renderMudHtml(
                           [mudState.level ? `Level ${mudState.level}` : undefined, mudState.race, mudState.className]
                             .filter(Boolean)
-                            .join(' · ') || 'Awaiting MSDP profile',
+                            .join(' | ') || 'Awaiting MSDP profile',
                         ),
                       }}
                     />
@@ -1527,7 +1556,7 @@ function App() {
                     {abilityScores.map((score) => (
                       <div key={score.label} className="ability-cell">
                         <span className="ability-label">{score.label}</span>
-                        <span className="ability-value">{formatNumber(score.value) ?? '—'}</span>
+                        <span className="ability-value">{formatNumber(score.value) ?? '-'}</span>
                       </div>
                     ))}
                   </div>
@@ -2048,6 +2077,10 @@ function clampNumber(value: number | undefined, minimum: number, maximum: number
   return Math.min(Math.max(value, minimum), maximum)
 }
 
+function isOverrideOnlyMsdpVariableKey(key: MsdpVariableKey) {
+  return OVERRIDE_ONLY_MSDP_VARIABLE_KEYS.has(key)
+}
+
 function parsePositiveIntegerInput(value: string) {
   if (!value.trim()) {
     return null
@@ -2246,7 +2279,7 @@ function Stat({ label, value }: StatProps) {
     return (
       <>
         <dt>{label}</dt>
-        <dd dangerouslySetInnerHTML={{ __html: renderMudHtml(value || '—') }} />
+        <dd dangerouslySetInnerHTML={{ __html: renderMudHtml(value || '-') }} />
       </>
     )
   }
@@ -2254,7 +2287,7 @@ function Stat({ label, value }: StatProps) {
   return (
     <>
       <dt>{label}</dt>
-      <dd>{value !== undefined ? value : '—'}</dd>
+      <dd>{value !== undefined ? value : '-'}</dd>
     </>
   )
 }
@@ -2707,7 +2740,7 @@ function formatNumber(value: number | undefined) {
 
 function formatSignedNumber(value: number | undefined) {
   if (value === undefined) {
-    return '—'
+    return '-'
   }
 
   if (value > 0) {
@@ -2729,13 +2762,61 @@ function getExperienceProgress(mudState: MudState) {
   return Math.max(mudState.experienceMax - mudState.experienceTnl, 0)
 }
 
-function buildMapOutput(mudState: MudState) {
+function buildMapOutput(mudState: MudState, status: ConnectionStatus) {
   const minimap = mudState.minimap?.trimEnd()
   if (minimap) {
     return minimap
   }
 
-  return 'Waiting for MINIMAP MSDP data.'
+  const roomOutput = buildRoomOutput(mudState)
+  if (roomOutput) {
+    return roomOutput
+  }
+
+  if (status === 'connecting') {
+    return 'Loading room data...'
+  }
+
+  if (status === 'error') {
+    return 'Map data unavailable after connection error.'
+  }
+
+  if (status === 'idle' || status === 'disconnected') {
+    return 'Map data unavailable while offline.'
+  }
+
+  return 'No room or map data reported yet.'
+}
+
+function buildRoomOutput(mudState: MudState) {
+  const lines: string[] = []
+  const heading = [mudState.roomName, mudState.areaName].filter(Boolean).join(' - ')
+
+  if (heading) {
+    lines.push(heading)
+  }
+
+  if (mudState.roomVnum !== undefined) {
+    lines.push(`Room #${mudState.roomVnum}`)
+  }
+
+  const exits = mudState.roomExits ? formatMudValueAsText(mudState.roomExits) : ''
+  if (exits) {
+    lines.push(`Exits: ${exits}`)
+  }
+
+  if (mudState.worldTime) {
+    lines.push(`World time: ${mudState.worldTime}`)
+  }
+
+  if (lines.length === 0 && mudState.room) {
+    const room = formatMudValueAsText(mudState.room)
+    if (room) {
+      lines.push(room)
+    }
+  }
+
+  return lines.join('\n')
 }
 
 function findMatchingMudPresetId(mudPresets: AppSettings['connection']['muds'], host: string, port: number) {

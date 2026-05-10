@@ -648,8 +648,11 @@ function getConfiguredMsdpVariables(msdpVariables: MsdpVariableMap) {
 }
 
 function resolveMsdpVariableKey(variable: string, msdpVariables: MsdpVariableMap): MsdpVariableKey | null {
+  const normalizedVariable = variable.trim()
+
   for (const [key, configuredVariable] of Object.entries(msdpVariables)) {
-    if (configuredVariable === variable) {
+    const normalizedConfiguredVariable = configuredVariable.trim()
+    if (normalizedConfiguredVariable && normalizedConfiguredVariable === normalizedVariable) {
       return key as MsdpVariableKey
     }
   }
@@ -666,6 +669,15 @@ function mapMsdpUpdate(variable: string, value: MudValue, msdpVariables: MsdpVar
   const partial: Partial<MudState> = {}
 
   switch (key) {
+    case 'serverId':
+      partial.serverId = toOptionalString(value)
+      break
+    case 'serverTime':
+      partial.serverTime = toOptionalNumber(value)
+      break
+    case 'snippetVersion':
+      partial.snippetVersion = toOptionalNumber(value)
+      break
     case 'characterName':
       partial.characterName = toOptionalString(value)
       break
@@ -726,6 +738,9 @@ function mapMsdpUpdate(variable: string, value: MudValue, msdpVariables: MsdpVar
     case 'charisma':
       partial.charisma = toOptionalNumber(value)
       break
+    case 'practice':
+      partial.practice = toOptionalNumber(value)
+      break
     case 'fortitude':
       partial.fortitude = toOptionalNumber(value)
       break
@@ -737,6 +752,9 @@ function mapMsdpUpdate(variable: string, value: MudValue, msdpVariables: MsdpVar
       break
     case 'attackBonus':
       partial.attackBonus = toOptionalNumber(value)
+      break
+    case 'damageBonus':
+      partial.damageBonus = toOptionalNumber(value)
       break
     case 'armorClass':
       partial.armorClass = toOptionalNumber(value)
@@ -750,17 +768,41 @@ function mapMsdpUpdate(variable: string, value: MudValue, msdpVariables: MsdpVar
     case 'position':
       partial.position = toOptionalString(value)
       break
+    case 'room':
+      partial.room = toStructuredValue(value)
+      break
+    case 'areaName':
+      partial.areaName = toOptionalString(value)
+      break
+    case 'roomName':
+      partial.roomName = toOptionalString(value)
+      break
+    case 'roomVnum':
+      partial.roomVnum = toOptionalNumber(value)
+      break
+    case 'roomExits':
+      partial.roomExits = toStructuredValue(value)
+      break
+    case 'worldTime':
+      partial.worldTime = toOptionalString(value)
+      break
+    case 'actions':
+      partial.actions = toListLikeValue(value)
+      break
+    case 'inventory':
+      partial.inventory = toListLikeValue(value)
+      break
     case 'minimap':
       partial.minimap = toOptionalString(value)
       break
     case 'affects':
-      partial.affects = value
+      partial.affects = toListLikeValue(value)
       break
     case 'group':
-      partial.group = value
+      partial.group = toListLikeValue(value)
       break
     case 'questInfo':
-      partial.questInfo = value
+      partial.questInfo = toStructuredValue(value)
       break
     case 'opponentName':
       partial.opponentName = toOptionalString(value)
@@ -781,7 +823,7 @@ function mapMsdpUpdate(variable: string, value: MudValue, msdpVariables: MsdpVar
       partial.tankHealthMax = toOptionalNumber(value)
       break
     default:
-      break
+      assertNever(key)
   }
 
   return partial
@@ -809,4 +851,16 @@ function toOptionalString(value: MudValue) {
   }
 
   return undefined
+}
+
+function toStructuredValue(value: MudValue) {
+  return value
+}
+
+function toListLikeValue(value: MudValue) {
+  return value
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unhandled MSDP variable key: ${String(value)}`)
 }

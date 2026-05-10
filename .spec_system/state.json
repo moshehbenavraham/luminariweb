@@ -3,7 +3,7 @@
   "project_name": "Luminari Web",
   "description": "First-party React and Node web MUD client for LuminariMUD-compatible games with an MSDP-driven HUD and WebSocket-to-Telnet proxy.",
   "current_phase": 0,
-  "current_session": null,
+  "current_session": "phase00-session02-msdp-variable-map-alignment",
   "monorepo": false,
   "phases": {
     "0": {
@@ -34,12 +34,23 @@
     }
   },
   "completed_sessions": [
-    "phase00-session01-baseline-verification-and-project-hygiene"
+    "phase00-session01-baseline-verification-and-project-hygiene",
+    "phase00-session02-msdp-variable-map-alignment"
   ],
   "next_session_history": [
     {
       "date": "2026-05-10",
       "session": "phase00-session01-baseline-verification-and-project-hygiene",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-10",
+      "session": "phase00-session02-msdp-variable-map-alignment",
+      "status": "planned"
+    },
+    {
+      "date": "2026-05-10",
+      "session": "phase00-session02-msdp-variable-map-alignment",
       "status": "completed"
     }
   ]

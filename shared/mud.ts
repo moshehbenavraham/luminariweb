@@ -46,7 +46,7 @@ export interface MudState {
   roomName?: string
   areaName?: string
   roomVnum?: number
-  roomExits?: string[]
+  roomExits?: MudValue
   roomCoords?: {
     x?: number
     y?: number
@@ -58,9 +58,10 @@ export interface MudState {
   minimap?: string
   worldTime?: string
   actions?: MudValue
+  inventory?: MudValue
   affects?: MudValue
   group?: MudValue
-    questInfo?: MudValue
+  questInfo?: MudValue
   opponentName?: string
   opponentHealth?: number
   opponentHealthMax?: number
@@ -72,11 +73,18 @@ export interface MudState {
 export type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error'
 
 export const defaultMsdpVariables = {
+  serverId: 'SERVER_ID',
+  serverTime: 'SERVER_TIME',
+  snippetVersion: 'SNIPPET_VERSION',
   characterName: 'CHARACTER_NAME',
-  title: 'TITLE',
+  title: '',
   level: 'LEVEL',
   race: 'RACE',
   className: 'CLASS',
+  position: 'POSITION',
+  alignment: 'ALIGNMENT',
+  money: 'MONEY',
+  practice: 'PRACTICE',
   health: 'HEALTH',
   healthMax: 'HEALTH_MAX',
   psp: 'PSP',
@@ -92,18 +100,24 @@ export const defaultMsdpVariables = {
   intelligence: 'INT',
   wisdom: 'WIS',
   charisma: 'CHA',
-  fortitude: 'FORTITUDE',
-  reflex: 'REFLEX',
-  willpower: 'WILLPOWER',
-  position: 'POSITION',
+  fortitude: '',
+  reflex: '',
+  willpower: '',
   attackBonus: 'ATTACK_BONUS',
+  damageBonus: '',
   armorClass: 'AC',
-  alignment: 'ALIGNMENT',
-  money: 'MONEY',
-  minimap: 'MINIMAP',
+  room: 'ROOM',
+  areaName: 'AREA_NAME',
+  roomName: 'ROOM_NAME',
+  roomVnum: 'ROOM_VNUM',
+  roomExits: 'ROOM_EXITS',
+  worldTime: 'WORLD_TIME',
+  actions: 'ACTIONS',
+  inventory: 'INVENTORY',
   affects: 'AFFECTS',
   group: 'GROUP',
-  questInfo: 'QUEST_INFO',
+  minimap: '',
+  questInfo: '',
   opponentName: 'OPPONENT_NAME',
   opponentHealth: 'OPPONENT_HEALTH',
   opponentHealthMax: 'OPPONENT_HEALTH_MAX',
@@ -115,53 +129,105 @@ export const defaultMsdpVariables = {
 export type MsdpVariableKey = keyof typeof defaultMsdpVariables
 export type MsdpVariableMap = Record<MsdpVariableKey, string>
 
-export function normalizeMsdpVariableMap(value: unknown): MsdpVariableMap {
-  const raw = value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {}
+export const msdpVariableKeys = Object.keys(defaultMsdpVariables) as MsdpVariableKey[]
 
-  return {
-    characterName: normalizeMsdpVariableValue(raw.characterName, defaultMsdpVariables.characterName),
-    title: normalizeMsdpVariableValue(raw.title, defaultMsdpVariables.title),
-    level: normalizeMsdpVariableValue(raw.level, defaultMsdpVariables.level),
-    race: normalizeMsdpVariableValue(raw.race, defaultMsdpVariables.race),
-    className: normalizeMsdpVariableValue(raw.className, defaultMsdpVariables.className),
-    health: normalizeMsdpVariableValue(raw.health, defaultMsdpVariables.health),
-    healthMax: normalizeMsdpVariableValue(raw.healthMax, defaultMsdpVariables.healthMax),
-    psp: normalizeMsdpVariableValue(raw.psp, defaultMsdpVariables.psp),
-    pspMax: normalizeMsdpVariableValue(raw.pspMax, defaultMsdpVariables.pspMax),
-    movement: normalizeMsdpVariableValue(raw.movement, defaultMsdpVariables.movement),
-    movementMax: normalizeMsdpVariableValue(raw.movementMax, defaultMsdpVariables.movementMax),
-    experience: normalizeMsdpVariableValue(raw.experience, defaultMsdpVariables.experience),
-    experienceMax: normalizeMsdpVariableValue(raw.experienceMax, defaultMsdpVariables.experienceMax),
-    experienceTnl: normalizeMsdpVariableValue(raw.experienceTnl, defaultMsdpVariables.experienceTnl),
-    strength: normalizeMsdpVariableValue(raw.strength, defaultMsdpVariables.strength),
-    dexterity: normalizeMsdpVariableValue(raw.dexterity, defaultMsdpVariables.dexterity),
-    constitution: normalizeMsdpVariableValue(raw.constitution, defaultMsdpVariables.constitution),
-    intelligence: normalizeMsdpVariableValue(raw.intelligence, defaultMsdpVariables.intelligence),
-    wisdom: normalizeMsdpVariableValue(raw.wisdom, defaultMsdpVariables.wisdom),
-    charisma: normalizeMsdpVariableValue(raw.charisma, defaultMsdpVariables.charisma),
-    fortitude: normalizeMsdpVariableValue(raw.fortitude, defaultMsdpVariables.fortitude),
-    reflex: normalizeMsdpVariableValue(raw.reflex, defaultMsdpVariables.reflex),
-    willpower: normalizeMsdpVariableValue(raw.willpower, defaultMsdpVariables.willpower),
-    position: normalizeMsdpVariableValue(raw.position, defaultMsdpVariables.position),
-    attackBonus: normalizeMsdpVariableValue(raw.attackBonus, defaultMsdpVariables.attackBonus),
-    armorClass: normalizeMsdpVariableValue(raw.armorClass, defaultMsdpVariables.armorClass),
-    alignment: normalizeMsdpVariableValue(raw.alignment, defaultMsdpVariables.alignment),
-    money: normalizeMsdpVariableValue(raw.money, defaultMsdpVariables.money),
-    minimap: normalizeMsdpVariableValue(raw.minimap, defaultMsdpVariables.minimap),
-    affects: normalizeMsdpVariableValue(raw.affects, defaultMsdpVariables.affects),
-    group: normalizeMsdpVariableValue(raw.group, defaultMsdpVariables.group),
-    questInfo: normalizeMsdpVariableValue(raw.questInfo, defaultMsdpVariables.questInfo),
-    opponentName: normalizeMsdpVariableValue(raw.opponentName, defaultMsdpVariables.opponentName),
-    opponentHealth: normalizeMsdpVariableValue(raw.opponentHealth, defaultMsdpVariables.opponentHealth),
-    opponentHealthMax: normalizeMsdpVariableValue(raw.opponentHealthMax, defaultMsdpVariables.opponentHealthMax),
-    tankName: normalizeMsdpVariableValue(raw.tankName, defaultMsdpVariables.tankName),
-    tankHealth: normalizeMsdpVariableValue(raw.tankHealth, defaultMsdpVariables.tankHealth),
-    tankHealthMax: normalizeMsdpVariableValue(raw.tankHealthMax, defaultMsdpVariables.tankHealthMax),
+export const confirmedMsdpVariableKeys = [
+  'serverId',
+  'serverTime',
+  'snippetVersion',
+  'characterName',
+  'level',
+  'race',
+  'className',
+  'position',
+  'alignment',
+  'money',
+  'practice',
+  'health',
+  'healthMax',
+  'psp',
+  'pspMax',
+  'movement',
+  'movementMax',
+  'experience',
+  'experienceMax',
+  'experienceTnl',
+  'strength',
+  'dexterity',
+  'constitution',
+  'intelligence',
+  'wisdom',
+  'charisma',
+  'attackBonus',
+  'armorClass',
+  'room',
+  'areaName',
+  'roomName',
+  'roomVnum',
+  'roomExits',
+  'worldTime',
+  'actions',
+  'inventory',
+  'affects',
+  'group',
+  'opponentName',
+  'opponentHealth',
+  'opponentHealthMax',
+  'tankName',
+  'tankHealth',
+  'tankHealthMax',
+] as const satisfies readonly MsdpVariableKey[]
+
+export const optionalMsdpVariableKeys = [
+  'practice',
+  'room',
+  'areaName',
+  'roomName',
+  'roomVnum',
+  'roomExits',
+  'worldTime',
+  'actions',
+  'inventory',
+  'affects',
+  'group',
+] as const satisfies readonly MsdpVariableKey[]
+
+export const overrideOnlyMsdpVariableKeys = [
+  'title',
+  'fortitude',
+  'reflex',
+  'willpower',
+  'damageBonus',
+  'minimap',
+  'questInfo',
+] as const satisfies readonly MsdpVariableKey[]
+
+export function normalizeMsdpVariableMap(value: unknown): MsdpVariableMap {
+  const raw = isObjectRecord(value) ? value : {}
+  const normalized = {} as MsdpVariableMap
+
+  for (const key of msdpVariableKeys) {
+    normalized[key] = normalizeMsdpVariableValue(raw[key], defaultMsdpVariables[key])
   }
+
+  return normalized
 }
 
 function normalizeMsdpVariableValue(value: unknown, fallback: string) {
-  return typeof value === 'string' && value.trim() ? value.trim() : fallback
+  if (typeof value !== 'string') {
+    return fallback
+  }
+
+  const trimmed = value.trim()
+  if (trimmed) {
+    return trimmed
+  }
+
+  return fallback === '' ? '' : fallback
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
 export type ClientMessage =

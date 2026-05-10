@@ -27,7 +27,16 @@ Connect:
   "type": "connect",
   "host": "krynn.d20mud.com",
   "port": 4300,
-  "msdpVariables": {}
+  "msdpVariables": {
+    "characterName": "CHARACTER_NAME",
+    "health": "HEALTH",
+    "healthMax": "HEALTH_MAX",
+    "roomName": "ROOM_NAME",
+    "roomExits": "ROOM_EXITS",
+    "actions": "ACTIONS",
+    "inventory": "INVENTORY",
+    "minimap": ""
+  }
 }
 ```
 
@@ -48,7 +57,15 @@ Update MSDP variable mapping:
 ```json
 {
   "type": "msdp-config",
-  "msdpVariables": {}
+  "msdpVariables": {
+    "room": "ROOM",
+    "areaName": "AREA_NAME",
+    "roomName": "ROOM_NAME",
+    "roomVnum": "ROOM_VNUM",
+    "roomExits": "ROOM_EXITS",
+    "worldTime": "WORLD_TIME",
+    "questInfo": ""
+  }
 }
 ```
 
@@ -80,10 +97,26 @@ Partial MUD state update:
   "type": "state",
   "state": {
     "health": 42,
-    "healthMax": 50
+    "healthMax": 50,
+    "roomName": "Market Square",
+    "areaName": "Luminari",
+    "roomVnum": 1234,
+    "roomExits": {
+      "north": "1235",
+      "south": "1233"
+    },
+    "actions": ["look", "rest"],
+    "inventory": [
+      {
+        "name": "lantern",
+        "quantity": 1
+      }
+    ]
   }
 }
 ```
+
+Blank MSDP mapping values are override-only slots. They are normalized and preserved in browser settings, but the proxy filters them out before sending MSDP `REPORT` or `SEND` requests.
 
 ## Validation
 
