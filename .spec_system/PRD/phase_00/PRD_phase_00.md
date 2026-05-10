@@ -4,7 +4,7 @@
 **Sessions**: 5 (initial estimate)
 **Estimated Duration**: 2-5 days
 
-**Progress**: 2/5 sessions (40%)
+**Progress**: 3/5 sessions (60%)
 
 ---
 
@@ -20,7 +20,7 @@ Phase 00 makes the current client honest about what Luminari-Source emits today,
 |---------|------|--------|------------|-----------|
 | 01 | Baseline Verification and Project Hygiene | Complete | ~12-25 | PASS |
 | 02 | MSDP Variable Map Alignment | Complete | ~12-25 | PASS |
-| 03 | Unavailable Data UX | Not Started | ~12-25 | - |
+| 03 | Unavailable Data UX | Complete | ~12-25 | PASS |
 | 04 | MSDP Fixture Corpus | Not Started | ~12-25 | - |
 | 05 | State Mapping Tests | Not Started | ~12-25 | - |
 
@@ -30,12 +30,12 @@ Phase 00 makes the current client honest about what Luminari-Source emits today,
 
 - Session 01: Baseline Verification and Project Hygiene
 - Session 02: MSDP Variable Map Alignment
+- Session 03: Unavailable Data UX
 
 ---
 
 ## Upcoming Sessions
 
-- Session 03: Unavailable Data UX
 - Session 04: MSDP Fixture Corpus
 - Session 05: State Mapping Tests
 
