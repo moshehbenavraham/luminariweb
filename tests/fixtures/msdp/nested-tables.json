@@ -114,7 +114,14 @@
         "sanitized": true
       },
       "description": "Mixed arrays and tables parse deterministically across ACTIONS and INVENTORY.",
-      "coverage": ["mixed-array-table", "actions", "inventory", "array", "table", "numeric-normalization"],
+      "coverage": [
+        "mixed-array-table",
+        "actions",
+        "inventory",
+        "array",
+        "table",
+        "numeric-normalization"
+      ],
       "sourceFacts": [
         "PRD Source Protocol Facts confirms ACTIONS and INVENTORY.",
         "Session 02 preserves list-like and structured values for later feature-specific normalization."

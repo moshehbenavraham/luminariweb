@@ -4,11 +4,11 @@ React browser client for connection controls, terminal display, HUD state, side 
 
 ## Run Commands
 
-| Command | Purpose |
-|---------|---------|
-| `npm run dev:client` | Run the Vite frontend server |
-| `npm run dev` | Run frontend and proxy together |
-| `npm run build` | Type-check and build frontend output |
+| Command              | Purpose                              |
+| -------------------- | ------------------------------------ |
+| `npm run dev:client` | Run the Vite frontend server         |
+| `npm run dev`        | Run frontend and proxy together      |
+| `npm run build`      | Type-check and build frontend output |
 
 ## Key Files
 

@@ -111,15 +111,15 @@
 
 ## Local Dev Tools
 
-| Category | Tool | Config |
-|----------|------|--------|
-| Formatter | not configured | - |
-| Linter | ESLint | `eslint.config.js`, `npm run lint` |
-| Type Safety | TypeScript | `tsconfig.json`, `npm run build` |
-| Frontend Build | Vite | `vite.config.ts`, `npm run build` |
-| Server Runtime | tsx/Node | `npm run dev:server`, `npm run start` |
-| Testing | not configured | Add during fixture/parser work |
-| Database | not configured | No DB signals detected |
+| Category       | Tool           | Config                                |
+| -------------- | -------------- | ------------------------------------- |
+| Formatter      | Prettier       | `.prettierrc.json`, `npm run format`  |
+| Linter         | ESLint         | `eslint.config.js`, `npm run lint`    |
+| Type Safety    | TypeScript     | `tsconfig.json`, `npm run build`      |
+| Frontend Build | Vite           | `vite.config.ts`, `npm run build`     |
+| Server Runtime | tsx/Node       | `npm run dev:server`, `npm run start` |
+| Testing        | not configured | Add during fixture/parser work        |
+| Database       | not configured | No DB signals detected                |
 
 ## Git and Review
 

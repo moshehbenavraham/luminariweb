@@ -30,9 +30,7 @@
         "VAL",
         "5"
       ],
-      "expectedPairs": [
-        ["HEALTH", 5]
-      ],
+      "expectedPairs": [["HEALTH", 5]],
       "notes": [
         "The LEVEL entry is intentionally malformed because it has no VAL marker before its scalar content."
       ]
@@ -51,14 +49,8 @@
       "sourceFacts": [
         "server/index.ts readScalar returns an empty string when called at payload end."
       ],
-      "payloadTokens": [
-        "VAR",
-        "SERVER_ID",
-        "VAL"
-      ],
-      "expectedPairs": [
-        ["SERVER_ID", ""]
-      ],
+      "payloadTokens": ["VAR", "SERVER_ID", "VAL"],
+      "expectedPairs": [["SERVER_ID", ""]],
       "notes": [
         "This documents current safe parser output and does not require a behavior change in this session."
       ]
@@ -77,22 +69,9 @@
       "sourceFacts": [
         "server/index.ts only pushes an MSDP pair when the parsed variable name is non-empty."
       ],
-      "payloadTokens": [
-        "VAR",
-        "",
-        "VAL",
-        "ignored value",
-        "VAR",
-        "LEVEL",
-        "VAL",
-        "4"
-      ],
-      "expectedPairs": [
-        ["LEVEL", 4]
-      ],
-      "notes": [
-        "The ignored value remains inert because its variable name is empty."
-      ]
+      "payloadTokens": ["VAR", "", "VAL", "ignored value", "VAR", "LEVEL", "VAL", "4"],
+      "expectedPairs": [["LEVEL", 4]],
+      "notes": ["The ignored value remains inert because its variable name is empty."]
     },
     {
       "id": "malformed.incomplete-table",
@@ -151,22 +130,8 @@
         "server/index.ts array parsing stops at payload end if ARRAY_CLOSE is missing.",
         "PRD Source Protocol Facts confirms ACTIONS."
       ],
-      "payloadTokens": [
-        "VAR",
-        "ACTIONS",
-        "VAL",
-        "ARRAY_OPEN",
-        "VAL",
-        "standard",
-        "VAL",
-        "move"
-      ],
-      "expectedPairs": [
-        [
-          "ACTIONS",
-          ["standard", "move"]
-        ]
-      ],
+      "payloadTokens": ["VAR", "ACTIONS", "VAL", "ARRAY_OPEN", "VAL", "standard", "VAL", "move"],
+      "expectedPairs": [["ACTIONS", ["standard", "move"]]],
       "notes": [
         "Future hardening may choose a stricter result, but current safe behavior is partial output."
       ]

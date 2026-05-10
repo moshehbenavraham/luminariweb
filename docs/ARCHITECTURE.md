@@ -48,25 +48,25 @@ Telnet MUD server
 
 ## HTTP Endpoints
 
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /health` | Returns `{ "ok": true }` for local and deployment health checks |
-| `GET /api/settings` | Returns runtime settings from `shared/app-settings.ts` |
-| `GET /*` | Serves built frontend assets outside development |
+| Endpoint            | Purpose                                                         |
+| ------------------- | --------------------------------------------------------------- |
+| `GET /health`       | Returns `{ "ok": true }` for local and deployment health checks |
+| `GET /api/settings` | Returns runtime settings from `shared/app-settings.ts`          |
+| `GET /*`            | Serves built frontend assets outside development                |
 
 WebSocket details are documented in [api/http-and-websocket.md](api/http-and-websocket.md).
 
 ## Tech Stack Rationale
 
-| Technology | Purpose | Why Chosen |
-|------------|---------|------------|
-| TypeScript | Shared app language | Keeps frontend, server, and protocol contracts typed |
-| React | Browser UI | Matches the current app and supports stateful panels |
-| Vite | Development and build | Provides fast dev server and production bundling |
-| Express | HTTP server | Small server surface for health, settings, and static assets |
-| `ws` | WebSocket transport | Direct Node WebSocket support for browser-to-proxy messages |
-| Node `net` | Telnet transport | Required to open TCP sockets from the server side |
-| `ansi-to-html` | Terminal rendering | Current renderer for ANSI-colored terminal text |
+| Technology     | Purpose               | Why Chosen                                                   |
+| -------------- | --------------------- | ------------------------------------------------------------ |
+| TypeScript     | Shared app language   | Keeps frontend, server, and protocol contracts typed         |
+| React          | Browser UI            | Matches the current app and supports stateful panels         |
+| Vite           | Development and build | Provides fast dev server and production bundling             |
+| Express        | HTTP server           | Small server surface for health, settings, and static assets |
+| `ws`           | WebSocket transport   | Direct Node WebSocket support for browser-to-proxy messages  |
+| Node `net`     | Telnet transport      | Required to open TCP sockets from the server side            |
+| `ansi-to-html` | Terminal rendering    | Current renderer for ANSI-colored terminal text              |
 
 ## Data Layer
 

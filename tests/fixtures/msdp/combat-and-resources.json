@@ -51,9 +51,7 @@
         ["MOVEMENT", 91],
         ["MOVEMENT_MAX", 110]
       ],
-      "notes": [
-        "Values are synthetic but within normal parser scalar ranges."
-      ]
+      "notes": ["Values are synthetic but within normal parser scalar ranges."]
     },
     {
       "id": "combat.experience.progression",
@@ -151,9 +149,7 @@
         ["ATTACK_BONUS", 7],
         ["AC", -4]
       ],
-      "notes": [
-        "Combat names are generic synthetic labels."
-      ]
+      "notes": ["Combat names are generic synthetic labels."]
     },
     {
       "id": "combat.position.money.practice",

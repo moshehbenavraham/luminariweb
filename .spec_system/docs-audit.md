@@ -8,14 +8,14 @@ Full audit mode was used because no implementation sessions are completed yet an
 
 ## Summary
 
-| Area | Required | Found | Status |
-|------|----------|-------|--------|
-| Root files | 3 | 3 | Current, with legal file stored as `LICENSE.md` |
-| `/docs` standard files | 6 | 6 | Created or verified |
-| ADRs | 1 template | 1 template | Created |
-| API docs | 1 | 1 | Created |
-| Runbooks | 1 | 1 | Created |
-| Service READMEs | 3 | 3 | Created |
+| Area                   | Required   | Found      | Status                                          |
+| ---------------------- | ---------- | ---------- | ----------------------------------------------- |
+| Root files             | 3          | 3          | Current, with legal file stored as `LICENSE.md` |
+| `/docs` standard files | 6          | 6          | Created or verified                             |
+| ADRs                   | 1 template | 1 template | Created                                         |
+| API docs               | 1          | 1          | Created                                         |
+| Runbooks               | 1          | 1          | Created                                         |
+| Service READMEs        | 3          | 3          | Created                                         |
 
 ## Files Created
 

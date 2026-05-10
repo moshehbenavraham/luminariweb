@@ -5,72 +5,72 @@ export type MudValue =
   | null
   | MudValue[]
   | {
-      [key: string]: MudValue
-    }
+      [key: string]: MudValue;
+    };
 
 export interface MudState {
-  characterName?: string
-  title?: string
-  serverId?: string
-  serverTime?: number
-  snippetVersion?: number
-  level?: number
-  race?: string
-  className?: string
-  health?: number
-  healthMax?: number
-  psp?: number
-  pspMax?: number
-  movement?: number
-  movementMax?: number
-  experience?: number
-  experienceMax?: number
-  experienceTnl?: number
-  attackBonus?: number
-  damageBonus?: number
-  strength?: number
-  dexterity?: number
-  constitution?: number
-  intelligence?: number
-  wisdom?: number
-  charisma?: number
-  fortitude?: number
-  reflex?: number
-  willpower?: number
-  armorClass?: number
-  alignment?: string
-  practice?: number
-  money?: number
-  position?: string
-  room?: MudValue
-  roomName?: string
-  areaName?: string
-  roomVnum?: number
-  roomExits?: MudValue
+  characterName?: string;
+  title?: string;
+  serverId?: string;
+  serverTime?: number;
+  snippetVersion?: number;
+  level?: number;
+  race?: string;
+  className?: string;
+  health?: number;
+  healthMax?: number;
+  psp?: number;
+  pspMax?: number;
+  movement?: number;
+  movementMax?: number;
+  experience?: number;
+  experienceMax?: number;
+  experienceTnl?: number;
+  attackBonus?: number;
+  damageBonus?: number;
+  strength?: number;
+  dexterity?: number;
+  constitution?: number;
+  intelligence?: number;
+  wisdom?: number;
+  charisma?: number;
+  fortitude?: number;
+  reflex?: number;
+  willpower?: number;
+  armorClass?: number;
+  alignment?: string;
+  practice?: number;
+  money?: number;
+  position?: string;
+  room?: MudValue;
+  roomName?: string;
+  areaName?: string;
+  roomVnum?: number;
+  roomExits?: MudValue;
   roomCoords?: {
-    x?: number
-    y?: number
-    z?: number
-  }
-  roomTerrain?: string
-  roomEnvironment?: string
-  automap?: string
-  minimap?: string
-  worldTime?: string
-  actions?: MudValue
-  inventory?: MudValue
-  affects?: MudValue
-  group?: MudValue
-  questInfo?: MudValue
-  opponentName?: string
-  opponentHealth?: number
-  opponentHealthMax?: number
-  tankName?: string
-  tankHealth?: number
-  tankHealthMax?: number
+    x?: number;
+    y?: number;
+    z?: number;
+  };
+  roomTerrain?: string;
+  roomEnvironment?: string;
+  automap?: string;
+  minimap?: string;
+  worldTime?: string;
+  actions?: MudValue;
+  inventory?: MudValue;
+  affects?: MudValue;
+  group?: MudValue;
+  questInfo?: MudValue;
+  opponentName?: string;
+  opponentHealth?: number;
+  opponentHealthMax?: number;
+  tankName?: string;
+  tankHealth?: number;
+  tankHealthMax?: number;
 }
 
-export type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error'
+export type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
 
 export const defaultMsdpVariables = {
   serverId: 'SERVER_ID',
@@ -124,12 +124,12 @@ export const defaultMsdpVariables = {
   tankName: 'TANK_NAME',
   tankHealth: 'TANK_HEALTH',
   tankHealthMax: 'TANK_HEALTH_MAX',
-} as const
+} as const;
 
-export type MsdpVariableKey = keyof typeof defaultMsdpVariables
-export type MsdpVariableMap = Record<MsdpVariableKey, string>
+export type MsdpVariableKey = keyof typeof defaultMsdpVariables;
+export type MsdpVariableMap = Record<MsdpVariableKey, string>;
 
-export const msdpVariableKeys = Object.keys(defaultMsdpVariables) as MsdpVariableKey[]
+export const msdpVariableKeys = Object.keys(defaultMsdpVariables) as MsdpVariableKey[];
 
 export const confirmedMsdpVariableKeys = [
   'serverId',
@@ -176,7 +176,7 @@ export const confirmedMsdpVariableKeys = [
   'tankName',
   'tankHealth',
   'tankHealthMax',
-] as const satisfies readonly MsdpVariableKey[]
+] as const satisfies readonly MsdpVariableKey[];
 
 export const optionalMsdpVariableKeys = [
   'practice',
@@ -190,7 +190,7 @@ export const optionalMsdpVariableKeys = [
   'inventory',
   'affects',
   'group',
-] as const satisfies readonly MsdpVariableKey[]
+] as const satisfies readonly MsdpVariableKey[];
 
 export const overrideOnlyMsdpVariableKeys = [
   'title',
@@ -200,66 +200,66 @@ export const overrideOnlyMsdpVariableKeys = [
   'damageBonus',
   'minimap',
   'questInfo',
-] as const satisfies readonly MsdpVariableKey[]
+] as const satisfies readonly MsdpVariableKey[];
 
 export function normalizeMsdpVariableMap(value: unknown): MsdpVariableMap {
-  const raw = isObjectRecord(value) ? value : {}
-  const normalized = {} as MsdpVariableMap
+  const raw = isObjectRecord(value) ? value : {};
+  const normalized = {} as MsdpVariableMap;
 
   for (const key of msdpVariableKeys) {
-    normalized[key] = normalizeMsdpVariableValue(raw[key], defaultMsdpVariables[key])
+    normalized[key] = normalizeMsdpVariableValue(raw[key], defaultMsdpVariables[key]);
   }
 
-  return normalized
+  return normalized;
 }
 
 function normalizeMsdpVariableValue(value: unknown, fallback: string) {
   if (typeof value !== 'string') {
-    return fallback
+    return fallback;
   }
 
-  const trimmed = value.trim()
+  const trimmed = value.trim();
   if (trimmed) {
-    return trimmed
+    return trimmed;
   }
 
-  return fallback === '' ? '' : fallback
+  return fallback === '' ? '' : fallback;
 }
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
 export type ClientMessage =
   | {
-      type: 'connect'
-      host: string
-      port: number
-      msdpVariables: MsdpVariableMap
+      type: 'connect';
+      host: string;
+      port: number;
+      msdpVariables: MsdpVariableMap;
     }
   | {
-      type: 'disconnect'
+      type: 'disconnect';
     }
   | {
-      type: 'input'
-      text: string
+      type: 'input';
+      text: string;
     }
   | {
-      type: 'msdp-config'
-      msdpVariables: MsdpVariableMap
-    }
+      type: 'msdp-config';
+      msdpVariables: MsdpVariableMap;
+    };
 
 export type ServerMessage =
   | {
-      type: 'connection-status'
-      status: ConnectionStatus
-      detail: string
+      type: 'connection-status';
+      status: ConnectionStatus;
+      detail: string;
     }
   | {
-      type: 'terminal'
-      text: string
+      type: 'terminal';
+      text: string;
     }
   | {
-      type: 'state'
-      state: Partial<MudState>
-    }
+      type: 'state';
+      state: Partial<MudState>;
+    };

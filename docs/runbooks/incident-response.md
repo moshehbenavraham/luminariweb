@@ -2,12 +2,12 @@
 
 ## Severity
 
-| Level | Description | Response Target |
-|-------|-------------|-----------------|
-| P0 | App unavailable or proxy cannot start | Immediate |
-| P1 | Users cannot connect to configured MUDs | Under 1 hour |
-| P2 | HUD, panels, aliases, triggers, or settings broken | Under 4 hours |
-| P3 | Documentation or cosmetic issue | Next planned maintenance |
+| Level | Description                                        | Response Target          |
+| ----- | -------------------------------------------------- | ------------------------ |
+| P0    | App unavailable or proxy cannot start              | Immediate                |
+| P1    | Users cannot connect to configured MUDs            | Under 1 hour             |
+| P2    | HUD, panels, aliases, triggers, or settings broken | Under 4 hours            |
+| P3    | Documentation or cosmetic issue                    | Next planned maintenance |
 
 ## First Checks
 

@@ -1,29 +1,29 @@
 export type MudPreset = {
-  id: string
-  name: string
-  host: string
-  port: number
-  description?: string
-}
+  id: string;
+  name: string;
+  host: string;
+  port: number;
+  description?: string;
+};
 
 export type AppSettings = {
   ports: {
-    client: number
-    server: number
-    preview: number
-  }
+    client: number;
+    server: number;
+    preview: number;
+  };
   connection: {
-    defaultHost: string
-    defaultPort: number
-    muds: MudPreset[]
-  }
+    defaultHost: string;
+    defaultPort: number;
+    muds: MudPreset[];
+  };
   personalization: {
-    browserTitle: string
-    eyebrow: string
-    title: string
-    subtitle: string
-  }
-}
+    browserTitle: string;
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+  };
+};
 
 export const appSettings: AppSettings = {
   ports: {
@@ -69,7 +69,6 @@ export const appSettings: AppSettings = {
     browserTitle: 'Luminari Web',
     eyebrow: 'LuminariMUD web client',
     title: 'Luminari Web',
-    subtitle:
-      'A React and Node MUD client with an MSDP-driven HUD and WebSocket-to-Telnet proxy.',
+    subtitle: 'A React and Node MUD client with an MSDP-driven HUD and WebSocket-to-Telnet proxy.',
   },
-}
+};

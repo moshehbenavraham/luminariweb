@@ -63,27 +63,27 @@ The code currently requests and maps several MSDP variables. The product plan re
 
 ## Tech Stack
 
-| Technology | Purpose |
-|------------|---------|
-| TypeScript | Shared frontend, server, and protocol typing |
-| React | Browser client UI |
-| Vite | Frontend development server and production build |
-| Express | HTTP server for health, settings, and static assets |
-| `ws` | Browser WebSocket server |
-| Node `net` | Telnet socket from proxy to MUD server |
-| `ansi-to-html` | Current terminal text rendering |
+| Technology     | Purpose                                             |
+| -------------- | --------------------------------------------------- |
+| TypeScript     | Shared frontend, server, and protocol typing        |
+| React          | Browser client UI                                   |
+| Vite           | Frontend development server and production build    |
+| Express        | HTTP server for health, settings, and static assets |
+| `ws`           | Browser WebSocket server                            |
+| Node `net`     | Telnet socket from proxy to MUD server              |
+| `ansi-to-html` | Current terminal text rendering                     |
 
 ## Commands
 
-| Command | Purpose |
-|---------|---------|
-| `npm run dev` | Run frontend and proxy together |
-| `npm run dev:client` | Run Vite only |
-| `npm run dev:server` | Run the proxy server only |
-| `npm run lint` | Run ESLint |
-| `npm run build` | Type-check and build client/server output |
-| `npm run preview` | Preview built client assets |
-| `npm start` | Run the built server from `dist/server/index.js` |
+| Command              | Purpose                                          |
+| -------------------- | ------------------------------------------------ |
+| `npm run dev`        | Run frontend and proxy together                  |
+| `npm run dev:client` | Run Vite only                                    |
+| `npm run dev:server` | Run the proxy server only                        |
+| `npm run lint`       | Run ESLint                                       |
+| `npm run build`      | Type-check and build client/server output        |
+| `npm run preview`    | Preview built client assets                      |
+| `npm start`          | Run the built server from `dist/server/index.js` |
 
 ## Configuration
 
@@ -91,9 +91,9 @@ Primary defaults live in [shared/app-settings.ts](shared/app-settings.ts). The b
 
 Environment overrides:
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `PORT` | `5191` | HTTP/WebSocket server port |
+| Variable      | Default           | Purpose                           |
+| ------------- | ----------------- | --------------------------------- |
+| `PORT`        | `5191`            | HTTP/WebSocket server port        |
 | `VITE_WS_URL` | same-origin `/ws` | Browser WebSocket target override |
 
 ## Project Status

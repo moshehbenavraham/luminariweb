@@ -31,15 +31,8 @@
         "swift",
         "ARRAY_CLOSE"
       ],
-      "expectedPairs": [
-        [
-          "ACTIONS",
-          ["standard", "move", "swift"]
-        ]
-      ],
-      "notes": [
-        "Action names are synthetic placeholders for later rendering tests."
-      ]
+      "expectedPairs": [["ACTIONS", ["standard", "move", "swift"]]],
+      "notes": ["Action names are synthetic placeholders for later rendering tests."]
     },
     {
       "id": "collections.inventory.table",
@@ -160,9 +153,7 @@
           ]
         ]
       ],
-      "notes": [
-        "Effect names and durations are synthetic."
-      ]
+      "notes": ["Effect names and durations are synthetic."]
     },
     {
       "id": "collections.empty.values",
@@ -201,9 +192,7 @@
         ["AFFECTS", []],
         ["INVENTORY", {}]
       ],
-      "notes": [
-        "Later mapping tests should preserve explicit empty collection values."
-      ]
+      "notes": ["Later mapping tests should preserve explicit empty collection values."]
     }
   ]
 }

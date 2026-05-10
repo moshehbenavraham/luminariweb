@@ -6,16 +6,16 @@ The fixtures are intentionally small, synthetic unless explicitly labeled otherw
 
 ## Directory Contract
 
-| Path | Purpose |
-|------|---------|
-| `manifest.json` | Corpus index, coverage tags, origin metadata, and parser expectation summaries. |
-| `core-scalars.json` | Server metadata, character identity, ability scores, and scalar normalization examples. |
-| `combat-and-resources.json` | Resource, experience, combat, tank, position, money, and practice examples. |
-| `room-and-exits.json` | Room, area, vnum, exits, world time, and room table examples. |
-| `collections.json` | Actions, inventory, affects, empty arrays, and simple table examples. |
-| `group-data.json` | Representative group member table examples. |
-| `nested-tables.json` | Mixed nested table and array payload examples. |
-| `malformed-payloads.json` | Malformed payload examples with safe expected parser output. |
+| Path                        | Purpose                                                                                 |
+| --------------------------- | --------------------------------------------------------------------------------------- |
+| `manifest.json`             | Corpus index, coverage tags, origin metadata, and parser expectation summaries.         |
+| `core-scalars.json`         | Server metadata, character identity, ability scores, and scalar normalization examples. |
+| `combat-and-resources.json` | Resource, experience, combat, tank, position, money, and practice examples.             |
+| `room-and-exits.json`       | Room, area, vnum, exits, world time, and room table examples.                           |
+| `collections.json`          | Actions, inventory, affects, empty arrays, and simple table examples.                   |
+| `group-data.json`           | Representative group member table examples.                                             |
+| `nested-tables.json`        | Mixed nested table and array payload examples.                                          |
+| `malformed-payloads.json`   | Malformed payload examples with safe expected parser output.                            |
 
 Future tests should load `manifest.json` first and then resolve each fixture file listed in the manifest. Tests should not hard-code a partial set of fixture filenames.
 
@@ -23,14 +23,14 @@ Future tests should load `manifest.json` first and then resolve each fixture fil
 
 Fixture payloads use human-readable token streams instead of raw byte arrays. Test helpers can convert these tokens to raw MSDP bytes by replacing token strings with the byte values below and UTF-8 encoding all other strings.
 
-| Token | Byte | Parser Constant | Meaning |
-|-------|------|-----------------|---------|
-| `VAR` | `1` | `MSDP_VAR` | Starts a variable name or table key. |
-| `VAL` | `2` | `MSDP_VAL` | Starts a variable value or table value. |
-| `TABLE_OPEN` | `3` | `MSDP_TABLE_OPEN` | Starts a table payload. |
-| `TABLE_CLOSE` | `4` | `MSDP_TABLE_CLOSE` | Ends a table payload. |
-| `ARRAY_OPEN` | `5` | `MSDP_ARRAY_OPEN` | Starts an array payload. |
-| `ARRAY_CLOSE` | `6` | `MSDP_ARRAY_CLOSE` | Ends an array payload. |
+| Token         | Byte | Parser Constant    | Meaning                                 |
+| ------------- | ---- | ------------------ | --------------------------------------- |
+| `VAR`         | `1`  | `MSDP_VAR`         | Starts a variable name or table key.    |
+| `VAL`         | `2`  | `MSDP_VAL`         | Starts a variable value or table value. |
+| `TABLE_OPEN`  | `3`  | `MSDP_TABLE_OPEN`  | Starts a table payload.                 |
+| `TABLE_CLOSE` | `4`  | `MSDP_TABLE_CLOSE` | Ends a table payload.                   |
+| `ARRAY_OPEN`  | `5`  | `MSDP_ARRAY_OPEN`  | Starts an array payload.                |
+| `ARRAY_CLOSE` | `6`  | `MSDP_ARRAY_CLOSE` | Ends an array payload.                  |
 
 Example scalar payload:
 
@@ -65,14 +65,10 @@ Each fixture file contains a file-level version and a `fixtures` array:
       },
       "description": "Short fixture purpose.",
       "coverage": ["character", "scalar"],
-      "sourceFacts": [
-        "PRD Source Protocol Facts confirms CHARACTER_NAME, LEVEL, RACE, and CLASS."
-      ],
+      "sourceFacts": ["PRD Source Protocol Facts confirms CHARACTER_NAME, LEVEL, RACE, and CLASS."],
       "payloadTokens": ["VAR", "LEVEL", "VAL", "17"],
       "expectedPairs": [["LEVEL", 17]],
-      "notes": [
-        "Numeric integer strings normalize to numbers in the current parser."
-      ]
+      "notes": ["Numeric integer strings normalize to numbers in the current parser."]
     }
   ]
 }
@@ -80,20 +76,20 @@ Each fixture file contains a file-level version and a `fixtures` array:
 
 ### Required Fields
 
-| Field | Type | Rule |
-|-------|------|------|
-| `id` | string | Globally unique across the corpus. Use dotted names grouped by file purpose. |
-| `version` | number | Increment when a fixture meaningfully changes. |
-| `origin.type` | string | `synthetic` or `real-capture`. |
-| `origin.capturedAt` | string or null | ISO-like timestamp for real captures; `null` for synthetic fixtures. |
-| `origin.source` | string | Human-readable source or construction note. |
-| `origin.sanitized` | boolean | Must be `true` before a real capture can be committed. |
-| `description` | string | Short explanation of the parser behavior under coverage. |
-| `coverage` | string array | Tags used by manifest and future test selection. |
-| `sourceFacts` | string array | PRD or source-audit facts that justify variable names and expected output. |
-| `payloadTokens` | string array | Control-token names plus scalar strings in payload order. |
-| `expectedPairs` | array | Parser output as `[variable, value]` tuples. |
-| `notes` | string array | Review and future-test guidance. |
+| Field               | Type           | Rule                                                                         |
+| ------------------- | -------------- | ---------------------------------------------------------------------------- |
+| `id`                | string         | Globally unique across the corpus. Use dotted names grouped by file purpose. |
+| `version`           | number         | Increment when a fixture meaningfully changes.                               |
+| `origin.type`       | string         | `synthetic` or `real-capture`.                                               |
+| `origin.capturedAt` | string or null | ISO-like timestamp for real captures; `null` for synthetic fixtures.         |
+| `origin.source`     | string         | Human-readable source or construction note.                                  |
+| `origin.sanitized`  | boolean        | Must be `true` before a real capture can be committed.                       |
+| `description`       | string         | Short explanation of the parser behavior under coverage.                     |
+| `coverage`          | string array   | Tags used by manifest and future test selection.                             |
+| `sourceFacts`       | string array   | PRD or source-audit facts that justify variable names and expected output.   |
+| `payloadTokens`     | string array   | Control-token names plus scalar strings in payload order.                    |
+| `expectedPairs`     | array          | Parser output as `[variable, value]` tuples.                                 |
+| `notes`             | string array   | Review and future-test guidance.                                             |
 
 ### Expected Pair Values
 
@@ -110,16 +106,16 @@ Expected values use the current parser contract:
 
 The PRD source protocol facts confirm these variable groups from Luminari-Source. Fixture coverage should remain traceable to these groups and should not imply unsupported data is emitted.
 
-| Source Group | Confirmed Variables Covered | Fixture Files |
-|--------------|-----------------------------|---------------|
-| Server/client metadata | `SERVER_ID`, `SERVER_TIME`, `SNIPPET_VERSION` | `core-scalars.json` |
-| Character | `CHARACTER_NAME`, `LEVEL`, `RACE`, `CLASS`, `POSITION`, `ALIGNMENT`, `MONEY`, `PRACTICE` | `core-scalars.json`, `combat-and-resources.json` |
-| Resources | `HEALTH`, `HEALTH_MAX`, `PSP`, `PSP_MAX`, `MOVEMENT`, `MOVEMENT_MAX`, `EXPERIENCE`, `EXPERIENCE_MAX`, `EXPERIENCE_TNL` | `combat-and-resources.json` |
-| Combat | `ATTACK_BONUS`, `AC`, `OPPONENT_NAME`, `OPPONENT_HEALTH`, `OPPONENT_HEALTH_MAX`, `TANK_NAME`, `TANK_HEALTH`, `TANK_HEALTH_MAX` | `combat-and-resources.json` |
-| Ability scores | `STR`, `INT`, `WIS`, `DEX`, `CON`, `CHA` | `core-scalars.json` |
-| Collections | `ACTIONS`, `INVENTORY`, `AFFECTS`, `GROUP` | `collections.json`, `group-data.json`, `nested-tables.json` |
-| Room/world | `ROOM`, `AREA_NAME`, `ROOM_EXITS`, `ROOM_NAME`, `ROOM_VNUM`, `WORLD_TIME` | `room-and-exits.json`, `nested-tables.json` |
-| Parser safety | Skipped leading bytes, truncated values, empty variable names, incomplete tables, incomplete arrays | `malformed-payloads.json` |
+| Source Group           | Confirmed Variables Covered                                                                                                    | Fixture Files                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| Server/client metadata | `SERVER_ID`, `SERVER_TIME`, `SNIPPET_VERSION`                                                                                  | `core-scalars.json`                                         |
+| Character              | `CHARACTER_NAME`, `LEVEL`, `RACE`, `CLASS`, `POSITION`, `ALIGNMENT`, `MONEY`, `PRACTICE`                                       | `core-scalars.json`, `combat-and-resources.json`            |
+| Resources              | `HEALTH`, `HEALTH_MAX`, `PSP`, `PSP_MAX`, `MOVEMENT`, `MOVEMENT_MAX`, `EXPERIENCE`, `EXPERIENCE_MAX`, `EXPERIENCE_TNL`         | `combat-and-resources.json`                                 |
+| Combat                 | `ATTACK_BONUS`, `AC`, `OPPONENT_NAME`, `OPPONENT_HEALTH`, `OPPONENT_HEALTH_MAX`, `TANK_NAME`, `TANK_HEALTH`, `TANK_HEALTH_MAX` | `combat-and-resources.json`                                 |
+| Ability scores         | `STR`, `INT`, `WIS`, `DEX`, `CON`, `CHA`                                                                                       | `core-scalars.json`                                         |
+| Collections            | `ACTIONS`, `INVENTORY`, `AFFECTS`, `GROUP`                                                                                     | `collections.json`, `group-data.json`, `nested-tables.json` |
+| Room/world             | `ROOM`, `AREA_NAME`, `ROOM_EXITS`, `ROOM_NAME`, `ROOM_VNUM`, `WORLD_TIME`                                                      | `room-and-exits.json`, `nested-tables.json`                 |
+| Parser safety          | Skipped leading bytes, truncated values, empty variable names, incomplete tables, incomplete arrays                            | `malformed-payloads.json`                                   |
 
 ### Override-Only Exclusions
 
@@ -168,7 +164,7 @@ const controlTokens = {
   TABLE_CLOSE: 4,
   ARRAY_OPEN: 5,
   ARRAY_CLOSE: 6,
-} as const
+} as const;
 ```
 
 For each `payloadTokens` entry:

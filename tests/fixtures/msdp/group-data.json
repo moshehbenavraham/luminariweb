@@ -151,9 +151,7 @@
           ]
         ]
       ],
-      "notes": [
-        "The fixture intentionally omits leader, healthMax, movement, and status."
-      ]
+      "notes": ["The fixture intentionally omits leader, healthMax, movement, and status."]
     }
   ]
 }

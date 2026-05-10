@@ -101,9 +101,7 @@
       },
       "description": "Ability score variables parse as normalized numeric scalars.",
       "coverage": ["abilities", "scalar", "numeric-normalization"],
-      "sourceFacts": [
-        "PRD Source Protocol Facts confirms STR, INT, WIS, DEX, CON, and CHA."
-      ],
+      "sourceFacts": ["PRD Source Protocol Facts confirms STR, INT, WIS, DEX, CON, and CHA."],
       "payloadTokens": [
         "VAR",
         "STR",

@@ -70,7 +70,16 @@
       "file": "combat-and-resources.json",
       "fixtureCount": 4,
       "originTypes": ["synthetic"],
-      "coverage": ["resources", "experience", "combat", "tank", "position", "money", "practice", "scalar"],
+      "coverage": [
+        "resources",
+        "experience",
+        "combat",
+        "tank",
+        "position",
+        "money",
+        "practice",
+        "scalar"
+      ],
       "fixtureIds": [
         "combat.resources.current",
         "combat.experience.progression",
@@ -110,10 +119,7 @@
       "fixtureCount": 2,
       "originTypes": ["synthetic"],
       "coverage": ["group", "array", "table", "partial-data"],
-      "fixtureIds": [
-        "group.full.members",
-        "group.partial.member"
-      ],
+      "fixtureIds": ["group.full.members", "group.partial.member"],
       "parserExpectation": "Group payloads parse member tables and tolerate missing member fields."
     },
     {
@@ -121,17 +127,21 @@
       "fixtureCount": 2,
       "originTypes": ["synthetic"],
       "coverage": ["nested-table", "mixed-array-table", "room", "actions", "inventory"],
-      "fixtureIds": [
-        "nested.room.with.exits",
-        "nested.mixed.action.inventory"
-      ],
+      "fixtureIds": ["nested.room.with.exits", "nested.mixed.action.inventory"],
       "parserExpectation": "Nested tables and mixed array/table payloads can be encoded deterministically."
     },
     {
       "file": "malformed-payloads.json",
       "fixtureCount": 5,
       "originTypes": ["synthetic"],
-      "coverage": ["malformed", "truncated", "marker-skipping", "empty-variable", "incomplete-table", "incomplete-array"],
+      "coverage": [
+        "malformed",
+        "truncated",
+        "marker-skipping",
+        "empty-variable",
+        "incomplete-table",
+        "incomplete-array"
+      ],
       "fixtureIds": [
         "malformed.leading-marker-skip",
         "malformed.truncated-value",

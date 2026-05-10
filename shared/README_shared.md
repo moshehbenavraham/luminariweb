@@ -9,9 +9,9 @@ Shared TypeScript module used by both the React client and Node proxy server.
 
 ## Run Commands
 
-| Command | Purpose |
-|---------|---------|
-| `npm run lint` | Check shared TypeScript through ESLint |
-| `npm run build` | Type-check and compile shared code |
+| Command         | Purpose                                |
+| --------------- | -------------------------------------- |
+| `npm run lint`  | Check shared TypeScript through ESLint |
+| `npm run build` | Type-check and compile shared code     |
 
 Keep shared contracts backward-compatible with the browser and server in the same change.

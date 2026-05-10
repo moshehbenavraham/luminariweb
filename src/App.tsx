@@ -1,14 +1,20 @@
-import AnsiToHtml from 'ansi-to-html'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties, ChangeEvent, FormEvent, KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react'
-import type { ReactNode } from 'react'
-import { appSettings } from '../shared/app-settings.ts'
-import type { AppSettings } from '../shared/app-settings.ts'
+import AnsiToHtml from 'ansi-to-html';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type {
+  CSSProperties,
+  ChangeEvent,
+  FormEvent,
+  KeyboardEvent as ReactKeyboardEvent,
+  MouseEvent as ReactMouseEvent,
+} from 'react';
+import type { ReactNode } from 'react';
+import { appSettings } from '../shared/app-settings.ts';
+import type { AppSettings } from '../shared/app-settings.ts';
 import {
   defaultMsdpVariables,
   normalizeMsdpVariableMap,
   overrideOnlyMsdpVariableKeys,
-} from '../shared/mud.ts'
+} from '../shared/mud.ts';
 import type {
   ClientMessage,
   ConnectionStatus,
@@ -17,23 +23,23 @@ import type {
   MudState,
   MudValue,
   ServerMessage,
-} from '../shared/mud.ts'
-import './App.css'
+} from '../shared/mud.ts';
+import './App.css';
 
-const DEFAULT_HOST = appSettings.connection.defaultHost
-const DEFAULT_PORT = appSettings.connection.defaultPort
-const CUSTOM_MUD_VALUE = '__custom__'
-const TERMINAL_CHUNK_LIMIT = 500
-const COMMAND_HISTORY_LIMIT = 100
-const AUTOMATION_COOKIE_MAX_AGE = 60 * 60 * 24 * 365
-const AUTOMATION_COOKIE_CHUNK_SIZE = 3000
-const AUTOMATION_RECURSION_LIMIT = 10
-const CLIENT_CONFIG_EXPORT_VERSION = 1
-const ALIASES_COOKIE_NAME = 'lwc.aliases'
-const TRIGGERS_COOKIE_NAME = 'lwc.triggers'
-const CLIENT_SETTINGS_COOKIE_NAME = 'lwc.settings'
-const ANSI_ESCAPE_PATTERN = new RegExp(String.raw`\u001b\[[0-?]*[ -/]*[@-~]`, 'g')
-const LUMINARI_COLOR_CHAR = '^'
+const DEFAULT_HOST = appSettings.connection.defaultHost;
+const DEFAULT_PORT = appSettings.connection.defaultPort;
+const CUSTOM_MUD_VALUE = '__custom__';
+const TERMINAL_CHUNK_LIMIT = 500;
+const COMMAND_HISTORY_LIMIT = 100;
+const AUTOMATION_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+const AUTOMATION_COOKIE_CHUNK_SIZE = 3000;
+const AUTOMATION_RECURSION_LIMIT = 10;
+const CLIENT_CONFIG_EXPORT_VERSION = 1;
+const ALIASES_COOKIE_NAME = 'lwc.aliases';
+const TRIGGERS_COOKIE_NAME = 'lwc.triggers';
+const CLIENT_SETTINGS_COOKIE_NAME = 'lwc.settings';
+const ANSI_ESCAPE_PATTERN = new RegExp(String.raw`\u001b\[[0-?]*[ -/]*[@-~]`, 'g');
+const LUMINARI_COLOR_CHAR = '^';
 const LUMINARI_COLOR_CODES: Record<string, string> = {
   n: '\u001b[0;00m',
   d: luminariRgbToAnsi('F000'),
@@ -76,7 +82,7 @@ const LUMINARI_COLOR_CODES: Record<string, string> = {
   '-': '\u001b[5m',
   '=': '\u001b[7m',
   '*': '@',
-}
+};
 const MOVEMENT_COMMANDS = new Set([
   'n',
   'north',
@@ -100,7 +106,7 @@ const MOVEMENT_COMMANDS = new Set([
   'down',
   'in',
   'out',
-])
+]);
 const NUMPAD_COMMANDS: Record<string, string> = {
   Numpad1: 'sw',
   Numpad2: 's',
@@ -115,82 +121,82 @@ const NUMPAD_COMMANDS: Record<string, string> = {
   NumpadSubtract: 'up',
   Numpad0: 'in',
   NumpadDecimal: 'out',
-}
+};
 
 type BarConfig = {
-  label: string
-  overlayLabel?: string
-  value?: number
-  max?: number
-  accentClass: string
-}
+  label: string;
+  overlayLabel?: string;
+  value?: number;
+  max?: number;
+  accentClass: string;
+};
 
-type SidebarTabId = 'character' | 'quests' | 'group' | 'affects'
+type SidebarTabId = 'character' | 'quests' | 'group' | 'affects';
 
 type SidebarTab = {
-  id: SidebarTabId
-  label: string
-}
+  id: SidebarTabId;
+  label: string;
+};
 
 type AliasDefinition = {
-  id: string
-  pattern: string
-  expansion: string
-  enabled: boolean
-}
+  id: string;
+  pattern: string;
+  expansion: string;
+  enabled: boolean;
+};
 
 type TriggerDefinition = {
-  id: string
-  pattern: string
-  action: string
-  enabled: boolean
-}
+  id: string;
+  pattern: string;
+  action: string;
+  enabled: boolean;
+};
 
-type SidebarFontFamily = 'sans' | 'mono' | 'serif'
+type SidebarFontFamily = 'sans' | 'mono' | 'serif';
 
 type ClientSettings = {
   terminal: {
-    fontSize: number
-    lineHeight: number
-    autoScroll: boolean
-    wrapLines: boolean
-  }
+    fontSize: number;
+    lineHeight: number;
+    autoScroll: boolean;
+    wrapLines: boolean;
+  };
   minimap: {
-    fontSize: number
-    paneHeight: number
-  }
+    fontSize: number;
+    paneHeight: number;
+  };
   sidebar: {
-    fontFamily: SidebarFontFamily
-    fontSize: number
-  }
-  msdp: MsdpVariableMap
-}
+    fontFamily: SidebarFontFamily;
+    fontSize: number;
+  };
+  msdp: MsdpVariableMap;
+};
 
 type AutomationNotice = {
-  kind: 'success' | 'error'
-  text: string
-}
+  kind: 'success' | 'error';
+  text: string;
+};
 
-type AutomationMenuId = 'aliases' | 'triggers' | 'msdpVars' | 'settings'
+type AutomationMenuId = 'aliases' | 'triggers' | 'msdpVars' | 'settings';
 
-type AvailabilityKind = 'present' | 'empty' | 'loading' | 'offline' | 'error' | 'unavailable'
+type AvailabilityKind = 'present' | 'empty' | 'loading' | 'offline' | 'error' | 'unavailable';
 
 type AvailabilityNotice = {
-  kind: AvailabilityKind
-  title: string
-  detail?: string
-  ariaLabel?: string
-}
+  kind: AvailabilityKind;
+  title: string;
+  detail?: string;
+  ariaLabel?: string;
+};
 
 type OptionalDataDescriptor = {
-  key?: MsdpVariableKey
-  label: string
-  unsupported: Omit<AvailabilityNotice, 'kind'>
-  waiting: Omit<AvailabilityNotice, 'kind'>
-  empty: Omit<AvailabilityNotice, 'kind'>
-  offline: Omit<AvailabilityNotice, 'kind'>
-  error: Omit<AvailabilityNotice, 'kind'>
-}
+  key?: MsdpVariableKey;
+  label: string;
+  unsupported: Omit<AvailabilityNotice, 'kind'>;
+  waiting: Omit<AvailabilityNotice, 'kind'>;
+  empty: Omit<AvailabilityNotice, 'kind'>;
+  offline: Omit<AvailabilityNotice, 'kind'>;
+  error: Omit<AvailabilityNotice, 'kind'>;
+};
 
 type OptionalDataDescriptorId =
   | 'title'
@@ -201,12 +207,12 @@ type OptionalDataDescriptorId =
   | 'damageBonus'
   | 'minimap'
   | 'group'
-  | 'affects'
+  | 'affects';
 
 type MapOutput = {
-  text: string
-  notice: AvailabilityNotice
-}
+  text: string;
+  notice: AvailabilityNotice;
+};
 
 const DEFAULT_CLIENT_SETTINGS: ClientSettings = {
   terminal: {
@@ -224,32 +230,33 @@ const DEFAULT_CLIENT_SETTINGS: ClientSettings = {
     fontSize: 13,
   },
   msdp: normalizeMsdpVariableMap(defaultMsdpVariables),
-}
+};
 
-const OUTPUT_FONT_SIZE_OPTIONS = [12, 13, 14, 15, 16, 18, 20, 22, 24]
+const OUTPUT_FONT_SIZE_OPTIONS = [12, 13, 14, 15, 16, 18, 20, 22, 24];
 const OUTPUT_LINE_HEIGHT_OPTIONS = [
   { value: 1.35, label: 'Compact' },
   { value: 1.55, label: 'Normal' },
   { value: 1.75, label: 'Relaxed' },
-]
+];
 const SIDEBAR_FONT_OPTIONS: Array<{ value: SidebarFontFamily; label: string }> = [
   { value: 'sans', label: 'Sans serif' },
   { value: 'mono', label: 'Monospace' },
   { value: 'serif', label: 'Serif' },
-]
+];
 const SIDEBAR_FONT_FAMILIES: Record<SidebarFontFamily, string> = {
   sans: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   mono: 'var(--mono)',
   serif: 'ui-serif, Georgia, Cambria, "Times New Roman", serif',
-}
-const OVERRIDE_ONLY_MSDP_VARIABLE_KEYS = new Set<MsdpVariableKey>(overrideOnlyMsdpVariableKeys)
+};
+const OVERRIDE_ONLY_MSDP_VARIABLE_KEYS = new Set<MsdpVariableKey>(overrideOnlyMsdpVariableKeys);
 const OPTIONAL_DATA_DESCRIPTORS: Record<OptionalDataDescriptorId, OptionalDataDescriptor> = {
   title: {
     key: 'title',
     label: 'Title',
     unsupported: {
       title: 'Title unavailable',
-      detail: 'Current Luminari-Source does not emit TITLE. Use an override only when a server provides it.',
+      detail:
+        'Current Luminari-Source does not emit TITLE. Use an override only when a server provides it.',
     },
     waiting: {
       title: 'Waiting for title',
@@ -273,7 +280,8 @@ const OPTIONAL_DATA_DESCRIPTORS: Record<OptionalDataDescriptorId, OptionalDataDe
     label: 'Quest info',
     unsupported: {
       title: 'Structured quests unavailable',
-      detail: 'Current Luminari-Source does not emit QUEST_INFO. Configure an override only for servers that do.',
+      detail:
+        'Current Luminari-Source does not emit QUEST_INFO. Configure an override only for servers that do.',
     },
     waiting: {
       title: 'Waiting for quests',
@@ -324,7 +332,8 @@ const OPTIONAL_DATA_DESCRIPTORS: Record<OptionalDataDescriptorId, OptionalDataDe
     label: 'Minimap',
     unsupported: {
       title: 'Live minimap unavailable',
-      detail: 'MINIMAP is declared but not reliably populated. Room and exits remain the supported fallback.',
+      detail:
+        'MINIMAP is declared but not reliably populated. Room and exits remain the supported fallback.',
     },
     waiting: {
       title: 'Waiting for minimap',
@@ -391,7 +400,7 @@ const OPTIONAL_DATA_DESCRIPTORS: Record<OptionalDataDescriptorId, OptionalDataDe
       detail: 'The connection ended before affects could be evaluated.',
     },
   },
-}
+};
 const MSDP_FIELD_SUPPORT_NOTES: Partial<Record<MsdpVariableKey, string>> = {
   title: 'Future server support or explicit override required.',
   fortitude: 'Future server support or explicit override required.',
@@ -400,15 +409,16 @@ const MSDP_FIELD_SUPPORT_NOTES: Partial<Record<MsdpVariableKey, string>> = {
   damageBonus: 'Unconfirmed live data; use only with a server override.',
   minimap: 'Unconfirmed live data; room fallback remains supported.',
   questInfo: 'Structured quest data requires future server support or an override.',
-}
+};
 const MSDP_VARIABLE_GROUPS: Array<{
-  title: string
-  description: string
-  fields: Array<{ key: MsdpVariableKey; label: string }>
+  title: string;
+  description: string;
+  fields: Array<{ key: MsdpVariableKey; label: string }>;
 }> = [
   {
     title: 'Server and character',
-    description: 'Source-confirmed server metadata and character profile variables, with title left override-only.',
+    description:
+      'Source-confirmed server metadata and character profile variables, with title left override-only.',
     fields: [
       { key: 'serverId', label: 'Server ID' },
       { key: 'serverTime', label: 'Server time' },
@@ -426,7 +436,8 @@ const MSDP_VARIABLE_GROUPS: Array<{
   },
   {
     title: 'Resources and attributes',
-    description: 'Source-confirmed bars, ability scores, and combat summary variables; saves and damage bonus need overrides.',
+    description:
+      'Source-confirmed bars, ability scores, and combat summary variables; saves and damage bonus need overrides.',
     fields: [
       { key: 'health', label: 'Health' },
       { key: 'healthMax', label: 'Health max' },
@@ -466,7 +477,8 @@ const MSDP_VARIABLE_GROUPS: Array<{
   },
   {
     title: 'Collections',
-    description: 'Structured source-confirmed collection variables and the future quest override slot.',
+    description:
+      'Structured source-confirmed collection variables and the future quest override slot.',
     fields: [
       { key: 'actions', label: 'Actions' },
       { key: 'inventory', label: 'Inventory' },
@@ -487,268 +499,275 @@ const MSDP_VARIABLE_GROUPS: Array<{
       { key: 'tankHealthMax', label: 'Tank health max' },
     ],
   },
-]
+];
 
 const SIDEBAR_TABS: SidebarTab[] = [
   { id: 'character', label: 'Character' },
   { id: 'quests', label: 'Quests' },
   { id: 'group', label: 'Group' },
   { id: 'affects', label: 'Affects' },
-]
+];
 
 function App() {
-  const [uiSettings, setUiSettings] = useState<AppSettings>(appSettings)
-  const [mudState, setMudState] = useState<MudState>({})
-  const [host, setHost] = useState(DEFAULT_HOST)
-  const [port, setPort] = useState(DEFAULT_PORT)
+  const [uiSettings, setUiSettings] = useState<AppSettings>(appSettings);
+  const [mudState, setMudState] = useState<MudState>({});
+  const [host, setHost] = useState(DEFAULT_HOST);
+  const [port, setPort] = useState(DEFAULT_PORT);
   const [selectedMudId, setSelectedMudId] = useState(
-    findMatchingMudPresetId(appSettings.connection.muds, DEFAULT_HOST, DEFAULT_PORT) ?? CUSTOM_MUD_VALUE,
-  )
-  const [command, setCommand] = useState('')
-  const [commandHistory, setCommandHistory] = useState<string[]>([])
-  const [historyIndex, setHistoryIndex] = useState<number | null>(null)
-  const [historyDraft, setHistoryDraft] = useState('')
-  const [aliases, setAliases] = useState<AliasDefinition[]>(() => loadAliasesFromCookies())
-  const [triggers, setTriggers] = useState<TriggerDefinition[]>(() => loadTriggersFromCookies())
-  const [clientSettings, setClientSettings] = useState<ClientSettings>(() => loadClientSettingsFromCookies())
-  const [automationNotice, setAutomationNotice] = useState<AutomationNotice | null>(null)
+    findMatchingMudPresetId(appSettings.connection.muds, DEFAULT_HOST, DEFAULT_PORT) ??
+      CUSTOM_MUD_VALUE,
+  );
+  const [command, setCommand] = useState('');
+  const [commandHistory, setCommandHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState<number | null>(null);
+  const [historyDraft, setHistoryDraft] = useState('');
+  const [aliases, setAliases] = useState<AliasDefinition[]>(() => loadAliasesFromCookies());
+  const [triggers, setTriggers] = useState<TriggerDefinition[]>(() => loadTriggersFromCookies());
+  const [clientSettings, setClientSettings] = useState<ClientSettings>(() =>
+    loadClientSettingsFromCookies(),
+  );
+  const [automationNotice, setAutomationNotice] = useState<AutomationNotice | null>(null);
   const [terminalChunks, setTerminalChunks] = useState<string[]>([
     '<span class="terminal-muted">Connect to a LuminariMUD-compatible server to begin.</span>',
-  ])
-  const [proxyReady, setProxyReady] = useState(false)
-  const [status, setStatus] = useState<ConnectionStatus>('idle')
-  const [statusDetail, setStatusDetail] = useState('Awaiting connection.')
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true)
-  const [openAutomationMenu, setOpenAutomationMenu] = useState<AutomationMenuId | null>(null)
-  const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTabId>('character')
-  const socketRef = useRef<WebSocket | null>(null)
-  const terminalRef = useRef<HTMLDivElement | null>(null)
-  const commandInputRef = useRef<HTMLInputElement | null>(null)
-  const configFileInputRef = useRef<HTMLInputElement | null>(null)
-  const menuBarRef = useRef<HTMLDivElement | null>(null)
-  const ansiConverterRef = useRef(createAnsiConverter())
-  const triggerBufferRef = useRef('')
-  const statusRef = useRef<ConnectionStatus>('idle')
-  const aliasesRef = useRef<AliasDefinition[]>(aliases)
-  const triggersRef = useRef<TriggerDefinition[]>(triggers)
+  ]);
+  const [proxyReady, setProxyReady] = useState(false);
+  const [status, setStatus] = useState<ConnectionStatus>('idle');
+  const [statusDetail, setStatusDetail] = useState('Awaiting connection.');
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [openAutomationMenu, setOpenAutomationMenu] = useState<AutomationMenuId | null>(null);
+  const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTabId>('character');
+  const socketRef = useRef<WebSocket | null>(null);
+  const terminalRef = useRef<HTMLDivElement | null>(null);
+  const commandInputRef = useRef<HTMLInputElement | null>(null);
+  const configFileInputRef = useRef<HTMLInputElement | null>(null);
+  const menuBarRef = useRef<HTMLDivElement | null>(null);
+  const ansiConverterRef = useRef(createAnsiConverter());
+  const triggerBufferRef = useRef('');
+  const statusRef = useRef<ConnectionStatus>('idle');
+  const aliasesRef = useRef<AliasDefinition[]>(aliases);
+  const triggersRef = useRef<TriggerDefinition[]>(triggers);
 
   useEffect(() => {
-    document.title = uiSettings.personalization.browserTitle
-  }, [uiSettings.personalization.browserTitle])
+    document.title = uiSettings.personalization.browserTitle;
+  }, [uiSettings.personalization.browserTitle]);
 
   useEffect(() => {
-    statusRef.current = status
-  }, [status])
+    statusRef.current = status;
+  }, [status]);
 
   useEffect(() => {
-    aliasesRef.current = aliases
-    saveAliasesToCookies(aliases)
-  }, [aliases])
+    aliasesRef.current = aliases;
+    saveAliasesToCookies(aliases);
+  }, [aliases]);
 
   useEffect(() => {
-    triggersRef.current = triggers
-    saveTriggersToCookies(triggers)
-  }, [triggers])
+    triggersRef.current = triggers;
+    saveTriggersToCookies(triggers);
+  }, [triggers]);
 
   useEffect(() => {
-    saveClientSettingsToCookies(normalizeClientSettings(clientSettings))
-  }, [clientSettings])
+    saveClientSettingsToCookies(normalizeClientSettings(clientSettings));
+  }, [clientSettings]);
 
   useEffect(() => {
     if (!openAutomationMenu) {
-      return
+      return;
     }
 
     function handlePointerDown(event: PointerEvent) {
       if (event.target instanceof Node && menuBarRef.current?.contains(event.target)) {
-        return
+        return;
       }
 
-      setOpenAutomationMenu(null)
+      setOpenAutomationMenu(null);
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
-        setOpenAutomationMenu(null)
+        setOpenAutomationMenu(null);
       }
     }
 
-    window.addEventListener('pointerdown', handlePointerDown)
-    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      window.removeEventListener('pointerdown', handlePointerDown)
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [openAutomationMenu])
+      window.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [openAutomationMenu]);
 
   useEffect(() => {
-    let active = true
+    let active = true;
 
     async function loadSettings() {
       try {
-        const response = await fetch(getSettingsUrl())
+        const response = await fetch(getSettingsUrl());
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`)
+          throw new Error(`HTTP ${response.status}`);
         }
 
-        const settings = (await response.json()) as AppSettings
+        const settings = (await response.json()) as AppSettings;
         if (!active) {
-          return
+          return;
         }
 
-        setUiSettings(settings)
-        setHost(settings.connection.defaultHost)
-        setPort(settings.connection.defaultPort)
+        setUiSettings(settings);
+        setHost(settings.connection.defaultHost);
+        setPort(settings.connection.defaultPort);
         setSelectedMudId(
           findMatchingMudPresetId(
             settings.connection.muds,
             settings.connection.defaultHost,
             settings.connection.defaultPort,
           ) ?? CUSTOM_MUD_VALUE,
-        )
+        );
       } catch (error) {
-        console.error('Failed to load app settings from /api/settings', error)
+        console.error('Failed to load app settings from /api/settings', error);
       }
     }
 
-    void loadSettings()
+    void loadSettings();
 
     return () => {
-      active = false
-    }
-  }, [])
+      active = false;
+    };
+  }, []);
 
   const sendMessage = useCallback((message: ClientMessage) => {
-    const socket = socketRef.current
+    const socket = socketRef.current;
     if (!socket || socket.readyState !== WebSocket.OPEN) {
-      statusRef.current = 'error'
-      setStatus('error')
-      setStatusDetail('The local WebSocket proxy is unavailable.')
-      setIsHeaderVisible(true)
-      return
+      statusRef.current = 'error';
+      setStatus('error');
+      setStatusDetail('The local WebSocket proxy is unavailable.');
+      setIsHeaderVisible(true);
+      return;
     }
 
-    socket.send(JSON.stringify(message))
-  }, [])
+    socket.send(JSON.stringify(message));
+  }, []);
 
   const sendInputLine = useCallback(
     (text: string) => {
       if (statusRef.current !== 'connected') {
-        return
+        return;
       }
 
-      sendMessage({ type: 'input', text })
+      sendMessage({ type: 'input', text });
     },
     [sendMessage],
-  )
+  );
 
   const rememberCommand = useCallback((text: string) => {
-    const normalized = text.trim().toLowerCase()
+    const normalized = text.trim().toLowerCase();
     if (!normalized || MOVEMENT_COMMANDS.has(normalized)) {
-      return
+      return;
     }
 
-    setCommandHistory((current) => [...current, text].slice(-COMMAND_HISTORY_LIMIT))
-  }, [])
+    setCommandHistory((current) => [...current, text].slice(-COMMAND_HISTORY_LIMIT));
+  }, []);
 
   const dispatchInputText = useCallback(
     (text: string, options?: { rememberInHistory?: boolean }) => {
-      const trimmed = text.trim()
+      const trimmed = text.trim();
       if (!trimmed) {
-        return
+        return;
       }
 
       if (options?.rememberInHistory ?? true) {
-        rememberCommand(trimmed)
+        rememberCommand(trimmed);
       }
 
-      const expandedCommands = expandAliasCommands(trimmed, aliasesRef.current)
+      const expandedCommands = expandAliasCommands(trimmed, aliasesRef.current);
       for (const expandedCommand of expandedCommands) {
-        sendInputLine(expandedCommand)
+        sendInputLine(expandedCommand);
       }
     },
     [rememberCommand, sendInputLine],
-  )
+  );
 
   useEffect(() => {
-    const socket = new WebSocket(getWebSocketUrl())
-    socketRef.current = socket
+    const socket = new WebSocket(getWebSocketUrl());
+    socketRef.current = socket;
 
     socket.addEventListener('open', () => {
-      setProxyReady(true)
+      setProxyReady(true);
       setStatusDetail((current) =>
         current === 'Awaiting connection.' ? 'Proxy ready. Connect to start playing.' : current,
-      )
-    })
+      );
+    });
 
     socket.addEventListener('close', () => {
-      setProxyReady(false)
-      statusRef.current = 'error'
-      setStatus('error')
-      setStatusDetail('The local WebSocket proxy is unavailable.')
-      setIsHeaderVisible(true)
-      setMudState({})
-      triggerBufferRef.current = ''
-    })
+      setProxyReady(false);
+      statusRef.current = 'error';
+      setStatus('error');
+      setStatusDetail('The local WebSocket proxy is unavailable.');
+      setIsHeaderVisible(true);
+      setMudState({});
+      triggerBufferRef.current = '';
+    });
 
     socket.addEventListener('message', (event) => {
-      const message = parseServerMessage(event.data)
+      const message = parseServerMessage(event.data);
       if (!message) {
-        return
+        return;
       }
 
       if (message.type === 'terminal') {
-        const triggerResult = consumeTriggerText(message.text, triggerBufferRef.current, triggersRef.current)
-        triggerBufferRef.current = triggerResult.buffer
+        const triggerResult = consumeTriggerText(
+          message.text,
+          triggerBufferRef.current,
+          triggersRef.current,
+        );
+        triggerBufferRef.current = triggerResult.buffer;
         for (const triggerCommand of triggerResult.commands) {
-          dispatchInputText(triggerCommand, { rememberInHistory: false })
+          dispatchInputText(triggerCommand, { rememberInHistory: false });
         }
 
-        const html = ansiConverterRef.current.toHtml(message.text)
+        const html = ansiConverterRef.current.toHtml(message.text);
         setTerminalChunks((current) => {
-          const next = [...current, html]
-          return next.slice(-TERMINAL_CHUNK_LIMIT)
-        })
-        return
+          const next = [...current, html];
+          return next.slice(-TERMINAL_CHUNK_LIMIT);
+        });
+        return;
       }
 
       if (message.type === 'connection-status') {
-        statusRef.current = message.status
-        setStatus(message.status)
-        setStatusDetail(message.detail)
-        setIsHeaderVisible(message.status !== 'connected')
+        statusRef.current = message.status;
+        setStatus(message.status);
+        setStatusDetail(message.detail);
+        setIsHeaderVisible(message.status !== 'connected');
 
         if (message.status !== 'connected') {
-          setMudState({})
+          setMudState({});
         }
 
         if (message.status === 'connected') {
-          ansiConverterRef.current = createAnsiConverter()
-          triggerBufferRef.current = ''
+          ansiConverterRef.current = createAnsiConverter();
+          triggerBufferRef.current = '';
           setTerminalChunks([
             '<span class="terminal-muted">Connected. Waiting for room text and MSDP updates...</span>',
-          ])
+          ]);
         } else {
-          triggerBufferRef.current = ''
+          triggerBufferRef.current = '';
         }
 
-        return
+        return;
       }
 
-      setMudState((current) => ({ ...current, ...message.state }))
-    })
+      setMudState((current) => ({ ...current, ...message.state }));
+    });
 
     return () => {
-      socket.close()
-      socketRef.current = null
-    }
-  }, [dispatchInputText])
+      socket.close();
+      socketRef.current = null;
+    };
+  }, [dispatchInputText]);
 
   useEffect(() => {
     if (terminalRef.current && clientSettings.terminal.autoScroll) {
-      terminalRef.current.scrollTop = terminalRef.current.scrollHeight
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
-  }, [clientSettings.terminal.autoScroll, terminalChunks])
+  }, [clientSettings.terminal.autoScroll, terminalChunks]);
 
   const bars = useMemo<BarConfig[]>(
     () => [
@@ -792,11 +811,14 @@ function App() {
       },
     ],
     [mudState],
-  )
+  );
 
-  const canConnect = proxyReady && status !== 'connecting'
-  const connected = status === 'connected'
-  const activeMsdpVariables = useMemo(() => normalizeMsdpVariableMap(clientSettings.msdp), [clientSettings.msdp])
+  const canConnect = proxyReady && status !== 'connecting';
+  const connected = status === 'connected';
+  const activeMsdpVariables = useMemo(
+    () => normalizeMsdpVariableMap(clientSettings.msdp),
+    [clientSettings.msdp],
+  );
   const terminalOutputStyle = useMemo<CSSProperties>(
     () => ({
       fontSize: `${clientSettings.terminal.fontSize}px`,
@@ -804,8 +826,12 @@ function App() {
       whiteSpace: clientSettings.terminal.wrapLines ? 'pre-wrap' : 'pre',
       wordBreak: clientSettings.terminal.wrapLines ? 'break-word' : 'normal',
     }),
-    [clientSettings.terminal.fontSize, clientSettings.terminal.lineHeight, clientSettings.terminal.wrapLines],
-  )
+    [
+      clientSettings.terminal.fontSize,
+      clientSettings.terminal.lineHeight,
+      clientSettings.terminal.wrapLines,
+    ],
+  );
   const minimapStyle = useMemo<CSSProperties>(
     () => ({
       fontSize: `${clientSettings.minimap.fontSize}px`,
@@ -813,23 +839,23 @@ function App() {
       minHeight: `${clientSettings.minimap.paneHeight}rem`,
     }),
     [clientSettings.minimap.fontSize, clientSettings.minimap.paneHeight],
-  )
+  );
   const sidebarPanelStyle = useMemo<CSSProperties>(
     () => ({
       fontFamily: SIDEBAR_FONT_FAMILIES[clientSettings.sidebar.fontFamily],
       fontSize: `${clientSettings.sidebar.fontSize}px`,
     }),
     [clientSettings.sidebar.fontFamily, clientSettings.sidebar.fontSize],
-  )
+  );
 
   const mapOutput = useMemo(
     () => buildMapOutput(mudState, status, activeMsdpVariables),
     [activeMsdpVariables, mudState, status],
-  )
+  );
   const selectedMudPreset = useMemo(
     () => uiSettings.connection.muds.find((mud) => mud.id === selectedMudId),
     [selectedMudId, uiSettings.connection.muds],
-  )
+  );
   const abilityScores = useMemo(
     () => [
       { label: 'STR', value: mudState.strength },
@@ -839,8 +865,15 @@ function App() {
       { label: 'WIS', value: mudState.wisdom },
       { label: 'CHA', value: mudState.charisma },
     ],
-    [mudState.charisma, mudState.constitution, mudState.dexterity, mudState.intelligence, mudState.strength, mudState.wisdom],
-  )
+    [
+      mudState.charisma,
+      mudState.constitution,
+      mudState.dexterity,
+      mudState.intelligence,
+      mudState.strength,
+      mudState.wisdom,
+    ],
+  );
   const savingThrows = useMemo(
     () => [
       {
@@ -875,250 +908,283 @@ function App() {
       },
     ],
     [activeMsdpVariables, mudState.fortitude, mudState.reflex, mudState.willpower, status],
-  )
+  );
   const characterHeading = useMemo(
     () => formatCharacterHeading(mudState.characterName, mudState.title),
     [mudState.characterName, mudState.title],
-  )
+  );
   const titleNotice = useMemo(
-    () => getTextAvailabilityNotice(mudState.title, OPTIONAL_DATA_DESCRIPTORS.title, status, activeMsdpVariables),
+    () =>
+      getTextAvailabilityNotice(
+        mudState.title,
+        OPTIONAL_DATA_DESCRIPTORS.title,
+        status,
+        activeMsdpVariables,
+      ),
     [activeMsdpVariables, mudState.title, status],
-  )
+  );
   const damageBonusNotice = useMemo(() => {
-    if (hasReportedNumber(mudState.damageBonus) || !isMsdpVariableConfigured(activeMsdpVariables, 'damageBonus')) {
-      return null
+    if (
+      hasReportedNumber(mudState.damageBonus) ||
+      !isMsdpVariableConfigured(activeMsdpVariables, 'damageBonus')
+    ) {
+      return null;
     }
 
-    return getMissingAvailabilityNotice(OPTIONAL_DATA_DESCRIPTORS.damageBonus, status, activeMsdpVariables)
-  }, [activeMsdpVariables, mudState.damageBonus, status])
+    return getMissingAvailabilityNotice(
+      OPTIONAL_DATA_DESCRIPTORS.damageBonus,
+      status,
+      activeMsdpVariables,
+    );
+  }, [activeMsdpVariables, mudState.damageBonus, status]);
   const questInfoNotice = useMemo(
-    () => getMudValueAvailabilityNotice(mudState.questInfo, OPTIONAL_DATA_DESCRIPTORS.questInfo, status, activeMsdpVariables),
+    () =>
+      getMudValueAvailabilityNotice(
+        mudState.questInfo,
+        OPTIONAL_DATA_DESCRIPTORS.questInfo,
+        status,
+        activeMsdpVariables,
+      ),
     [activeMsdpVariables, mudState.questInfo, status],
-  )
+  );
   const groupNotice = useMemo(
-    () => getMudValueAvailabilityNotice(mudState.group, OPTIONAL_DATA_DESCRIPTORS.group, status, activeMsdpVariables),
+    () =>
+      getMudValueAvailabilityNotice(
+        mudState.group,
+        OPTIONAL_DATA_DESCRIPTORS.group,
+        status,
+        activeMsdpVariables,
+      ),
     [activeMsdpVariables, mudState.group, status],
-  )
+  );
   const affectsNotice = useMemo(
-    () => getMudValueAvailabilityNotice(mudState.affects, OPTIONAL_DATA_DESCRIPTORS.affects, status, activeMsdpVariables),
+    () =>
+      getMudValueAvailabilityNotice(
+        mudState.affects,
+        OPTIONAL_DATA_DESCRIPTORS.affects,
+        status,
+        activeMsdpVariables,
+      ),
     [activeMsdpVariables, mudState.affects, status],
-  )
+  );
 
   useEffect(() => {
     if (!proxyReady) {
-      return
+      return;
     }
 
-    focusCommandInput(commandInputRef.current)
-  }, [connected, proxyReady])
+    focusCommandInput(commandInputRef.current);
+  }, [connected, proxyReady]);
 
   useEffect(() => {
     if (!connected) {
-      return
+      return;
     }
 
     function handlePointerDown(event: PointerEvent) {
       if (event.target === commandInputRef.current || shouldPreservePointerFocus(event.target)) {
-        return
+        return;
       }
 
-      focusCommandInput(commandInputRef.current)
+      focusCommandInput(commandInputRef.current);
     }
 
-    window.addEventListener('pointerdown', handlePointerDown)
+    window.addEventListener('pointerdown', handlePointerDown);
     return () => {
-      window.removeEventListener('pointerdown', handlePointerDown)
-    }
-  }, [connected])
+      window.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [connected]);
 
   useEffect(() => {
     if (!connected) {
-      return
+      return;
     }
 
-    sendMessage({ type: 'msdp-config', msdpVariables: activeMsdpVariables })
-  }, [activeMsdpVariables, connected, sendMessage])
+    sendMessage({ type: 'msdp-config', msdpVariables: activeMsdpVariables });
+  }, [activeMsdpVariables, connected, sendMessage]);
 
   useEffect(() => {
     if (!connected) {
-      return
+      return;
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.altKey || event.ctrlKey || event.metaKey) {
-        return
+        return;
       }
 
-      const command = NUMPAD_COMMANDS[event.code]
+      const command = NUMPAD_COMMANDS[event.code];
       if (!command) {
-        return
+        return;
       }
 
-      event.preventDefault()
-      setHistoryIndex(null)
-      setHistoryDraft('')
-      setCommand('')
-      dispatchInputText(command)
-      focusCommandInput(commandInputRef.current)
+      event.preventDefault();
+      setHistoryIndex(null);
+      setHistoryDraft('');
+      setCommand('');
+      dispatchInputText(command);
+      focusCommandInput(commandInputRef.current);
     }
 
-    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [connected, dispatchInputText])
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [connected, dispatchInputText]);
 
   function handleConnectionSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+    event.preventDefault();
 
     if (connected) {
-      sendMessage({ type: 'disconnect' })
-      return
+      sendMessage({ type: 'disconnect' });
+      return;
     }
 
-    statusRef.current = 'connecting'
-    setStatus('connecting')
-    setStatusDetail(`Connecting to ${host}:${port}...`)
-    sendMessage({ type: 'connect', host, port, msdpVariables: activeMsdpVariables })
+    statusRef.current = 'connecting';
+    setStatus('connecting');
+    setStatusDetail(`Connecting to ${host}:${port}...`);
+    sendMessage({ type: 'connect', host, port, msdpVariables: activeMsdpVariables });
   }
 
   function handleMudPresetChange(mudId: string) {
-    setSelectedMudId(mudId)
+    setSelectedMudId(mudId);
     if (mudId === CUSTOM_MUD_VALUE) {
-      return
+      return;
     }
 
-    const preset = uiSettings.connection.muds.find((mud) => mud.id === mudId)
+    const preset = uiSettings.connection.muds.find((mud) => mud.id === mudId);
     if (!preset) {
-      return
+      return;
     }
 
-    setHost(preset.host)
-    setPort(preset.port)
+    setHost(preset.host);
+    setPort(preset.port);
   }
 
   function handleHostChange(nextHost: string) {
-    setHost(nextHost)
+    setHost(nextHost);
     setSelectedMudId(
       findMatchingMudPresetId(uiSettings.connection.muds, nextHost, port) ?? CUSTOM_MUD_VALUE,
-    )
+    );
   }
 
   function handlePortChange(nextPort: number) {
-    setPort(nextPort)
+    setPort(nextPort);
     setSelectedMudId(
       findMatchingMudPresetId(uiSettings.connection.muds, host, nextPort) ?? CUSTOM_MUD_VALUE,
-    )
+    );
   }
 
   function handleCommandSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+    event.preventDefault();
 
     if (!connected) {
-      return
+      return;
     }
 
-    const trimmedCommand = command.trim()
+    const trimmedCommand = command.trim();
 
-    setHistoryIndex(null)
-    setHistoryDraft('')
+    setHistoryIndex(null);
+    setHistoryDraft('');
 
     if (!trimmedCommand) {
-      sendInputLine('')
+      sendInputLine('');
     } else {
-      dispatchInputText(command)
+      dispatchInputText(command);
     }
 
-    setCommand('')
-    focusCommandInput(commandInputRef.current)
+    setCommand('');
+    focusCommandInput(commandInputRef.current);
   }
 
   function handleCommandKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
     if (event.altKey || event.ctrlKey || event.metaKey) {
-      return
+      return;
     }
 
     if (event.key === 'Tab') {
-      const prefix = command.trim().toLowerCase()
+      const prefix = command.trim().toLowerCase();
       if (!prefix) {
-        return
+        return;
       }
 
       const matchingCommands = commandHistory.filter((entry) =>
         entry.trim().toLowerCase().startsWith(prefix),
-      )
+      );
       if (matchingCommands.length === 0) {
-        return
+        return;
       }
 
-      event.preventDefault()
-      const completedCommand = matchingCommands[matchingCommands.length - 1]
-      setCommand(completedCommand)
-      setHistoryIndex(null)
-      setHistoryDraft(completedCommand)
-      return
+      event.preventDefault();
+      const completedCommand = matchingCommands[matchingCommands.length - 1];
+      setCommand(completedCommand);
+      setHistoryIndex(null);
+      setHistoryDraft(completedCommand);
+      return;
     }
 
     if (event.key === 'ArrowUp') {
       if (commandHistory.length === 0) {
-        return
+        return;
       }
 
-      event.preventDefault()
+      event.preventDefault();
 
       if (historyIndex === null) {
-        setHistoryDraft(command)
-        setHistoryIndex(commandHistory.length - 1)
-        setCommand(commandHistory[commandHistory.length - 1])
-        return
+        setHistoryDraft(command);
+        setHistoryIndex(commandHistory.length - 1);
+        setCommand(commandHistory[commandHistory.length - 1]);
+        return;
       }
 
       if (historyIndex > 0) {
-        setHistoryIndex(historyIndex - 1)
-        setCommand(commandHistory[historyIndex - 1])
+        setHistoryIndex(historyIndex - 1);
+        setCommand(commandHistory[historyIndex - 1]);
       }
 
-      return
+      return;
     }
 
     if (event.key !== 'ArrowDown' || historyIndex === null) {
-      return
+      return;
     }
 
-    event.preventDefault()
+    event.preventDefault();
 
     if (historyIndex < commandHistory.length - 1) {
-      setHistoryIndex(historyIndex + 1)
-      setCommand(commandHistory[historyIndex + 1])
-      return
+      setHistoryIndex(historyIndex + 1);
+      setCommand(commandHistory[historyIndex + 1]);
+      return;
     }
 
-    setHistoryIndex(null)
-    setCommand(historyDraft)
+    setHistoryIndex(null);
+    setCommand(historyDraft);
   }
 
   function updateAlias(aliasId: string, updates: Partial<AliasDefinition>) {
-    setAliases((current) => current.map((alias) => (alias.id === aliasId ? { ...alias, ...updates } : alias)))
+    setAliases((current) =>
+      current.map((alias) => (alias.id === aliasId ? { ...alias, ...updates } : alias)),
+    );
   }
 
   function updateTrigger(triggerId: string, updates: Partial<TriggerDefinition>) {
     setTriggers((current) =>
       current.map((trigger) => (trigger.id === triggerId ? { ...trigger, ...updates } : trigger)),
-    )
+    );
   }
 
   function toggleAutomationMenu(menuId: AutomationMenuId) {
-    setOpenAutomationMenu((current) => (current === menuId ? null : menuId))
+    setOpenAutomationMenu((current) => (current === menuId ? null : menuId));
   }
 
   function handleAddAlias() {
-    setAliases((current) => [...current, createEmptyAlias()])
-    setAutomationNotice(null)
+    setAliases((current) => [...current, createEmptyAlias()]);
+    setAutomationNotice(null);
   }
 
   function handleAddTrigger() {
-    setTriggers((current) => [...current, createEmptyTrigger()])
-    setAutomationNotice(null)
+    setTriggers((current) => [...current, createEmptyTrigger()]);
+    setAutomationNotice(null);
   }
 
   function updateTerminalSettings(updates: Partial<ClientSettings['terminal']>) {
@@ -1128,8 +1194,8 @@ function App() {
         ...current.terminal,
         ...updates,
       },
-    }))
-    setAutomationNotice(null)
+    }));
+    setAutomationNotice(null);
   }
 
   function updateMinimapSettings(updates: Partial<ClientSettings['minimap']>) {
@@ -1139,8 +1205,8 @@ function App() {
         ...current.minimap,
         ...updates,
       },
-    }))
-    setAutomationNotice(null)
+    }));
+    setAutomationNotice(null);
   }
 
   function updateSidebarSettings(updates: Partial<ClientSettings['sidebar']>) {
@@ -1150,8 +1216,8 @@ function App() {
         ...current.sidebar,
         ...updates,
       },
-    }))
-    setAutomationNotice(null)
+    }));
+    setAutomationNotice(null);
   }
 
   function updateMsdpVariable(key: MsdpVariableKey, nextValue: string) {
@@ -1161,8 +1227,8 @@ function App() {
         ...current.msdp,
         [key]: nextValue,
       }),
-    }))
-    setAutomationNotice(null)
+    }));
+    setAutomationNotice(null);
   }
 
   function handleConfigExport() {
@@ -1172,45 +1238,50 @@ function App() {
       settings: normalizeClientSettings(clientSettings),
       aliases,
       triggers,
-    })
-    setOpenAutomationMenu(null)
+    });
+    setOpenAutomationMenu(null);
     setAutomationNotice({
       kind: 'success',
       text: `Saved settings, ${aliases.length} alias${pluralize(aliases.length)}, and ${triggers.length} trigger${pluralize(triggers.length)} to file.`,
-    })
+    });
   }
 
   async function handleConfigImport(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    event.target.value = ''
+    const file = event.target.files?.[0];
+    event.target.value = '';
     if (!file) {
-      return
+      return;
     }
 
     try {
-      const importedConfig = parseClientConfigImport(await file.text(), clientSettings, aliases, triggers)
-      setClientSettings(importedConfig.settings)
-      setAliases(importedConfig.aliases)
-      setTriggers(importedConfig.triggers)
-      setOpenAutomationMenu(null)
+      const importedConfig = parseClientConfigImport(
+        await file.text(),
+        clientSettings,
+        aliases,
+        triggers,
+      );
+      setClientSettings(importedConfig.settings);
+      setAliases(importedConfig.aliases);
+      setTriggers(importedConfig.triggers);
+      setOpenAutomationMenu(null);
       setAutomationNotice({
         kind: 'success',
         text: `Loaded settings, ${importedConfig.aliases.length} alias${pluralize(importedConfig.aliases.length)}, and ${importedConfig.triggers.length} trigger${pluralize(importedConfig.triggers.length)} from ${file.name}.`,
-      })
+      });
     } catch (error) {
       setAutomationNotice({
         kind: 'error',
         text: error instanceof Error ? error.message : 'Failed to load configuration.',
-      })
+      });
     }
   }
 
   function handleTerminalClick(event: ReactMouseEvent<HTMLDivElement>) {
     if (!connected || event.button !== 0 || hasExpandedSelection()) {
-      return
+      return;
     }
 
-    focusCommandInput(commandInputRef.current)
+    focusCommandInput(commandInputRef.current);
   }
 
   return (
@@ -1218,7 +1289,11 @@ function App() {
       <div ref={menuBarRef} className="window-menu-bar panel" data-prevent-command-focus>
         <div className="window-menu-links" role="menubar" aria-label="Window menu">
           {connected ? (
-            <button type="button" className="window-menu-link" onClick={() => setIsHeaderVisible((current) => !current)}>
+            <button
+              type="button"
+              className="window-menu-link"
+              onClick={() => setIsHeaderVisible((current) => !current)}
+            >
               {isHeaderVisible ? 'Hide Header' : 'Show Header'}
             </button>
           ) : null}
@@ -1250,7 +1325,8 @@ function App() {
                   </div>
 
                   <p className="automation-menu-help">
-                    Use <code>*</code> as a wildcard and <code>%1</code> through <code>%9</code> in expansions.
+                    Use <code>*</code> as a wildcard and <code>%1</code> through <code>%9</code> in
+                    expansions.
                   </p>
 
                   {aliases.length === 0 ? (
@@ -1264,7 +1340,9 @@ function App() {
                               <input
                                 type="checkbox"
                                 checked={alias.enabled}
-                                onChange={(event) => updateAlias(alias.id, { enabled: event.target.checked })}
+                                onChange={(event) =>
+                                  updateAlias(alias.id, { enabled: event.target.checked })
+                                }
                               />
                               <span>{alias.enabled ? 'Enabled' : 'Disabled'}</span>
                             </label>
@@ -1272,7 +1350,11 @@ function App() {
                             <button
                               type="button"
                               className="automation-delete"
-                              onClick={() => setAliases((current) => current.filter((entry) => entry.id !== alias.id))}
+                              onClick={() =>
+                                setAliases((current) =>
+                                  current.filter((entry) => entry.id !== alias.id),
+                                )
+                              }
                             >
                               Delete
                             </button>
@@ -1283,7 +1365,9 @@ function App() {
                               <span>Pattern</span>
                               <input
                                 value={alias.pattern}
-                                onChange={(event) => updateAlias(alias.id, { pattern: event.target.value })}
+                                onChange={(event) =>
+                                  updateAlias(alias.id, { pattern: event.target.value })
+                                }
                                 placeholder="k *"
                               />
                             </label>
@@ -1293,7 +1377,9 @@ function App() {
                               <textarea
                                 rows={2}
                                 value={alias.expansion}
-                                onChange={(event) => updateAlias(alias.id, { expansion: event.target.value })}
+                                onChange={(event) =>
+                                  updateAlias(alias.id, { expansion: event.target.value })
+                                }
                                 placeholder="kill %1"
                               />
                             </label>
@@ -1323,7 +1409,10 @@ function App() {
                   <div className="automation-section-header">
                     <div>
                       <h3>Triggers</h3>
-                      <p>Literal trigger patterns match anywhere in a line; wildcards let you capture text.</p>
+                      <p>
+                        Literal trigger patterns match anywhere in a line; wildcards let you capture
+                        text.
+                      </p>
                     </div>
 
                     <div className="automation-actions">
@@ -1334,7 +1423,8 @@ function App() {
                   </div>
 
                   <p className="automation-menu-help">
-                    Use <code>*</code> as a wildcard and <code>%1</code> through <code>%9</code> in actions.
+                    Use <code>*</code> as a wildcard and <code>%1</code> through <code>%9</code> in
+                    actions.
                   </p>
 
                   {triggers.length === 0 ? (
@@ -1348,7 +1438,9 @@ function App() {
                               <input
                                 type="checkbox"
                                 checked={trigger.enabled}
-                                onChange={(event) => updateTrigger(trigger.id, { enabled: event.target.checked })}
+                                onChange={(event) =>
+                                  updateTrigger(trigger.id, { enabled: event.target.checked })
+                                }
                               />
                               <span>{trigger.enabled ? 'Enabled' : 'Disabled'}</span>
                             </label>
@@ -1356,7 +1448,11 @@ function App() {
                             <button
                               type="button"
                               className="automation-delete"
-                              onClick={() => setTriggers((current) => current.filter((entry) => entry.id !== trigger.id))}
+                              onClick={() =>
+                                setTriggers((current) =>
+                                  current.filter((entry) => entry.id !== trigger.id),
+                                )
+                              }
                             >
                               Delete
                             </button>
@@ -1367,7 +1463,9 @@ function App() {
                               <span>Pattern</span>
                               <input
                                 value={trigger.pattern}
-                                onChange={(event) => updateTrigger(trigger.id, { pattern: event.target.value })}
+                                onChange={(event) =>
+                                  updateTrigger(trigger.id, { pattern: event.target.value })
+                                }
                                 placeholder="* tells you '*'"
                               />
                             </label>
@@ -1377,7 +1475,9 @@ function App() {
                               <textarea
                                 rows={2}
                                 value={trigger.action}
-                                onChange={(event) => updateTrigger(trigger.id, { action: event.target.value })}
+                                onChange={(event) =>
+                                  updateTrigger(trigger.id, { action: event.target.value })
+                                }
                                 placeholder="tell %1 Thanks for the message."
                               />
                             </label>
@@ -1412,7 +1512,8 @@ function App() {
                   </div>
 
                   <p className="automation-menu-help">
-                    These mappings are saved with your client settings and sent to the proxy when you connect.
+                    These mappings are saved with your client settings and sent to the proxy when
+                    you connect.
                   </p>
 
                   <div className="settings-list">
@@ -1425,24 +1526,32 @@ function App() {
 
                         <div className="msdp-vars-grid">
                           {group.fields.map((field) => {
-                            const isOverrideOnly = isOverrideOnlyMsdpVariableKey(field.key)
-                            const supportNote = getMsdpFieldSupportNote(field.key)
+                            const isOverrideOnly = isOverrideOnlyMsdpVariableKey(field.key);
+                            const supportNote = getMsdpFieldSupportNote(field.key);
 
                             return (
                               <label key={field.key}>
                                 <span className="msdp-var-label">
                                   {field.label}
-                                  {isOverrideOnly ? <span className="msdp-var-badge">Future/override</span> : null}
+                                  {isOverrideOnly ? (
+                                    <span className="msdp-var-badge">Future/override</span>
+                                  ) : null}
                                 </span>
                                 <input
                                   aria-label={`${field.label} MSDP variable${supportNote ? `. ${supportNote}` : ''}`}
                                   value={clientSettings.msdp[field.key]}
-                                  onChange={(event) => updateMsdpVariable(field.key, event.target.value)}
-                                  placeholder={defaultMsdpVariables[field.key] || 'Optional override'}
+                                  onChange={(event) =>
+                                    updateMsdpVariable(field.key, event.target.value)
+                                  }
+                                  placeholder={
+                                    defaultMsdpVariables[field.key] || 'Optional override'
+                                  }
                                 />
-                                {supportNote ? <small className="msdp-var-support">{supportNote}</small> : null}
+                                {supportNote ? (
+                                  <small className="msdp-var-support">{supportNote}</small>
+                                ) : null}
                               </label>
-                            )
+                            );
                           })}
                         </div>
                       </section>
@@ -1483,7 +1592,8 @@ function App() {
                   </div>
 
                   <p className="automation-menu-help">
-                    Saved config files include display settings, MSDP variable mappings, aliases, and triggers.
+                    Saved config files include display settings, MSDP variable mappings, aliases,
+                    and triggers.
                   </p>
 
                   <div className="settings-list">
@@ -1499,7 +1609,9 @@ function App() {
                           <select
                             value={String(clientSettings.terminal.fontSize)}
                             onChange={(event) =>
-                              updateTerminalSettings({ fontSize: Number.parseInt(event.target.value, 10) })
+                              updateTerminalSettings({
+                                fontSize: Number.parseInt(event.target.value, 10),
+                              })
                             }
                           >
                             {OUTPUT_FONT_SIZE_OPTIONS.map((fontSize) => (
@@ -1515,7 +1627,9 @@ function App() {
                           <select
                             value={String(clientSettings.terminal.lineHeight)}
                             onChange={(event) =>
-                              updateTerminalSettings({ lineHeight: Number.parseFloat(event.target.value) })
+                              updateTerminalSettings({
+                                lineHeight: Number.parseFloat(event.target.value),
+                              })
                             }
                           >
                             {OUTPUT_LINE_HEIGHT_OPTIONS.map((option) => (
@@ -1532,7 +1646,9 @@ function App() {
                           <input
                             type="checkbox"
                             checked={clientSettings.terminal.autoScroll}
-                            onChange={(event) => updateTerminalSettings({ autoScroll: event.target.checked })}
+                            onChange={(event) =>
+                              updateTerminalSettings({ autoScroll: event.target.checked })
+                            }
                           />
                           <span>Auto-scroll when new output arrives</span>
                         </label>
@@ -1541,7 +1657,9 @@ function App() {
                           <input
                             type="checkbox"
                             checked={clientSettings.terminal.wrapLines}
-                            onChange={(event) => updateTerminalSettings({ wrapLines: event.target.checked })}
+                            onChange={(event) =>
+                              updateTerminalSettings({ wrapLines: event.target.checked })
+                            }
                           />
                           <span>Wrap long lines in the output window</span>
                         </label>
@@ -1565,9 +1683,9 @@ function App() {
                             inputMode="numeric"
                             value={clientSettings.minimap.fontSize}
                             onChange={(event) => {
-                              const nextValue = parsePositiveIntegerInput(event.target.value)
+                              const nextValue = parsePositiveIntegerInput(event.target.value);
                               if (nextValue !== null) {
-                                updateMinimapSettings({ fontSize: nextValue })
+                                updateMinimapSettings({ fontSize: nextValue });
                               }
                             }}
                           />
@@ -1583,9 +1701,9 @@ function App() {
                             inputMode="numeric"
                             value={clientSettings.minimap.paneHeight}
                             onChange={(event) => {
-                              const nextValue = parsePositiveIntegerInput(event.target.value)
+                              const nextValue = parsePositiveIntegerInput(event.target.value);
                               if (nextValue !== null) {
-                                updateMinimapSettings({ paneHeight: nextValue })
+                                updateMinimapSettings({ paneHeight: nextValue });
                               }
                             }}
                           />
@@ -1606,7 +1724,7 @@ function App() {
                             value={clientSettings.sidebar.fontFamily}
                             onChange={(event) => {
                               if (isSidebarFontFamily(event.target.value)) {
-                                updateSidebarSettings({ fontFamily: event.target.value })
+                                updateSidebarSettings({ fontFamily: event.target.value });
                               }
                             }}
                           >
@@ -1628,9 +1746,9 @@ function App() {
                             inputMode="numeric"
                             value={clientSettings.sidebar.fontSize}
                             onChange={(event) => {
-                              const nextValue = parsePositiveIntegerInput(event.target.value)
+                              const nextValue = parsePositiveIntegerInput(event.target.value);
                               if (nextValue !== null) {
-                                updateSidebarSettings({ fontSize: nextValue })
+                                updateSidebarSettings({ fontSize: nextValue });
                               }
                             }}
                           />
@@ -1645,7 +1763,9 @@ function App() {
         </div>
 
         {automationNotice ? (
-          <p className={`window-menu-status window-menu-status-${automationNotice.kind}`}>{automationNotice.text}</p>
+          <p className={`window-menu-status window-menu-status-${automationNotice.kind}`}>
+            {automationNotice.text}
+          </p>
         ) : null}
 
         <input
@@ -1670,7 +1790,10 @@ function App() {
               {uiSettings.connection.muds.length > 0 ? (
                 <label>
                   <span>MUD</span>
-                  <select value={selectedMudId} onChange={(event) => handleMudPresetChange(event.target.value)}>
+                  <select
+                    value={selectedMudId}
+                    onChange={(event) => handleMudPresetChange(event.target.value)}
+                  >
                     {uiSettings.connection.muds.map((mud) => (
                       <option key={mud.id} value={mud.id}>
                         {mud.name}
@@ -1740,9 +1863,9 @@ function App() {
               ref={commandInputRef}
               value={command}
               onChange={(event) => {
-                setCommand(event.target.value)
-                setHistoryIndex(null)
-                setHistoryDraft(event.target.value)
+                setCommand(event.target.value);
+                setHistoryIndex(null);
+                setHistoryDraft(event.target.value);
               }}
               onKeyDown={handleCommandKeyDown}
               placeholder={connected ? 'Type a command...' : 'Connect before sending commands.'}
@@ -1799,7 +1922,9 @@ function App() {
                       dangerouslySetInnerHTML={{
                         __html: renderMudHtml(
                           [
-                            hasReportedNumber(mudState.level) ? `Level ${mudState.level}` : undefined,
+                            hasReportedNumber(mudState.level)
+                              ? `Level ${mudState.level}`
+                              : undefined,
                             mudState.race,
                             mudState.className,
                           ]
@@ -1872,7 +1997,10 @@ function App() {
                 affectsNotice ? (
                   <AvailabilityNoticeBlock notice={affectsNotice} />
                 ) : (
-                  <MudValuePanel value={mudState.affects} emptyMessage="No active affects reported." />
+                  <MudValuePanel
+                    value={mudState.affects}
+                    emptyMessage="No active affects reported."
+                  />
                 )
               ) : null}
             </div>
@@ -1880,7 +2008,7 @@ function App() {
         </aside>
       </main>
     </div>
-  )
+  );
 }
 
 function createEmptyAlias(): AliasDefinition {
@@ -1889,7 +2017,7 @@ function createEmptyAlias(): AliasDefinition {
     pattern: '',
     expansion: '',
     enabled: true,
-  }
+  };
 }
 
 function createEmptyTrigger(): TriggerDefinition {
@@ -1898,235 +2026,241 @@ function createEmptyTrigger(): TriggerDefinition {
     pattern: '',
     action: '',
     enabled: true,
-  }
+  };
 }
 
 function createAutomationId(prefix: string) {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`
+    return `${prefix}-${crypto.randomUUID()}`;
   }
 
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function expandAliasCommands(text: string, aliases: AliasDefinition[], depth = 0): string[] {
-  const trimmedText = text.trim()
+  const trimmedText = text.trim();
   if (!trimmedText) {
-    return []
+    return [];
   }
 
   if (depth >= AUTOMATION_RECURSION_LIMIT) {
-    return [trimmedText]
+    return [trimmedText];
   }
 
   for (const alias of aliases) {
     if (!alias.enabled) {
-      continue
+      continue;
     }
 
-    const match = matchAliasPattern(trimmedText, alias.pattern)
+    const match = matchAliasPattern(trimmedText, alias.pattern);
     if (!match) {
-      continue
+      continue;
     }
 
-    const expandedText = substituteCaptures(alias.expansion, trimmedText, match.captures)
-    const splitCommands = splitCommandSequence(expandedText)
+    const expandedText = substituteCaptures(alias.expansion, trimmedText, match.captures);
+    const splitCommands = splitCommandSequence(expandedText);
     if (splitCommands.length === 0) {
-      return []
+      return [];
     }
 
-    return splitCommands.flatMap((command) => expandAliasCommands(command, aliases, depth + 1))
+    return splitCommands.flatMap((command) => expandAliasCommands(command, aliases, depth + 1));
   }
 
-  return [trimmedText]
+  return [trimmedText];
 }
 
 function consumeTriggerText(text: string, buffer: string, triggers: TriggerDefinition[]) {
-  const normalizedText = stripMudFormatting(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-  const combined = `${buffer}${normalizedText}`
-  const segments = combined.split('\n')
-  const nextBuffer = segments.pop() ?? ''
-  const commands: string[] = []
+  const normalizedText = stripMudFormatting(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const combined = `${buffer}${normalizedText}`;
+  const segments = combined.split('\n');
+  const nextBuffer = segments.pop() ?? '';
+  const commands: string[] = [];
 
   for (const segment of segments) {
-    const line = segment.trim()
+    const line = segment.trim();
     if (!line) {
-      continue
+      continue;
     }
 
     for (const trigger of triggers) {
       if (!trigger.enabled) {
-        continue
+        continue;
       }
 
-      const match = matchTriggerPattern(line, trigger.pattern)
+      const match = matchTriggerPattern(line, trigger.pattern);
       if (!match) {
-        continue
+        continue;
       }
 
-      const actionText = substituteCaptures(trigger.action, line, match.captures)
-      commands.push(...splitCommandSequence(actionText))
+      const actionText = substituteCaptures(trigger.action, line, match.captures);
+      commands.push(...splitCommandSequence(actionText));
     }
   }
 
-  return { buffer: nextBuffer, commands }
+  return { buffer: nextBuffer, commands };
 }
 
 function matchAliasPattern(text: string, pattern: string) {
-  const trimmedPattern = pattern.trim()
+  const trimmedPattern = pattern.trim();
   if (!trimmedPattern) {
-    return null
+    return null;
   }
 
   if (trimmedPattern.includes('*')) {
-    return matchWildcardPattern(text, trimmedPattern)
+    return matchWildcardPattern(text, trimmedPattern);
   }
 
-  const normalizedText = text.toLowerCase()
-  const normalizedPattern = trimmedPattern.toLowerCase()
+  const normalizedText = text.toLowerCase();
+  const normalizedPattern = trimmedPattern.toLowerCase();
   if (normalizedText === normalizedPattern) {
-    return { captures: [''] }
+    return { captures: [''] };
   }
 
   if (normalizedText.startsWith(`${normalizedPattern} `)) {
-    return { captures: [text.slice(trimmedPattern.length).trimStart()] }
+    return { captures: [text.slice(trimmedPattern.length).trimStart()] };
   }
 
-  return null
+  return null;
 }
 
 function matchTriggerPattern(text: string, pattern: string) {
-  const trimmedPattern = pattern.trim()
+  const trimmedPattern = pattern.trim();
   if (!trimmedPattern) {
-    return null
+    return null;
   }
 
   if (trimmedPattern.includes('*')) {
-    return matchWildcardPattern(text, trimmedPattern)
+    return matchWildcardPattern(text, trimmedPattern);
   }
 
-  return text.toLowerCase().includes(trimmedPattern.toLowerCase()) ? { captures: [] } : null
+  return text.toLowerCase().includes(trimmedPattern.toLowerCase()) ? { captures: [] } : null;
 }
 
 function matchWildcardPattern(text: string, pattern: string) {
-  const escapedSegments = pattern.trim().split('*').map(escapeRegExp)
-  const matcher = new RegExp(`^${escapedSegments.join('(.*?)')}$`, 'i')
-  const match = matcher.exec(text)
+  const escapedSegments = pattern.trim().split('*').map(escapeRegExp);
+  const matcher = new RegExp(`^${escapedSegments.join('(.*?)')}$`, 'i');
+  const match = matcher.exec(text);
   if (!match) {
-    return null
+    return null;
   }
 
-  return { captures: match.slice(1).map((capture) => capture.trim()) }
+  return { captures: match.slice(1).map((capture) => capture.trim()) };
 }
 
 function substituteCaptures(template: string, source: string, captures: string[]) {
   return template.replace(/%(\d)/g, (_match, indexText: string) => {
-    const index = Number(indexText)
+    const index = Number(indexText);
     if (index === 0) {
-      return source
+      return source;
     }
 
-    return captures[index - 1] ?? ''
-  })
+    return captures[index - 1] ?? '';
+  });
 }
 
 function splitCommandSequence(value: string) {
   return value
     .split(/\r?\n|;/)
     .map((entry) => entry.trim())
-    .filter(Boolean)
+    .filter(Boolean);
 }
 
 function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function stripMudFormatting(value: string) {
-  return convertLuminariColorCodes(value).replace(ANSI_ESCAPE_PATTERN, '')
+  return convertLuminariColorCodes(value).replace(ANSI_ESCAPE_PATTERN, '');
 }
 
 function loadAliasesFromCookies() {
-  return parsePersistedAliases(readChunkedCookie(ALIASES_COOKIE_NAME))
+  return parsePersistedAliases(readChunkedCookie(ALIASES_COOKIE_NAME));
 }
 
 function loadTriggersFromCookies() {
-  return parsePersistedTriggers(readChunkedCookie(TRIGGERS_COOKIE_NAME))
+  return parsePersistedTriggers(readChunkedCookie(TRIGGERS_COOKIE_NAME));
 }
 
 function loadClientSettingsFromCookies() {
-  return parsePersistedClientSettings(readChunkedCookie(CLIENT_SETTINGS_COOKIE_NAME))
+  return parsePersistedClientSettings(readChunkedCookie(CLIENT_SETTINGS_COOKIE_NAME));
 }
 
 function saveAliasesToCookies(aliases: AliasDefinition[]) {
-  writeChunkedCookie(ALIASES_COOKIE_NAME, JSON.stringify(aliases))
+  writeChunkedCookie(ALIASES_COOKIE_NAME, JSON.stringify(aliases));
 }
 
 function saveTriggersToCookies(triggers: TriggerDefinition[]) {
-  writeChunkedCookie(TRIGGERS_COOKIE_NAME, JSON.stringify(triggers))
+  writeChunkedCookie(TRIGGERS_COOKIE_NAME, JSON.stringify(triggers));
 }
 
 function saveClientSettingsToCookies(settings: ClientSettings) {
-  writeChunkedCookie(CLIENT_SETTINGS_COOKIE_NAME, JSON.stringify(settings))
+  writeChunkedCookie(CLIENT_SETTINGS_COOKIE_NAME, JSON.stringify(settings));
 }
 
 function parsePersistedAliases(value: string | null) {
   if (!value) {
-    return []
+    return [];
   }
 
   try {
-    return normalizeAliases(JSON.parse(value))
+    return normalizeAliases(JSON.parse(value));
   } catch {
-    return []
+    return [];
   }
 }
 
 function parsePersistedTriggers(value: string | null) {
   if (!value) {
-    return []
+    return [];
   }
 
   try {
-    return normalizeTriggers(JSON.parse(value))
+    return normalizeTriggers(JSON.parse(value));
   } catch {
-    return []
+    return [];
   }
 }
 
 function parsePersistedClientSettings(value: string | null) {
   if (!value) {
-    return DEFAULT_CLIENT_SETTINGS
+    return DEFAULT_CLIENT_SETTINGS;
   }
 
   try {
-    return normalizeClientSettings(JSON.parse(value))
+    return normalizeClientSettings(JSON.parse(value));
   } catch {
-    return DEFAULT_CLIENT_SETTINGS
+    return DEFAULT_CLIENT_SETTINGS;
   }
 }
 
 function parseAliasImport(content: string) {
-  let parsed: unknown
+  let parsed: unknown;
 
   try {
-    parsed = JSON.parse(content)
+    parsed = JSON.parse(content);
   } catch {
-    throw new Error('Alias file is not valid JSON.')
+    throw new Error('Alias file is not valid JSON.');
   }
 
-  return normalizeAliases(extractImportedEntries(parsed, 'aliases'), 'Alias file must contain an aliases array.')
+  return normalizeAliases(
+    extractImportedEntries(parsed, 'aliases'),
+    'Alias file must contain an aliases array.',
+  );
 }
 
 function parseTriggerImport(content: string) {
-  let parsed: unknown
+  let parsed: unknown;
 
   try {
-    parsed = JSON.parse(content)
+    parsed = JSON.parse(content);
   } catch {
-    throw new Error('Trigger file is not valid JSON.')
+    throw new Error('Trigger file is not valid JSON.');
   }
 
-  return normalizeTriggers(extractImportedEntries(parsed, 'triggers'), 'Trigger file must contain a triggers array.')
+  return normalizeTriggers(
+    extractImportedEntries(parsed, 'triggers'),
+    'Trigger file must contain a triggers array.',
+  );
 }
 
 function parseClientConfigImport(
@@ -2135,30 +2269,36 @@ function parseClientConfigImport(
   currentAliases: AliasDefinition[],
   currentTriggers: TriggerDefinition[],
 ) {
-  let parsed: unknown
+  let parsed: unknown;
 
   try {
-    parsed = JSON.parse(content)
+    parsed = JSON.parse(content);
   } catch {
-    throw new Error('Configuration file is not valid JSON.')
+    throw new Error('Configuration file is not valid JSON.');
   }
 
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error('Configuration file must be a JSON object.')
+    throw new Error('Configuration file must be a JSON object.');
   }
 
-  const record = parsed as Record<string, unknown>
-  const type = record.type
+  const record = parsed as Record<string, unknown>;
+  const type = record.type;
 
   if ('settings' in record) {
     return {
-      settings: normalizeClientSettings(record.settings, 'Configuration file must contain a settings object.'),
-      aliases: normalizeAliases(extractImportedEntries(record, 'aliases'), 'Configuration file must contain an aliases array.'),
+      settings: normalizeClientSettings(
+        record.settings,
+        'Configuration file must contain a settings object.',
+      ),
+      aliases: normalizeAliases(
+        extractImportedEntries(record, 'aliases'),
+        'Configuration file must contain an aliases array.',
+      ),
       triggers: normalizeTriggers(
         extractImportedEntries(record, 'triggers'),
         'Configuration file must contain a triggers array.',
       ),
-    }
+    };
   }
 
   if (type === 'luminari-web-client-aliases' || ('aliases' in record && !('triggers' in record))) {
@@ -2166,7 +2306,7 @@ function parseClientConfigImport(
       settings: currentSettings,
       aliases: parseAliasImport(content),
       triggers: currentTriggers,
-    }
+    };
   }
 
   if (type === 'luminari-web-client-triggers' || ('triggers' in record && !('aliases' in record))) {
@@ -2174,53 +2314,62 @@ function parseClientConfigImport(
       settings: currentSettings,
       aliases: currentAliases,
       triggers: parseTriggerImport(content),
-    }
+    };
   }
 
-  throw new Error('Configuration file must include settings, aliases, and triggers.')
+  throw new Error('Configuration file must include settings, aliases, and triggers.');
 }
 
 function extractImportedEntries(parsed: unknown, key: 'aliases' | 'triggers') {
   if (Array.isArray(parsed)) {
-    return parsed
+    return parsed;
   }
 
   if (parsed && typeof parsed === 'object' && key in parsed) {
-    const nestedEntries = (parsed as Record<string, unknown>)[key]
+    const nestedEntries = (parsed as Record<string, unknown>)[key];
     if (Array.isArray(nestedEntries)) {
-      return nestedEntries
+      return nestedEntries;
     }
   }
 
-  throw new Error(key === 'aliases' ? 'Alias file must contain an aliases array.' : 'Trigger file must contain a triggers array.')
+  throw new Error(
+    key === 'aliases'
+      ? 'Alias file must contain an aliases array.'
+      : 'Trigger file must contain a triggers array.',
+  );
 }
 
 function normalizeClientSettings(value: unknown, emptyStateMessage?: string): ClientSettings {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     if (emptyStateMessage) {
-      throw new Error(emptyStateMessage)
+      throw new Error(emptyStateMessage);
     }
 
-    return DEFAULT_CLIENT_SETTINGS
+    return DEFAULT_CLIENT_SETTINGS;
   }
 
-  const record = value as Record<string, unknown>
-  const terminalValue = record.terminal
+  const record = value as Record<string, unknown>;
+  const terminalValue = record.terminal;
   if (!terminalValue || typeof terminalValue !== 'object' || Array.isArray(terminalValue)) {
     if (emptyStateMessage) {
-      throw new Error('Configuration settings must include a terminal object.')
+      throw new Error('Configuration settings must include a terminal object.');
     }
 
-    return DEFAULT_CLIENT_SETTINGS
+    return DEFAULT_CLIENT_SETTINGS;
   }
 
-  const terminalRecord = terminalValue as Record<string, unknown>
-  const minimapRecord = isObjectRecord(record.minimap) ? record.minimap : null
-  const sidebarRecord = isObjectRecord(record.sidebar) ? record.sidebar : null
+  const terminalRecord = terminalValue as Record<string, unknown>;
+  const minimapRecord = isObjectRecord(record.minimap) ? record.minimap : null;
+  const sidebarRecord = isObjectRecord(record.sidebar) ? record.sidebar : null;
 
   return {
     terminal: {
-      fontSize: clampNumber(readNumericSetting(terminalRecord.fontSize), 10, 32, DEFAULT_CLIENT_SETTINGS.terminal.fontSize),
+      fontSize: clampNumber(
+        readNumericSetting(terminalRecord.fontSize),
+        10,
+        32,
+        DEFAULT_CLIENT_SETTINGS.terminal.fontSize,
+      ),
       lineHeight: clampNumber(
         readNumericSetting(terminalRecord.lineHeight),
         1.2,
@@ -2254,47 +2403,52 @@ function normalizeClientSettings(value: unknown, emptyStateMessage?: string): Cl
       fontFamily: isSidebarFontFamily(sidebarRecord?.fontFamily)
         ? sidebarRecord.fontFamily
         : DEFAULT_CLIENT_SETTINGS.sidebar.fontFamily,
-      fontSize: clampNumber(readNumericSetting(sidebarRecord?.fontSize), 8, 32, DEFAULT_CLIENT_SETTINGS.sidebar.fontSize),
+      fontSize: clampNumber(
+        readNumericSetting(sidebarRecord?.fontSize),
+        8,
+        32,
+        DEFAULT_CLIENT_SETTINGS.sidebar.fontSize,
+      ),
     },
     msdp: normalizeMsdpVariableMap(record.msdp),
-  }
+  };
 }
 
 function normalizeAliases(value: unknown, emptyStateMessage?: string): AliasDefinition[] {
   if (!Array.isArray(value)) {
     if (emptyStateMessage) {
-      throw new Error(emptyStateMessage)
+      throw new Error(emptyStateMessage);
     }
 
-    return []
+    return [];
   }
 
-  return value.map((entry, index) => normalizeAliasEntry(entry, index))
+  return value.map((entry, index) => normalizeAliasEntry(entry, index));
 }
 
 function normalizeTriggers(value: unknown, emptyStateMessage?: string): TriggerDefinition[] {
   if (!Array.isArray(value)) {
     if (emptyStateMessage) {
-      throw new Error(emptyStateMessage)
+      throw new Error(emptyStateMessage);
     }
 
-    return []
+    return [];
   }
 
-  return value.map((entry, index) => normalizeTriggerEntry(entry, index))
+  return value.map((entry, index) => normalizeTriggerEntry(entry, index));
 }
 
 function normalizeAliasEntry(value: unknown, index: number): AliasDefinition {
   if (!value || typeof value !== 'object') {
-    throw new Error(`Alias ${index + 1} is invalid.`)
+    throw new Error(`Alias ${index + 1} is invalid.`);
   }
 
-  const record = value as Record<string, unknown>
-  const pattern = readOptionalString(record, ['pattern', 'name'])
-  const expansion = readOptionalString(record, ['expansion', 'value', 'command'])
+  const record = value as Record<string, unknown>;
+  const pattern = readOptionalString(record, ['pattern', 'name']);
+  const expansion = readOptionalString(record, ['expansion', 'value', 'command']);
 
   if (!pattern?.trim() || !expansion?.trim()) {
-    throw new Error(`Alias ${index + 1} must include both pattern and expansion.`)
+    throw new Error(`Alias ${index + 1} must include both pattern and expansion.`);
   }
 
   return {
@@ -2302,20 +2456,20 @@ function normalizeAliasEntry(value: unknown, index: number): AliasDefinition {
     pattern,
     expansion,
     enabled: typeof record.enabled === 'boolean' ? record.enabled : true,
-  }
+  };
 }
 
 function normalizeTriggerEntry(value: unknown, index: number): TriggerDefinition {
   if (!value || typeof value !== 'object') {
-    throw new Error(`Trigger ${index + 1} is invalid.`)
+    throw new Error(`Trigger ${index + 1} is invalid.`);
   }
 
-  const record = value as Record<string, unknown>
-  const pattern = readOptionalString(record, ['pattern', 'match'])
-  const action = readOptionalString(record, ['action', 'command', 'expansion'])
+  const record = value as Record<string, unknown>;
+  const pattern = readOptionalString(record, ['pattern', 'match']);
+  const action = readOptionalString(record, ['action', 'command', 'expansion']);
 
   if (!pattern?.trim() || !action?.trim()) {
-    throw new Error(`Trigger ${index + 1} must include both pattern and action.`)
+    throw new Error(`Trigger ${index + 1} must include both pattern and action.`);
   }
 
   return {
@@ -2323,171 +2477,184 @@ function normalizeTriggerEntry(value: unknown, index: number): TriggerDefinition
     pattern,
     action,
     enabled: typeof record.enabled === 'boolean' ? record.enabled : true,
-  }
+  };
 }
 
 function readOptionalString(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
-    const value = record[key]
+    const value = record[key];
     if (typeof value === 'string') {
-      return value
+      return value;
     }
   }
 
-  return undefined
+  return undefined;
 }
 
 function readNumericSetting(value: unknown) {
   if (typeof value === 'number' && Number.isFinite(value)) {
-    return value
+    return value;
   }
 
-  return undefined
+  return undefined;
 }
 
-function clampNumber(value: number | undefined, minimum: number, maximum: number, fallback: number) {
+function clampNumber(
+  value: number | undefined,
+  minimum: number,
+  maximum: number,
+  fallback: number,
+) {
   if (value === undefined) {
-    return fallback
+    return fallback;
   }
 
-  return Math.min(Math.max(value, minimum), maximum)
+  return Math.min(Math.max(value, minimum), maximum);
 }
 
 function isOverrideOnlyMsdpVariableKey(key: MsdpVariableKey) {
-  return OVERRIDE_ONLY_MSDP_VARIABLE_KEYS.has(key)
+  return OVERRIDE_ONLY_MSDP_VARIABLE_KEYS.has(key);
 }
 
 function parsePositiveIntegerInput(value: string) {
   if (!value.trim()) {
-    return null
+    return null;
   }
 
-  const parsed = Number.parseInt(value, 10)
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : null
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value && typeof value === 'object' && !Array.isArray(value))
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
 
 function isSidebarFontFamily(value: unknown): value is SidebarFontFamily {
-  return value === 'sans' || value === 'mono' || value === 'serif'
+  return value === 'sans' || value === 'mono' || value === 'serif';
 }
 
 function readChunkedCookie(name: string) {
   if (typeof document === 'undefined') {
-    return null
+    return null;
   }
 
-  const cookies = parseCookieMap(document.cookie)
-  const singleValue = cookies.get(name)
+  const cookies = parseCookieMap(document.cookie);
+  const singleValue = cookies.get(name);
   if (singleValue !== undefined) {
-    return decodeURIComponent(singleValue)
+    return decodeURIComponent(singleValue);
   }
 
-  const countText = cookies.get(`${name}.count`)
+  const countText = cookies.get(`${name}.count`);
   if (!countText) {
-    return null
+    return null;
   }
 
-  const count = Number(countText)
+  const count = Number(countText);
   if (!Number.isInteger(count) || count < 1) {
-    return null
+    return null;
   }
 
-  let combined = ''
+  let combined = '';
   for (let index = 0; index < count; index += 1) {
-    const chunk = cookies.get(`${name}.${index}`)
+    const chunk = cookies.get(`${name}.${index}`);
     if (chunk === undefined) {
-      return null
+      return null;
     }
 
-    combined += chunk
+    combined += chunk;
   }
 
-  return decodeURIComponent(combined)
+  return decodeURIComponent(combined);
 }
 
 function writeChunkedCookie(name: string, rawValue: string) {
   if (typeof document === 'undefined') {
-    return
+    return;
   }
 
-  clearCookieGroup(name)
+  clearCookieGroup(name);
 
-  const encodedValue = encodeURIComponent(rawValue)
-  const chunks = []
+  const encodedValue = encodeURIComponent(rawValue);
+  const chunks = [];
   for (let index = 0; index < encodedValue.length; index += AUTOMATION_COOKIE_CHUNK_SIZE) {
-    chunks.push(encodedValue.slice(index, index + AUTOMATION_COOKIE_CHUNK_SIZE))
+    chunks.push(encodedValue.slice(index, index + AUTOMATION_COOKIE_CHUNK_SIZE));
   }
 
   if (chunks.length <= 1) {
-    setCookieValue(name, encodedValue)
-    return
+    setCookieValue(name, encodedValue);
+    return;
   }
 
-  setCookieValue(`${name}.count`, String(chunks.length))
+  setCookieValue(`${name}.count`, String(chunks.length));
   chunks.forEach((chunk, index) => {
-    setCookieValue(`${name}.${index}`, chunk)
-  })
+    setCookieValue(`${name}.${index}`, chunk);
+  });
 }
 
 function clearCookieGroup(name: string) {
   if (typeof document === 'undefined') {
-    return
+    return;
   }
 
-  const cookies = parseCookieMap(document.cookie)
+  const cookies = parseCookieMap(document.cookie);
   for (const cookieName of cookies.keys()) {
-    if (cookieName === name || cookieName === `${name}.count` || cookieName.startsWith(`${name}.`)) {
-      expireCookie(cookieName)
+    if (
+      cookieName === name ||
+      cookieName === `${name}.count` ||
+      cookieName.startsWith(`${name}.`)
+    ) {
+      expireCookie(cookieName);
     }
   }
 }
 
 function setCookieValue(name: string, value: string) {
-  document.cookie = `${name}=${value}; max-age=${AUTOMATION_COOKIE_MAX_AGE}; path=/; SameSite=Lax`
+  document.cookie = `${name}=${value}; max-age=${AUTOMATION_COOKIE_MAX_AGE}; path=/; SameSite=Lax`;
 }
 
 function expireCookie(name: string) {
-  document.cookie = `${name}=; max-age=0; path=/; SameSite=Lax`
+  document.cookie = `${name}=; max-age=0; path=/; SameSite=Lax`;
 }
 
 function parseCookieMap(cookieHeader: string) {
-  const cookies = new Map<string, string>()
+  const cookies = new Map<string, string>();
   if (!cookieHeader.trim()) {
-    return cookies
+    return cookies;
   }
 
   for (const entry of cookieHeader.split(/;\s*/)) {
-    const separatorIndex = entry.indexOf('=')
+    const separatorIndex = entry.indexOf('=');
     if (separatorIndex <= 0) {
-      continue
+      continue;
     }
 
-    const key = entry.slice(0, separatorIndex)
-    const value = entry.slice(separatorIndex + 1)
-    cookies.set(key, value)
+    const key = entry.slice(0, separatorIndex);
+    const value = entry.slice(separatorIndex + 1);
+    cookies.set(key, value);
   }
 
-  return cookies
+  return cookies;
 }
 
 function downloadJsonFile(filename: string, payload: unknown) {
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  link.click()
-  URL.revokeObjectURL(url)
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function pluralize(count: number) {
-  return count === 1 ? '' : 's'
+  return count === 1 ? '' : 's';
 }
 
-function createSavingThrowDescriptor(key: MsdpVariableKey, label: string, variableName: string): OptionalDataDescriptor {
+function createSavingThrowDescriptor(
+  key: MsdpVariableKey,
+  label: string,
+  variableName: string,
+): OptionalDataDescriptor {
   return {
     key,
     label,
@@ -2511,11 +2678,11 @@ function createSavingThrowDescriptor(key: MsdpVariableKey, label: string, variab
       title: 'Unavailable',
       detail: `The connection ended before ${label.toLowerCase()} could be evaluated.`,
     },
-  }
+  };
 }
 
 function getMsdpFieldSupportNote(key: MsdpVariableKey) {
-  return MSDP_FIELD_SUPPORT_NOTES[key]
+  return MSDP_FIELD_SUPPORT_NOTES[key];
 }
 
 function getTextAvailabilityNotice(
@@ -2525,14 +2692,14 @@ function getTextAvailabilityNotice(
   msdpVariables: MsdpVariableMap,
 ) {
   if (value === undefined) {
-    return getMissingAvailabilityNotice(descriptor, status, msdpVariables)
+    return getMissingAvailabilityNotice(descriptor, status, msdpVariables);
   }
 
   if (!value.trim()) {
-    return createAvailabilityNotice('empty', descriptor.empty)
+    return createAvailabilityNotice('empty', descriptor.empty);
   }
 
-  return null
+  return null;
 }
 
 function getNumberAvailabilityNotice(
@@ -2542,10 +2709,10 @@ function getNumberAvailabilityNotice(
   msdpVariables: MsdpVariableMap,
 ) {
   if (hasReportedNumber(value)) {
-    return null
+    return null;
   }
 
-  return getMissingAvailabilityNotice(descriptor, status, msdpVariables)
+  return getMissingAvailabilityNotice(descriptor, status, msdpVariables);
 }
 
 function getMudValueAvailabilityNotice(
@@ -2555,14 +2722,14 @@ function getMudValueAvailabilityNotice(
   msdpVariables: MsdpVariableMap,
 ) {
   if (value === undefined) {
-    return getMissingAvailabilityNotice(descriptor, status, msdpVariables)
+    return getMissingAvailabilityNotice(descriptor, status, msdpVariables);
   }
 
   if (isEmptyMudValue(value)) {
-    return createAvailabilityNotice('empty', descriptor.empty)
+    return createAvailabilityNotice('empty', descriptor.empty);
   }
 
-  return null
+  return null;
 }
 
 function getMissingAvailabilityNotice(
@@ -2571,102 +2738,106 @@ function getMissingAvailabilityNotice(
   msdpVariables: MsdpVariableMap,
 ) {
   if (status === 'idle' || status === 'disconnected') {
-    return createAvailabilityNotice('offline', descriptor.offline)
+    return createAvailabilityNotice('offline', descriptor.offline);
   }
 
   if (status === 'error') {
-    return createAvailabilityNotice('error', descriptor.error)
+    return createAvailabilityNotice('error', descriptor.error);
   }
 
   if (descriptor.key && !isMsdpVariableConfigured(msdpVariables, descriptor.key)) {
-    return createAvailabilityNotice('unavailable', descriptor.unsupported)
+    return createAvailabilityNotice('unavailable', descriptor.unsupported);
   }
 
   if (status === 'connecting') {
-    return createAvailabilityNotice('loading', descriptor.waiting)
+    return createAvailabilityNotice('loading', descriptor.waiting);
   }
 
-  return createAvailabilityNotice('loading', descriptor.waiting)
+  return createAvailabilityNotice('loading', descriptor.waiting);
 }
 
-function createAvailabilityNotice(kind: AvailabilityKind, notice: Omit<AvailabilityNotice, 'kind'>): AvailabilityNotice {
+function createAvailabilityNotice(
+  kind: AvailabilityKind,
+  notice: Omit<AvailabilityNotice, 'kind'>,
+): AvailabilityNotice {
   return {
     kind,
     ...notice,
-  }
+  };
 }
 
 function formatAvailabilityAriaLabel(notice: AvailabilityNotice) {
-  return notice.ariaLabel ?? [notice.title, notice.detail].filter(Boolean).join('. ')
+  return notice.ariaLabel ?? [notice.title, notice.detail].filter(Boolean).join('. ');
 }
 
 function hasReportedNumber(value: number | undefined): value is number {
-  return typeof value === 'number' && Number.isFinite(value)
+  return typeof value === 'number' && Number.isFinite(value);
 }
 
 function isMsdpVariableConfigured(msdpVariables: MsdpVariableMap, key: MsdpVariableKey) {
-  return msdpVariables[key].trim().length > 0
+  return msdpVariables[key].trim().length > 0;
 }
 
 function isEmptyMudValue(value: MudValue) {
   if (value === null) {
-    return true
+    return true;
   }
 
   if (typeof value === 'string') {
-    return value.trim().length === 0
+    return value.trim().length === 0;
   }
 
   if (Array.isArray(value)) {
-    return value.length === 0
+    return value.length === 0;
   }
 
   if (isMudRecord(value)) {
-    return Object.keys(value).length === 0
+    return Object.keys(value).length === 0;
   }
 
-  return false
+  return false;
 }
 
 function formatCharacterHeading(characterName?: string, title?: string) {
-  const trimmedName = characterName?.trim()
-  const trimmedTitle = title?.trim()
+  const trimmedName = characterName?.trim();
+  const trimmedTitle = title?.trim();
 
   if (!trimmedTitle) {
-    return trimmedName || 'Unknown adventurer'
+    return trimmedName || 'Unknown adventurer';
   }
 
   if (!trimmedName) {
-    return trimmedTitle
+    return trimmedTitle;
   }
 
-  const normalizedName = trimmedName.toLowerCase()
-  const normalizedTitle = trimmedTitle.toLowerCase()
+  const normalizedName = trimmedName.toLowerCase();
+  const normalizedTitle = trimmedTitle.toLowerCase();
 
   if (normalizedTitle.includes(normalizedName)) {
-    return trimmedTitle
+    return trimmedTitle;
   }
 
-  return `${trimmedName} ${trimmedTitle}`
+  return `${trimmedName} ${trimmedTitle}`;
 }
 
 type StatusBarProps = {
-  label: string
-  overlayLabel?: string
-  value?: number
-  max?: number
-  accentClass: string
-}
+  label: string;
+  overlayLabel?: string;
+  value?: number;
+  max?: number;
+  accentClass: string;
+};
 
 function StatusBar({ label, overlayLabel, value, max, accentClass }: StatusBarProps) {
-  const safeMax = max && max > 0 ? max : 0
-  const percentage = safeMax > 0 && value !== undefined ? Math.min((value / safeMax) * 100, 100) : 0
+  const safeMax = max && max > 0 ? max : 0;
+  const percentage =
+    safeMax > 0 && value !== undefined ? Math.min((value / safeMax) * 100, 100) : 0;
   const counter =
     value !== undefined && max !== undefined
       ? `${formatNumber(value)} / ${formatNumber(max)}`
-      : 'Waiting'
-  const trimmedOverlayLabel = overlayLabel?.trim()
-  const displayLabel = trimmedOverlayLabel ? `${label}: ${trimmedOverlayLabel}` : label
+      : 'Waiting';
+  const trimmedOverlayLabel = overlayLabel?.trim();
+  const displayLabel = trimmedOverlayLabel ? `${label}: ${trimmedOverlayLabel}` : label;
 
   return (
     <div className="status-bar">
@@ -2678,18 +2849,18 @@ function StatusBar({ label, overlayLabel, value, max, accentClass }: StatusBarPr
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 type StatProps = {
-  label: string
-  value?: string | number
-}
+  label: string;
+  value?: string | number;
+};
 
 type MudValuePanelProps = {
-  value?: MudValue
-  emptyMessage: string
-}
+  value?: MudValue;
+  emptyMessage: string;
+};
 
 function Stat({ label, value }: StatProps) {
   if (typeof value === 'string') {
@@ -2698,7 +2869,7 @@ function Stat({ label, value }: StatProps) {
         <dt>{label}</dt>
         <dd dangerouslySetInnerHTML={{ __html: renderMudHtml(value || '-') }} />
       </>
-    )
+    );
   }
 
   return (
@@ -2706,7 +2877,7 @@ function Stat({ label, value }: StatProps) {
       <dt>{label}</dt>
       <dd>{value !== undefined ? value : '-'}</dd>
     </>
-  )
+  );
 }
 
 function AvailabilityStat({ label, notice }: { label: string; notice: AvailabilityNotice }) {
@@ -2717,7 +2888,7 @@ function AvailabilityStat({ label, notice }: { label: string; notice: Availabili
         <AvailabilityValue notice={notice} />
       </dd>
     </>
-  )
+  );
 }
 
 function AvailabilityNoticeBlock({
@@ -2725,9 +2896,9 @@ function AvailabilityNoticeBlock({
   compact = false,
   className,
 }: {
-  notice: AvailabilityNotice
-  compact?: boolean
-  className?: string
+  notice: AvailabilityNotice;
+  compact?: boolean;
+  className?: string;
 }) {
   const classNames = [
     'availability-notice',
@@ -2736,46 +2907,49 @@ function AvailabilityNoticeBlock({
     className,
   ]
     .filter(Boolean)
-    .join(' ')
+    .join(' ');
 
   return (
     <p className={classNames} role="note" aria-label={formatAvailabilityAriaLabel(notice)}>
       <span className="availability-title">{notice.title}</span>
       {notice.detail ? <span className="availability-detail">{notice.detail}</span> : null}
     </p>
-  )
+  );
 }
 
 function AvailabilityValue({ notice }: { notice: AvailabilityNotice }) {
   return (
-    <span className={`availability-value availability-value-${notice.kind}`} title={formatAvailabilityAriaLabel(notice)}>
+    <span
+      className={`availability-value availability-value-${notice.kind}`}
+      title={formatAvailabilityAriaLabel(notice)}
+    >
       {notice.title}
     </span>
-  )
+  );
 }
 
 function EmptyTabMessage({ message }: { message: string }) {
-  return <p className="tab-empty-message">{message}</p>
+  return <p className="tab-empty-message">{message}</p>;
 }
 
 type GroupPanelProps = {
-  value: MudValue
-}
+  value: MudValue;
+};
 
 type GroupMember = {
-  name?: string
-  isLeader: boolean
-  health?: string
-  healthMax?: string
-  move?: string
-  moveMax?: string
-}
+  name?: string;
+  isLeader: boolean;
+  health?: string;
+  healthMax?: string;
+  move?: string;
+  moveMax?: string;
+};
 
 function GroupPanel({ value }: GroupPanelProps) {
-  const members = parseGroupMembers(value)
+  const members = parseGroupMembers(value);
 
   if (members.length === 0) {
-    return <MudValuePanel value={value} emptyMessage="No group data reported yet." />
+    return <MudValuePanel value={value} emptyMessage="No group data reported yet." />;
   }
 
   return (
@@ -2784,11 +2958,11 @@ function GroupPanel({ value }: GroupPanelProps) {
         const healthText =
           member.health !== undefined && member.healthMax !== undefined
             ? `Health ${member.health}/${member.healthMax}`
-            : null
+            : null;
         const moveText =
           member.move !== undefined && member.moveMax !== undefined
             ? `Move ${member.move}/${member.moveMax}`
-            : null
+            : null;
 
         return (
           <div key={`${member.name ?? 'member'}-${index}`} className="group-member">
@@ -2797,98 +2971,112 @@ function GroupPanel({ value }: GroupPanelProps) {
               {member.isLeader ? ' (Leader)' : ''}
             </div>
             {healthText || moveText ? (
-              <div>
-                {[healthText, moveText].filter(Boolean).join(' ')}
-              </div>
+              <div>{[healthText, moveText].filter(Boolean).join(' ')}</div>
             ) : null}
           </div>
-        )
+        );
       })}
     </div>
-  )
+  );
 }
 
 type QuestInfoPanelProps = {
-  value: MudValue
-}
+  value: MudValue;
+};
 
 function QuestInfoPanel({ value }: QuestInfoPanelProps) {
-  const normalizedValue = normalizeQuestValue(value)
-  return <div className="tab-inline-output quest-html-output">{renderQuestNode(normalizedValue)}</div>
+  const normalizedValue = normalizeQuestValue(value);
+  return (
+    <div className="tab-inline-output quest-html-output">{renderQuestNode(normalizedValue)}</div>
+  );
 }
 
 function MudValuePanel({ value, emptyMessage }: MudValuePanelProps) {
   if (value === undefined || value === null) {
-    return <EmptyTabMessage message={emptyMessage} />
+    return <EmptyTabMessage message={emptyMessage} />;
   }
 
-  const text = formatMudValueAsText(value)
-  return <div className="tab-inline-output">{text || emptyMessage}</div>
+  const text = formatMudValueAsText(value);
+  return <div className="tab-inline-output">{text || emptyMessage}</div>;
 }
 
 function formatMudValueAsText(value: MudValue): string {
   if (value === null || value === undefined) {
-    return ''
+    return '';
   }
 
   if (typeof value === 'string') {
-    return value
+    return value;
   }
 
   if (typeof value === 'number') {
-    return formatNumber(value) ?? String(value)
+    return formatNumber(value) ?? String(value);
   }
 
   if (typeof value === 'boolean') {
-    return value ? 'Yes' : 'No'
+    return value ? 'Yes' : 'No';
   }
 
   if (Array.isArray(value)) {
-    return value.map((item) => formatMudValueAsText(item)).filter(Boolean).join(', ')
+    return value
+      .map((item) => formatMudValueAsText(item))
+      .filter(Boolean)
+      .join(', ');
   }
 
   const entries = Object.entries(value)
     .map(([key, val]) => {
-      const formattedValue = formatMudValueAsText(val)
-      return formattedValue ? `${formatMudLabel(key)}: ${formattedValue}` : null
+      const formattedValue = formatMudValueAsText(val);
+      return formattedValue ? `${formatMudLabel(key)}: ${formattedValue}` : null;
     })
-    .filter(Boolean)
+    .filter(Boolean);
 
-  return entries.join(' | ')
+  return entries.join(' | ');
 }
 
 function parseGroupMembers(value: MudValue): GroupMember[] {
-  const entries = asCollection(value)
+  const entries = asCollection(value);
 
-  return entries
-    .flatMap((entry) => {
-      if (!isMudRecord(entry)) {
-        return []
-      }
+  return entries.flatMap((entry) => {
+    if (!isMudRecord(entry)) {
+      return [];
+    }
 
-      const name = asOptionalText(
-        readAnyKey(entry, ['name', 'NAME', 'member_name', 'MEMBER_NAME', 'character_name', 'CHARACTER_NAME']),
-      )
-      const health = asOptionalText(readAnyKey(entry, ['health', 'HEALTH']))
-      const healthMax = asOptionalText(readAnyKey(entry, ['health_max', 'HEALTH_MAX', 'max_health', 'MAX_HEALTH']))
-      const move = asOptionalText(readAnyKey(entry, ['move', 'MOVE', 'movement', 'MOVEMENT']))
-      const moveMax = asOptionalText(readAnyKey(entry, ['move_max', 'MOVE_MAX', 'movement_max', 'MOVEMENT_MAX']))
-      const isLeader = asOptionalBoolean(readAnyKey(entry, ['is_leader', 'IS_LEADER', 'leader', 'LEADER'])) ?? false
+    const name = asOptionalText(
+      readAnyKey(entry, [
+        'name',
+        'NAME',
+        'member_name',
+        'MEMBER_NAME',
+        'character_name',
+        'CHARACTER_NAME',
+      ]),
+    );
+    const health = asOptionalText(readAnyKey(entry, ['health', 'HEALTH']));
+    const healthMax = asOptionalText(
+      readAnyKey(entry, ['health_max', 'HEALTH_MAX', 'max_health', 'MAX_HEALTH']),
+    );
+    const move = asOptionalText(readAnyKey(entry, ['move', 'MOVE', 'movement', 'MOVEMENT']));
+    const moveMax = asOptionalText(
+      readAnyKey(entry, ['move_max', 'MOVE_MAX', 'movement_max', 'MOVEMENT_MAX']),
+    );
+    const isLeader =
+      asOptionalBoolean(readAnyKey(entry, ['is_leader', 'IS_LEADER', 'leader', 'LEADER'])) ?? false;
 
-      if (!name && !health && !healthMax && !move && !moveMax) {
-        return []
-      }
+    if (!name && !health && !healthMax && !move && !moveMax) {
+      return [];
+    }
 
-      return [{ name, isLeader, health, healthMax, move, moveMax }]
-    })
+    return [{ name, isLeader, health, healthMax, move, moveMax }];
+  });
 }
 
 function renderQuestNode(value: MudValue): ReactNode {
   if (value === null || value === undefined) {
-    return <span className="quest-empty">No quest data reported yet.</span>
+    return <span className="quest-empty">No quest data reported yet.</span>;
   }
 
-  const compactQuests = parseQuestEntries(value)
+  const compactQuests = parseQuestEntries(value);
   if (compactQuests.length > 0) {
     return (
       <div className="quest-compact-list">
@@ -2908,20 +3096,20 @@ function renderQuestNode(value: MudValue): ReactNode {
           </div>
         ))}
       </div>
-    )
+    );
   }
 
   if (typeof value === 'string') {
-    return <span dangerouslySetInnerHTML={{ __html: renderMudHtml(value) }} />
+    return <span dangerouslySetInnerHTML={{ __html: renderMudHtml(value) }} />;
   }
 
   if (typeof value === 'number' || typeof value === 'boolean') {
-    return <span>{formatMudValueAsText(value)}</span>
+    return <span>{formatMudValueAsText(value)}</span>;
   }
 
   if (Array.isArray(value)) {
     if (value.length === 0) {
-      return <span className="quest-empty">No entries.</span>
+      return <span className="quest-empty">No entries.</span>;
     }
 
     return (
@@ -2930,24 +3118,24 @@ function renderQuestNode(value: MudValue): ReactNode {
           <li key={index}>{renderQuestNode(item)}</li>
         ))}
       </ul>
-    )
+    );
   }
 
-  const entries = Object.entries(value)
+  const entries = Object.entries(value);
   if (entries.length === 0) {
-    return <span className="quest-empty">No fields.</span>
+    return <span className="quest-empty">No fields.</span>;
   }
 
   return (
     <div className="quest-object">
       {entries.map(([key, entryValue]) => {
-        const label = formatMudLabel(key)
+        const label = formatMudLabel(key);
         const isScalar =
           entryValue === null ||
           entryValue === undefined ||
           typeof entryValue === 'string' ||
           typeof entryValue === 'number' ||
-          typeof entryValue === 'boolean'
+          typeof entryValue === 'boolean';
 
         if (isScalar) {
           return (
@@ -2955,7 +3143,7 @@ function renderQuestNode(value: MudValue): ReactNode {
               <span className="quest-key">{label}</span>
               <span className="quest-value">{renderQuestNode(entryValue)}</span>
             </div>
-          )
+          );
         }
 
         return (
@@ -2963,44 +3151,44 @@ function renderQuestNode(value: MudValue): ReactNode {
             <div className="quest-block-title">{label}</div>
             <div>{renderQuestNode(entryValue)}</div>
           </div>
-        )
+        );
       })}
     </div>
-  )
+  );
 }
 
 type QuestEntry = {
-  name?: string
-  type?: string
-  vnum?: string
-  progress?: string
-  targets?: string
-}
+  name?: string;
+  type?: string;
+  vnum?: string;
+  progress?: string;
+  targets?: string;
+};
 
 function parseQuestEntries(value: MudValue): QuestEntry[] {
-  const source = Array.isArray(value) ? value : isMudRecord(value) ? [value] : []
+  const source = Array.isArray(value) ? value : isMudRecord(value) ? [value] : [];
 
   return source.flatMap((entry) => {
     if (!isMudRecord(entry)) {
-      return []
+      return [];
     }
 
-    const name = asOptionalText(readAnyKey(entry, ['name', 'NAME']))
-    const type = asOptionalText(readAnyKey(entry, ['type', 'TYPE']))
+    const name = asOptionalText(readAnyKey(entry, ['name', 'NAME']));
+    const type = asOptionalText(readAnyKey(entry, ['type', 'TYPE']));
 
-    const rawVnum = readAnyKey(entry, ['vnum', 'VNUM'])
+    const rawVnum = readAnyKey(entry, ['vnum', 'VNUM']);
     const vnum =
       rawVnum === undefined || rawVnum === null
         ? undefined
         : typeof rawVnum === 'number'
           ? String(Math.trunc(rawVnum))
-          : String(rawVnum).replace(/,/g, '')
+          : String(rawVnum).replace(/,/g, '');
 
-    const progress = formatQuestProgress(readAnyKey(entry, ['progress', 'PROGRESS']))
-    const targets = formatQuestTargets(readAnyKey(entry, ['targets', 'TARGETS']))
+    const progress = formatQuestProgress(readAnyKey(entry, ['progress', 'PROGRESS']));
+    const targets = formatQuestTargets(readAnyKey(entry, ['targets', 'TARGETS']));
 
     if (!name && !type && !vnum && !progress && !targets) {
-      return []
+      return [];
     }
 
     return [
@@ -3011,151 +3199,151 @@ function parseQuestEntries(value: MudValue): QuestEntry[] {
         progress,
         targets,
       },
-    ]
-  })
+    ];
+  });
 }
 
 function formatQuestProgress(value: MudValue | undefined): string | undefined {
   if (!isMudRecord(value)) {
-    return undefined
+    return undefined;
   }
 
-  const completed = asOptionalText(readAnyKey(value, ['completed', 'COMPLETED']))
-  const required = asOptionalText(readAnyKey(value, ['required', 'REQUIRED']))
+  const completed = asOptionalText(readAnyKey(value, ['completed', 'COMPLETED']));
+  const required = asOptionalText(readAnyKey(value, ['required', 'REQUIRED']));
   if (!completed || !required) {
-    return undefined
+    return undefined;
   }
 
-  return `${completed}/${required}`
+  return `${completed}/${required}`;
 }
 
 function formatQuestTargets(value: MudValue | undefined): string | undefined {
   if (!Array.isArray(value)) {
-    return undefined
+    return undefined;
   }
 
   const names = value
     .map((target) => {
       if (isMudRecord(target)) {
-        return asOptionalText(readAnyKey(target, ['name', 'NAME']))
+        return asOptionalText(readAnyKey(target, ['name', 'NAME']));
       }
 
-      return asOptionalText(target)
+      return asOptionalText(target);
     })
-    .filter((entry): entry is string => Boolean(entry))
+    .filter((entry): entry is string => Boolean(entry));
 
   if (names.length === 0) {
-    return undefined
+    return undefined;
   }
 
-  return names.join(', ')
+  return names.join(', ');
 }
 
 function normalizeQuestValue(value: MudValue): MudValue {
   if (typeof value !== 'string') {
-    return value
+    return value;
   }
 
-  const trimmed = value.trim()
+  const trimmed = value.trim();
   if (!trimmed) {
-    return value
+    return value;
   }
 
   const looksLikeJson =
     (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
-    (trimmed.startsWith('[') && trimmed.endsWith(']'))
+    (trimmed.startsWith('[') && trimmed.endsWith(']'));
 
   if (!looksLikeJson) {
-    return value
+    return value;
   }
 
   try {
-    const parsed: unknown = JSON.parse(trimmed)
+    const parsed: unknown = JSON.parse(trimmed);
     if (isMudValue(parsed)) {
-      return parsed
+      return parsed;
     }
   } catch {
-    return value
+    return value;
   }
 
-  return value
+  return value;
 }
 
 function isMudValue(value: unknown): value is MudValue {
   if (value === null) {
-    return true
+    return true;
   }
 
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-    return true
+    return true;
   }
 
   if (Array.isArray(value)) {
-    return value.every((item) => isMudValue(item))
+    return value.every((item) => isMudValue(item));
   }
 
   if (typeof value === 'object') {
-    return Object.values(value as Record<string, unknown>).every((entry) => isMudValue(entry))
+    return Object.values(value as Record<string, unknown>).every((entry) => isMudValue(entry));
   }
 
-  return false
+  return false;
 }
 
 function asCollection(value: MudValue): MudValue[] {
   if (Array.isArray(value)) {
-    return value
+    return value;
   }
 
   if (isMudRecord(value)) {
-    return Object.values(value)
+    return Object.values(value);
   }
 
-  return []
+  return [];
 }
 
 function isMudRecord(value: unknown): value is Record<string, MudValue> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function readAnyKey(record: Record<string, MudValue>, keys: string[]): MudValue | undefined {
   for (const key of keys) {
     if (key in record) {
-      return record[key]
+      return record[key];
     }
   }
 
-  return undefined
+  return undefined;
 }
 
 function asOptionalText(value: MudValue | undefined): string | undefined {
   if (value === undefined || value === null) {
-    return undefined
+    return undefined;
   }
 
-  const formatted = formatMudValueAsText(value)
-  return formatted || undefined
+  const formatted = formatMudValueAsText(value);
+  return formatted || undefined;
 }
 
 function asOptionalBoolean(value: MudValue | undefined): boolean | undefined {
   if (typeof value === 'boolean') {
-    return value
+    return value;
   }
 
   if (typeof value === 'number') {
-    return value !== 0
+    return value !== 0;
   }
 
   if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase()
+    const normalized = value.trim().toLowerCase();
     if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'y') {
-      return true
+      return true;
     }
     if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'n') {
-      return false
+      return false;
     }
   }
 
-  return undefined
+  return undefined;
 }
 
 function formatMudLabel(value: string) {
@@ -3163,69 +3351,73 @@ function formatMudLabel(value: string) {
     .replace(/_/g, ' ')
     .replace(/([a-z\d])([A-Z])/g, '$1 $2')
     .toLowerCase()
-    .replace(/\b\w/g, (character) => character.toUpperCase())
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 function getWebSocketUrl() {
   if (import.meta.env.VITE_WS_URL) {
-    return import.meta.env.VITE_WS_URL
+    return import.meta.env.VITE_WS_URL;
   }
 
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  return `${protocol}//${window.location.host}/ws`
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${protocol}//${window.location.host}/ws`;
 }
 
 function getSettingsUrl() {
-  return '/api/settings'
+  return '/api/settings';
 }
 
 function parseServerMessage(data: unknown): ServerMessage | null {
   if (typeof data !== 'string') {
-    return null
+    return null;
   }
 
   try {
-    const parsed: unknown = JSON.parse(data)
+    const parsed: unknown = JSON.parse(data);
     if (!parsed || typeof parsed !== 'object' || !('type' in parsed)) {
-      return null
+      return null;
     }
 
-    return parsed as ServerMessage
+    return parsed as ServerMessage;
   } catch {
-    return null
+    return null;
   }
 }
 
 function formatNumber(value: number | undefined) {
-  return value === undefined ? undefined : new Intl.NumberFormat().format(value)
+  return value === undefined ? undefined : new Intl.NumberFormat().format(value);
 }
 
 function formatSignedNumber(value: number | undefined) {
   if (value === undefined) {
-    return '-'
+    return '-';
   }
 
   if (value > 0) {
-    return `+${value}`
+    return `+${value}`;
   }
 
-  return String(value)
+  return String(value);
 }
 
 function getExperienceProgress(mudState: MudState) {
   if (mudState.experienceMax === undefined) {
-    return undefined
+    return undefined;
   }
 
   if (mudState.experienceTnl === undefined) {
-    return mudState.experience
+    return mudState.experience;
   }
 
-  return Math.max(mudState.experienceMax - mudState.experienceTnl, 0)
+  return Math.max(mudState.experienceMax - mudState.experienceTnl, 0);
 }
 
-function buildMapOutput(mudState: MudState, status: ConnectionStatus, msdpVariables: MsdpVariableMap): MapOutput {
-  const minimap = mudState.minimap?.trimEnd()
+function buildMapOutput(
+  mudState: MudState,
+  status: ConnectionStatus,
+  msdpVariables: MsdpVariableMap,
+): MapOutput {
+  const minimap = mudState.minimap?.trimEnd();
   if (minimap) {
     return {
       text: minimap,
@@ -3233,10 +3425,10 @@ function buildMapOutput(mudState: MudState, status: ConnectionStatus, msdpVariab
         title: 'Live MINIMAP',
         detail: 'Using server-reported minimap data.',
       }),
-    }
+    };
   }
 
-  const roomOutput = buildRoomOutput(mudState)
+  const roomOutput = buildRoomOutput(mudState);
   if (roomOutput) {
     return {
       text: roomOutput,
@@ -3244,7 +3436,7 @@ function buildMapOutput(mudState: MudState, status: ConnectionStatus, msdpVariab
         title: 'Room fallback',
         detail: 'Using source-confirmed room and exit data while live MINIMAP is unavailable.',
       }),
-    }
+    };
   }
 
   if (status === 'connecting') {
@@ -3254,21 +3446,21 @@ function buildMapOutput(mudState: MudState, status: ConnectionStatus, msdpVariab
         title: 'Loading map data',
         detail: 'Waiting for the first room or minimap update.',
       }),
-    }
+    };
   }
 
   if (status === 'error') {
     return {
       text: 'Map data unavailable after connection error.',
       notice: createAvailabilityNotice('error', OPTIONAL_DATA_DESCRIPTORS.minimap.error),
-    }
+    };
   }
 
   if (status === 'idle' || status === 'disconnected') {
     return {
       text: 'Map data unavailable while offline.',
       notice: createAvailabilityNotice('offline', OPTIONAL_DATA_DESCRIPTORS.minimap.offline),
-    }
+    };
   }
 
   if (!isMsdpVariableConfigured(msdpVariables, 'minimap')) {
@@ -3276,145 +3468,150 @@ function buildMapOutput(mudState: MudState, status: ConnectionStatus, msdpVariab
       text: 'No room fallback data reported yet.',
       notice: createAvailabilityNotice('empty', {
         title: 'No room data yet',
-        detail: 'ROOM and ROOM_EXITS are requested; live MINIMAP requires future server support or an override.',
+        detail:
+          'ROOM and ROOM_EXITS are requested; live MINIMAP requires future server support or an override.',
       }),
-    }
+    };
   }
 
   return {
     text: 'No room or minimap data reported yet.',
     notice: createAvailabilityNotice('loading', OPTIONAL_DATA_DESCRIPTORS.minimap.waiting),
-  }
+  };
 }
 
 function buildRoomOutput(mudState: MudState) {
-  const lines: string[] = []
-  const heading = [mudState.roomName, mudState.areaName].filter(Boolean).join(' - ')
+  const lines: string[] = [];
+  const heading = [mudState.roomName, mudState.areaName].filter(Boolean).join(' - ');
 
   if (heading) {
-    lines.push(heading)
+    lines.push(heading);
   }
 
   if (mudState.roomVnum !== undefined) {
-    lines.push(`Room #${mudState.roomVnum}`)
+    lines.push(`Room #${mudState.roomVnum}`);
   }
 
-  const exits = mudState.roomExits !== undefined ? formatMudValueAsText(mudState.roomExits) : ''
+  const exits = mudState.roomExits !== undefined ? formatMudValueAsText(mudState.roomExits) : '';
   if (exits) {
-    lines.push(`Exits: ${exits}`)
+    lines.push(`Exits: ${exits}`);
   }
 
   if (mudState.worldTime) {
-    lines.push(`World time: ${mudState.worldTime}`)
+    lines.push(`World time: ${mudState.worldTime}`);
   }
 
   if (lines.length === 0 && mudState.room !== undefined) {
-    const room = formatMudValueAsText(mudState.room)
+    const room = formatMudValueAsText(mudState.room);
     if (room) {
-      lines.push(room)
+      lines.push(room);
     }
   }
 
-  return lines.join('\n')
+  return lines.join('\n');
 }
 
-function findMatchingMudPresetId(mudPresets: AppSettings['connection']['muds'], host: string, port: number) {
+function findMatchingMudPresetId(
+  mudPresets: AppSettings['connection']['muds'],
+  host: string,
+  port: number,
+) {
   return mudPresets.find(
     (mud) => mud.host.toLowerCase() === host.trim().toLowerCase() && mud.port === port,
-  )?.id
+  )?.id;
 }
 
 function renderMudHtml(value: string) {
-  return new AnsiToHtml({ escapeXML: true }).toHtml(convertLuminariColorCodes(value))
+  return new AnsiToHtml({ escapeXML: true }).toHtml(convertLuminariColorCodes(value));
 }
 
 function convertLuminariColorCodes(value: string) {
-  let converted = ''
+  let converted = '';
 
   for (let index = 0; index < value.length; index += 1) {
-    const current = value[index]
+    const current = value[index];
     if (current !== LUMINARI_COLOR_CHAR) {
-      converted += current
-      continue
+      converted += current;
+      continue;
     }
 
-    const next = value[index + 1]
+    const next = value[index + 1];
     if (!next) {
-      converted += current
-      continue
+      converted += current;
+      continue;
     }
 
     if (next === LUMINARI_COLOR_CHAR) {
-      converted += LUMINARI_COLOR_CHAR
-      index += 1
-      continue
+      converted += LUMINARI_COLOR_CHAR;
+      index += 1;
+      continue;
     }
 
     if (next === '[') {
-      const endIndex = value.indexOf(']', index + 2)
+      const endIndex = value.indexOf(']', index + 2);
       if (endIndex > index + 2) {
-        const luminariRgb = value.slice(index + 2, endIndex)
-        const ansiColor = luminariRgbToAnsi(luminariRgb)
+        const luminariRgb = value.slice(index + 2, endIndex);
+        const ansiColor = luminariRgbToAnsi(luminariRgb);
         if (ansiColor) {
-          converted += ansiColor
-          index = endIndex
-          continue
+          converted += ansiColor;
+          index = endIndex;
+          continue;
         }
       }
     }
 
-    const luminariColor = LUMINARI_COLOR_CODES[next]
+    const luminariColor = LUMINARI_COLOR_CODES[next];
     if (luminariColor !== undefined) {
-      converted += luminariColor
-      index += 1
-      continue
+      converted += luminariColor;
+      index += 1;
+      continue;
     }
 
-    converted += current
+    converted += current;
   }
 
-  return converted
+  return converted;
 }
 
 function luminariRgbToAnsi(code: string) {
   if (!/^[FfBb][0-5]{3}$/.test(code)) {
-    return ''
+    return '';
   }
 
-  const isBackground = code[0].toLowerCase() === 'b'
+  const isBackground = code[0].toLowerCase() === 'b';
   const [red, green, blue] = code
     .slice(1)
     .split('')
-    .map((value) => Number(value) * 51)
+    .map((value) => Number(value) * 51);
 
-  return `\u001b[${isBackground ? 48 : 38};2;${red};${green};${blue}m`
+  return `\u001b[${isBackground ? 48 : 38};2;${red};${green};${blue}m`;
 }
 
 function shouldPreservePointerFocus(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
-    return false
+    return false;
   }
 
   return Boolean(
     target.closest(
       'input, textarea, select, button, label, a, summary, [data-prevent-command-focus], [contenteditable="true"]',
     ),
-  )
+  );
 }
 
 function hasExpandedSelection() {
   if (typeof window === 'undefined') {
-    return false
+    return false;
   }
 
-  const selection = window.getSelection()
-  return Boolean(selection && !selection.isCollapsed)
+  const selection = window.getSelection();
+  return Boolean(selection && !selection.isCollapsed);
 }
 
 function focusCommandInput(input: HTMLInputElement | null) {
   requestAnimationFrame(() => {
-    input?.focus({ preventScroll: true })
-  })
+    input?.focus({ preventScroll: true });
+  });
 }
 
 function createAnsiConverter() {
@@ -3422,7 +3619,7 @@ function createAnsiConverter() {
     escapeXML: true,
     newline: true,
     stream: true,
-  })
+  });
 }
 
-export default App
+export default App;

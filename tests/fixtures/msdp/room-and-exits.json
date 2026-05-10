@@ -37,9 +37,7 @@
         ["AREA_NAME", "Test Keep"],
         ["ROOM_VNUM", 1001]
       ],
-      "notes": [
-        "Room labels are synthetic and avoid live area capture content."
-      ]
+      "notes": ["Room labels are synthetic and avoid live area capture content."]
     },
     {
       "id": "room.exits.table",
@@ -84,9 +82,7 @@
           }
         ]
       ],
-      "notes": [
-        "The current parser preserves table shape as an object."
-      ]
+      "notes": ["The current parser preserves table shape as an object."]
     },
     {
       "id": "room.room.table",
@@ -156,18 +152,9 @@
         "PRD Source Protocol Facts confirms WORLD_TIME.",
         "shared/mud.ts maps worldTime to an optional string."
       ],
-      "payloadTokens": [
-        "VAR",
-        "WORLD_TIME",
-        "VAL",
-        "Day 12, Month 3, Year 204"
-      ],
-      "expectedPairs": [
-        ["WORLD_TIME", "Day 12, Month 3, Year 204"]
-      ],
-      "notes": [
-        "The text value is synthetic and used only for parser and mapping coverage."
-      ]
+      "payloadTokens": ["VAR", "WORLD_TIME", "VAL", "Day 12, Month 3, Year 204"],
+      "expectedPairs": [["WORLD_TIME", "Day 12, Month 3, Year 204"]],
+      "notes": ["The text value is synthetic and used only for parser and mapping coverage."]
     }
   ]
 }

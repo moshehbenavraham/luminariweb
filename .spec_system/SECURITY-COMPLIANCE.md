@@ -9,20 +9,22 @@
 
 ### Overall: NEEDS HARDENING BEFORE PUBLIC DEPLOYMENT
 
-| Metric | Value |
-|--------|-------|
-| Open Findings | 5 |
-| Critical/High | 1 |
-| Medium/Low | 4 |
-| Phases Audited | 0 |
-| Last Clean Phase | -- |
+| Metric           | Value |
+| ---------------- | ----- |
+| Open Findings    | 5     |
+| Critical/High    | 1     |
+| Medium/Low       | 4     |
+| Phases Audited   | 0     |
+| Last Clean Phase | --    |
 
 ## Open Findings
 
 ### Critical / High
+
 - **HIGH P00-SEC-001: Public proxy can target arbitrary hosts and ports.** `server/index.ts` validates only host syntax and port range before `net.createConnection()`. Before public deployment, add configured destination allowlists, DNS/IP checks that reject loopback/private/link-local/multicast/metadata ranges, banned service ports, origin checks, connection quotas, rate limits, and connect/idle timeouts.
 
 ### Medium / Low
+
 - **MEDIUM P00-SEC-002: Browser settings are stored in cookies.** `src/App.tsx` stores aliases, triggers, and client settings in chunked cookies with `SameSite=Lax` and `path=/`. They are not passwords, but they are sent to the server on HTTP/WebSocket requests. Prefer localStorage or IndexedDB and keep secrets out of client persistence.
 - **MEDIUM P00-SEC-003: No command/input rate limiting.** Alias and trigger recursion is capped, but neither browser command submission nor proxy input forwarding has rate limits. Add safeguards before public deployment to reduce automation loops and abuse.
 - **LOW P00-SEC-004: HTML rendering depends on escaping invariants.** Terminal and panel rendering use `dangerouslySetInnerHTML`, currently through `ansi-to-html` with `escapeXML: true`. Preserve that invariant, and add tests around HTML escaping before renderer changes.
@@ -33,6 +35,7 @@
 ### Overall: LOW RISK / LOCAL-ONLY
 
 ### Personal Data Inventory
+
 No account system, database, analytics, payment flow, or server-side profile storage exists in this repository.
 
 Browser-local data currently includes:
@@ -50,14 +53,14 @@ Potentially sensitive operational data:
 
 ### Compliance Checklist
 
-| Requirement | Status | Notes |
-|------------|--------|-------|
-| Data collection has documented purpose | Partial | Browser-local settings support gameplay preferences; no server-side account data exists |
-| Consent obtained before data storage | Partial | Settings are saved by using app controls, but there is no explicit storage notice |
-| Data minimization verified | Partial | No secrets are required; cookies should be replaced for local settings |
-| Deletion/erasure path exists | Partial | Users can clear browser storage/cookies; no in-app clear-all control is documented |
-| No PII in application logs | Pass | Current code logs startup and settings-load errors, not command text |
-| Third-party transfers documented | Partial | Commands and connection data are sent to selected MUD hosts; production policy is not finalized |
+| Requirement                            | Status  | Notes                                                                                           |
+| -------------------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
+| Data collection has documented purpose | Partial | Browser-local settings support gameplay preferences; no server-side account data exists         |
+| Consent obtained before data storage   | Partial | Settings are saved by using app controls, but there is no explicit storage notice               |
+| Data minimization verified             | Partial | No secrets are required; cookies should be replaced for local settings                          |
+| Deletion/erasure path exists           | Partial | Users can clear browser storage/cookies; no in-app clear-all control is documented              |
+| No PII in application logs             | Pass    | Current code logs startup and settings-load errors, not command text                            |
+| Third-party transfers documented       | Partial | Commands and connection data are sent to selected MUD hosts; production policy is not finalized |
 
 ## Dependency Security
 
@@ -74,13 +77,14 @@ Top-level runtime dependencies observed:
 Development dependencies include Vite, TypeScript, ESLint, React plugin packages, `tsx`, and `concurrently`.
 
 ## Resolved Findings
-*No resolved findings yet.*
+
+_No resolved findings yet._
 
 ## Phase History
 
-| Phase | Sessions | Security | GDPR | Findings Opened | Findings Closed |
-|-------|----------|----------|------|-----------------|-----------------|
-| 00 | 0/5 planned | Initial code scan | Local-only baseline | 5 | 0 |
+| Phase | Sessions    | Security          | GDPR                | Findings Opened | Findings Closed |
+| ----- | ----------- | ----------------- | ------------------- | --------------- | --------------- |
+| 00    | 0/5 planned | Initial code scan | Local-only baseline | 5               | 0               |
 
 ## Recommendations
 
@@ -90,4 +94,4 @@ Development dependencies include Vite, TypeScript, ESLint, React plugin packages
 4. Keep command logging disabled by default.
 5. Document any production MUD host policy in `docs/deployment.md` and `.spec_system/PRD/PRD.md`.
 
-*Auto-generated by initspec. Updated by carryforward between phases.*
+_Auto-generated by initspec. Updated by carryforward between phases._

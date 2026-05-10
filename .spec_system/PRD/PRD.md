@@ -122,15 +122,15 @@ Confirmed MSDP table variables include:
 
 Important mismatches to resolve:
 
-| Area | Current fact | Product impact |
-|------|--------------|----------------|
-| `TITLE` | Requested by current client, not present in `VariableNameTable` | Character title UI needs fallback or a future server variable |
-| `QUEST_INFO` | Requested by current client, not present in `VariableNameTable` | Quest tab needs another data source or future server work |
-| Saves | `FORTITUDE`, `REFLEX`, and `WILLPOWER` are requested but not present | Save widgets need removal, fallback, or server variables |
-| `MINIMAP` | Declared, but no audited `MSDPSet*` population call found | Minimap UI must not assume live data |
-| `ROOM` / `ROOM_EXITS` | Populated by source, but not in current default request map | Room/map work should start with these values |
-| `DAMAGE_BONUS` | Defined, but update path appears commented out | Damage bonus HUD should wait for live confirmation |
-| MCCP | Negotiation exists, compression functions are stubs | Proxy should keep rejecting MCCP until real support exists |
+| Area                  | Current fact                                                         | Product impact                                                |
+| --------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `TITLE`               | Requested by current client, not present in `VariableNameTable`      | Character title UI needs fallback or a future server variable |
+| `QUEST_INFO`          | Requested by current client, not present in `VariableNameTable`      | Quest tab needs another data source or future server work     |
+| Saves                 | `FORTITUDE`, `REFLEX`, and `WILLPOWER` are requested but not present | Save widgets need removal, fallback, or server variables      |
+| `MINIMAP`             | Declared, but no audited `MSDPSet*` population call found            | Minimap UI must not assume live data                          |
+| `ROOM` / `ROOM_EXITS` | Populated by source, but not in current default request map          | Room/map work should start with these values                  |
+| `DAMAGE_BONUS`        | Defined, but update path appears commented out                       | Damage bonus HUD should wait for live confirmation            |
+| MCCP                  | Negotiation exists, compression functions are stubs                  | Proxy should keep rejecting MCCP until real support exists    |
 
 ## Requirements
 
@@ -362,16 +362,16 @@ External sources:
 
 The active first-party client lives at the project root. The remaining external reference repositories are cloned under `EXAMPLES/`.
 
-| Role | Local path | Remote | Local branch/commit |
-|------|------------|--------|---------------------|
-| Luminari server source | `/home/aiwithapex/projects/Luminari-Source` | `https://github.com/LuminariMUD/Luminari-Source.git` | `master` / `60cbeff6` / 2026-02-22 |
-| Active first-party client | `/home/aiwithapex/projects/luminariweb` | `https://github.com/moshehbenavraham/luminariweb.git` | `main` / `2999ec3` / 2026-05-10 |
-| Feature/UI reference | `/home/aiwithapex/projects/luminariweb/EXAMPLES/mud-web-client` | `https://github.com/maldorne/mud-web-client.git` | `master` / `012720a` / 2026-04-27 |
-| Protocol proxy reference | `/home/aiwithapex/projects/luminariweb/EXAMPLES/mud-web-proxy` | `https://github.com/maldorne/mud-web-proxy.git` | `master` / `03dd743` / 2026-04-27 |
-| Mobile/PWA reference | `/home/aiwithapex/projects/luminariweb/EXAMPLES/lociterm` | `https://github.com/RahjIII/lociterm.git` | `dev` / `6370cd5` / 2026-02-02 |
-| Battle-tested bridge fallback | `/home/aiwithapex/projects/luminariweb/EXAMPLES/websockify` | `https://github.com/novnc/websockify.git` | `master` / `a4d6cc5` / 2026-02-11 |
-| Single-binary bridge fallback | `/home/aiwithapex/projects/luminariweb/EXAMPLES/wsgate-server` | `https://github.com/kazeburo/wsgate-server.git` | `master` / `71871da` / 2025-05-04 |
-| Native WebSocket architecture reference | `/home/aiwithapex/projects/luminariweb/EXAMPLES/mud-r` | `https://github.com/lpautet/mud-r.git` | `main` / `3e2e2bd` / 2025-09-29 |
+| Role                                    | Local path                                                      | Remote                                                | Local branch/commit                |
+| --------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------- | ---------------------------------- |
+| Luminari server source                  | `/home/aiwithapex/projects/Luminari-Source`                     | `https://github.com/LuminariMUD/Luminari-Source.git`  | `master` / `60cbeff6` / 2026-02-22 |
+| Active first-party client               | `/home/aiwithapex/projects/luminariweb`                         | `https://github.com/moshehbenavraham/luminariweb.git` | `main` / `2999ec3` / 2026-05-10    |
+| Feature/UI reference                    | `/home/aiwithapex/projects/luminariweb/EXAMPLES/mud-web-client` | `https://github.com/maldorne/mud-web-client.git`      | `master` / `012720a` / 2026-04-27  |
+| Protocol proxy reference                | `/home/aiwithapex/projects/luminariweb/EXAMPLES/mud-web-proxy`  | `https://github.com/maldorne/mud-web-proxy.git`       | `master` / `03dd743` / 2026-04-27  |
+| Mobile/PWA reference                    | `/home/aiwithapex/projects/luminariweb/EXAMPLES/lociterm`       | `https://github.com/RahjIII/lociterm.git`             | `dev` / `6370cd5` / 2026-02-02     |
+| Battle-tested bridge fallback           | `/home/aiwithapex/projects/luminariweb/EXAMPLES/websockify`     | `https://github.com/novnc/websockify.git`             | `master` / `a4d6cc5` / 2026-02-11  |
+| Single-binary bridge fallback           | `/home/aiwithapex/projects/luminariweb/EXAMPLES/wsgate-server`  | `https://github.com/kazeburo/wsgate-server.git`       | `master` / `71871da` / 2025-05-04  |
+| Native WebSocket architecture reference | `/home/aiwithapex/projects/luminariweb/EXAMPLES/mud-r`          | `https://github.com/lpautet/mud-r.git`                | `main` / `3e2e2bd` / 2025-09-29    |
 
 Notes:
 
@@ -486,15 +486,15 @@ Constraint:
 
 GitHub metadata was checked on 2026-05-10. Local clone state is listed in the Reference Repository Inventory table above.
 
-| Repo | Stars | Repo last push | License signal | Primary role |
-|------|------:|----------------|----------------|--------------|
-| `GickerLDS/LuminariWebClient` | 2 | 2026-05-10 | No assertion | Historical upstream base |
-| `maldorne/mud-web-client` | 17 | 2026-04-27 | GPL-3.0 | Feature/UI reference |
-| `maldorne/mud-web-proxy` | 12 | 2026-04-27 | GPL-3.0 | Protocol proxy reference |
-| `RahjIII/lociterm` | 16 | 2026-02-03 | LGPL-3.0 | Mobile/PWA reference |
-| `novnc/websockify` | 4390 | 2026-02-11 | LGPL-3.0 | Bridge fallback |
-| `kazeburo/wsgate-server` | 37 | 2025-05-04 | MIT | Single-binary bridge fallback |
-| `lpautet/mud-r` | 2 | 2026-04-22 | CircleMUD terms, no SPDX | Native WebSocket reference |
+| Repo                          | Stars | Repo last push | License signal           | Primary role                  |
+| ----------------------------- | ----: | -------------- | ------------------------ | ----------------------------- |
+| `GickerLDS/LuminariWebClient` |     2 | 2026-05-10     | No assertion             | Historical upstream base      |
+| `maldorne/mud-web-client`     |    17 | 2026-04-27     | GPL-3.0                  | Feature/UI reference          |
+| `maldorne/mud-web-proxy`      |    12 | 2026-04-27     | GPL-3.0                  | Protocol proxy reference      |
+| `RahjIII/lociterm`            |    16 | 2026-02-03     | LGPL-3.0                 | Mobile/PWA reference          |
+| `novnc/websockify`            |  4390 | 2026-02-11     | LGPL-3.0                 | Bridge fallback               |
+| `kazeburo/wsgate-server`      |    37 | 2025-05-04     | MIT                      | Single-binary bridge fallback |
+| `lpautet/mud-r`               |     2 | 2026-04-22     | CircleMUD terms, no SPDX | Native WebSocket reference    |
 
 ## Source Locations
 
@@ -519,17 +519,19 @@ GitHub metadata was checked on 2026-05-10. Local clone state is listed in the Re
 
 ## Phases
 
-| Phase | Name | Sessions | Status |
-|-------|------|----------|--------|
-| 0 | Align With Real Luminari Data | 5 | Not Started |
-| 1 | Harden Terminal and Proxy | 6 | Planned |
-| 2 | Build Luminari Game Panels | 6 | Planned |
-| 3 | Borrow the Best Ideas | 6 | Planned |
-| 4 | Source-Level Protocol Path | 5 | Planned |
+| Phase | Name                          | Sessions | Status   |
+| ----- | ----------------------------- | -------- | -------- |
+| 0     | Align With Real Luminari Data | 5        | Complete |
+| 1     | Harden Terminal and Proxy     | 6        | Planned  |
+| 2     | Build Luminari Game Panels    | 6        | Planned  |
+| 3     | Borrow the Best Ideas         | 6        | Planned  |
+| 4     | Source-Level Protocol Path    | 5        | Planned  |
 
 ## Phase 0: Align With Real Luminari Data
 
 Objective: make the current client honest about what Luminari-Source emits today, establish local verification, and create the fixture/test foundation needed for later protocol work.
+
+Status: complete. Phase 00 session 05 closed the local MSDP state-mapping test foundation, and the phase artifacts were archived after validation.
 
 ### P0-S1: Baseline Verification and Project Hygiene
 

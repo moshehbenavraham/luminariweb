@@ -7,25 +7,25 @@
 
 ## Port Mappings
 
-| Service | Port | URL |
-|---------|------|-----|
-| Vite frontend | 5190 | `http://localhost:5190` |
+| Service          | Port | URL                     |
+| ---------------- | ---- | ----------------------- |
+| Vite frontend    | 5190 | `http://localhost:5190` |
 | Proxy/API server | 5191 | `http://localhost:5191` |
-| Vite preview | 5192 | `http://localhost:5192` |
+| Vite preview     | 5192 | `http://localhost:5192` |
 
 Ports are configured in `shared/app-settings.ts`.
 
 ## Dev Scripts
 
-| Command | Purpose |
-|---------|---------|
-| `npm run dev` | Run the frontend and proxy together |
-| `npm run dev:client` | Run Vite only |
-| `npm run dev:server` | Run the proxy server with `tsx watch` |
-| `npm run lint` | Run ESLint |
-| `npm run build` | Type-check and build client/server output |
-| `npm run preview` | Preview built frontend assets |
-| `npm start` | Run the built server from `dist/server/index.js` |
+| Command              | Purpose                                          |
+| -------------------- | ------------------------------------------------ |
+| `npm run dev`        | Run the frontend and proxy together              |
+| `npm run dev:client` | Run Vite only                                    |
+| `npm run dev:server` | Run the proxy server with `tsx watch`            |
+| `npm run lint`       | Run ESLint                                       |
+| `npm run build`      | Type-check and build client/server output        |
+| `npm run preview`    | Preview built frontend assets                    |
+| `npm start`          | Run the built server from `dist/server/index.js` |
 
 ## Local Workflow
 

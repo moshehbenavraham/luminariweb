@@ -4,11 +4,11 @@ Express and WebSocket server that bridges browser clients to Telnet MUD servers.
 
 ## Run Commands
 
-| Command | Purpose |
-|---------|---------|
-| `npm run dev:server` | Run the proxy with `tsx watch` |
-| `npm run dev` | Run proxy and frontend together |
-| `npm start` | Run built server output |
+| Command              | Purpose                         |
+| -------------------- | ------------------------------- |
+| `npm run dev:server` | Run the proxy with `tsx watch`  |
+| `npm run dev`        | Run proxy and frontend together |
+| `npm start`          | Run built server output         |
 
 ## Responsibilities
 
