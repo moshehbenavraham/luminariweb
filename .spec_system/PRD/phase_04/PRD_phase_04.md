@@ -4,7 +4,7 @@
 **Sessions**: 5
 **Estimated Duration**: 5-8 days
 
-**Progress**: 3/5 sessions (60%)
+**Progress**: 4/5 sessions (80%)
 
 ---
 
