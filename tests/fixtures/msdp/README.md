@@ -106,16 +106,16 @@ Expected values use the current parser contract:
 
 The PRD source protocol facts confirm these variable groups from Luminari-Source. Fixture coverage should remain traceable to these groups and should not imply unsupported data is emitted.
 
-| Source Group           | Confirmed Variables Covered                                                                                                    | Fixture Files                                               |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
-| Server/client metadata | `SERVER_ID`, `SERVER_TIME`, `SNIPPET_VERSION`                                                                                  | `core-scalars.json`                                         |
+| Source Group           | Confirmed Variables Covered                                                                                                           | Fixture Files                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Server/client metadata | `SERVER_ID`, `SERVER_TIME`, `SNIPPET_VERSION`                                                                                         | `core-scalars.json`                                         |
 | Character              | `CHARACTER_NAME`, `TITLE`, `LEVEL`, `RACE`, `CLASS`, `POSITION`, `ALIGNMENT`, `MONEY`, `PRACTICE`, `FORTITUDE`, `REFLEX`, `WILLPOWER` | `core-scalars.json`, `combat-and-resources.json`            |
-| Resources              | `HEALTH`, `HEALTH_MAX`, `PSP`, `PSP_MAX`, `MOVEMENT`, `MOVEMENT_MAX`, `EXPERIENCE`, `EXPERIENCE_MAX`, `EXPERIENCE_TNL`         | `combat-and-resources.json`                                 |
-| Combat                 | `ATTACK_BONUS`, `AC`, `OPPONENT_NAME`, `OPPONENT_HEALTH`, `OPPONENT_HEALTH_MAX`, `TANK_NAME`, `TANK_HEALTH`, `TANK_HEALTH_MAX` | `combat-and-resources.json`                                 |
-| Ability scores         | `STR`, `INT`, `WIS`, `DEX`, `CON`, `CHA`                                                                                       | `core-scalars.json`                                         |
-| Collections            | `ACTIONS`, `INVENTORY`, `AFFECTS`, `GROUP`                                                                                     | `collections.json`, `group-data.json`, `nested-tables.json` |
-| Room/world             | `ROOM`, `AREA_NAME`, `ROOM_EXITS`, `ROOM_NAME`, `ROOM_VNUM`, `WORLD_TIME`, `MINIMAP`                                           | `room-and-exits.json`, `nested-tables.json`                 |
-| Parser safety          | Skipped leading bytes, truncated values, empty variable names, incomplete tables, incomplete arrays                            | `malformed-payloads.json`                                   |
+| Resources              | `HEALTH`, `HEALTH_MAX`, `PSP`, `PSP_MAX`, `MOVEMENT`, `MOVEMENT_MAX`, `EXPERIENCE`, `EXPERIENCE_MAX`, `EXPERIENCE_TNL`                | `combat-and-resources.json`                                 |
+| Combat                 | `ATTACK_BONUS`, `AC`, `OPPONENT_NAME`, `OPPONENT_HEALTH`, `OPPONENT_HEALTH_MAX`, `TANK_NAME`, `TANK_HEALTH`, `TANK_HEALTH_MAX`        | `combat-and-resources.json`                                 |
+| Ability scores         | `STR`, `INT`, `WIS`, `DEX`, `CON`, `CHA`                                                                                              | `core-scalars.json`                                         |
+| Collections            | `ACTIONS`, `INVENTORY`, `AFFECTS`, `GROUP`                                                                                            | `collections.json`, `group-data.json`, `nested-tables.json` |
+| Room/world             | `ROOM`, `AREA_NAME`, `ROOM_EXITS`, `ROOM_NAME`, `ROOM_VNUM`, `WORLD_TIME`, `MINIMAP`                                                  | `room-and-exits.json`, `nested-tables.json`                 |
+| Parser safety          | Skipped leading bytes, truncated values, empty variable names, incomplete tables, incomplete arrays                                   | `malformed-payloads.json`                                   |
 
 ## Room Fixture Notes
 

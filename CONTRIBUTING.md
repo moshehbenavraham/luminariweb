@@ -22,9 +22,10 @@ Run these before opening a pull request:
 ```bash
 npm run lint
 npm run build
+npm test
 ```
 
-There is no committed test script yet. When tests are added, document the command in `package.json`, `README.md`, and `docs/development.md`.
+The committed test script runs the focused Node test suite. If you add broader or slower tests, document their commands in `package.json`, `README.md`, and `docs/development.md`.
 
 ## Pull Requests
 
