@@ -28,14 +28,30 @@ import type {
   CombatParticipantModel,
   DamageBonusCombatModel,
 } from '../shared/msdp-combat-display.ts';
-import { buildCoreDisplayModel } from '../shared/msdp-display.ts';
-import type { CharacterFieldModel, HudBarModel } from '../shared/msdp-display.ts';
+import {
+  buildCoreDisplayModel,
+  formatAvailabilityAriaLabel,
+} from '../shared/msdp-display.ts';
+import type {
+  CharacterFieldModel,
+  DisplayAvailabilityNotice,
+  HudBarModel,
+} from '../shared/msdp-display.ts';
 import { buildGroupDisplayModel } from '../shared/msdp-group-display.ts';
 import type {
   GroupDisplayModel,
   GroupMemberModel,
   GroupResourceModel,
 } from '../shared/msdp-group-display.ts';
+import { buildMapDisplayModel } from '../shared/msdp-map-display.ts';
+import type {
+  MapDisplayModel,
+  MapFallbackExit,
+  MapFallbackIdentityField,
+  MapFallbackModel,
+} from '../shared/msdp-map-display.ts';
+import { buildQuestDisplayModel } from '../shared/msdp-quest-display.ts';
+import type { QuestDisplayModel } from '../shared/msdp-quest-display.ts';
 import { buildRoomDisplayModel } from '../shared/msdp-room-display.ts';
 import type {
   RoomDetailModel,
@@ -185,40 +201,7 @@ type AutomationNotice = {
 
 type AutomationMenuId = 'aliases' | 'triggers' | 'msdpVars' | 'settings';
 
-type AvailabilityKind = 'present' | 'empty' | 'loading' | 'offline' | 'error' | 'unavailable';
-
-type AvailabilityNotice = {
-  kind: AvailabilityKind;
-  title: string;
-  detail?: string;
-  ariaLabel?: string;
-};
-
-type OptionalDataDescriptor = {
-  key?: MsdpVariableKey;
-  label: string;
-  unsupported: Omit<AvailabilityNotice, 'kind'>;
-  waiting: Omit<AvailabilityNotice, 'kind'>;
-  empty: Omit<AvailabilityNotice, 'kind'>;
-  offline: Omit<AvailabilityNotice, 'kind'>;
-  error: Omit<AvailabilityNotice, 'kind'>;
-};
-
-type OptionalDataDescriptorId =
-  | 'title'
-  | 'questInfo'
-  | 'fortitude'
-  | 'reflex'
-  | 'willpower'
-  | 'damageBonus'
-  | 'minimap'
-  | 'group'
-  | 'affects';
-
-type MapOutput = {
-  text: string;
-  notice: AvailabilityNotice;
-};
+type AvailabilityNotice = DisplayAvailabilityNotice;
 
 const DEFAULT_CLIENT_SETTINGS: ClientSettings = {
   terminal: {
@@ -255,158 +238,6 @@ const SIDEBAR_FONT_FAMILIES: Record<SidebarFontFamily, string> = {
   serif: 'ui-serif, Georgia, Cambria, "Times New Roman", serif',
 };
 const OVERRIDE_ONLY_MSDP_VARIABLE_KEYS = new Set<MsdpVariableKey>(overrideOnlyMsdpVariableKeys);
-const OPTIONAL_DATA_DESCRIPTORS: Record<OptionalDataDescriptorId, OptionalDataDescriptor> = {
-  title: {
-    key: 'title',
-    label: 'Title',
-    unsupported: {
-      title: 'Title unavailable',
-      detail:
-        'Current Luminari-Source does not emit TITLE. Use an override only when a server provides it.',
-    },
-    waiting: {
-      title: 'Waiting for title',
-      detail: 'A TITLE override is configured, but no value has arrived in this session.',
-    },
-    empty: {
-      title: 'Title empty',
-      detail: 'The server reported a blank title.',
-    },
-    offline: {
-      title: 'Title offline',
-      detail: 'Connect before title data can be evaluated.',
-    },
-    error: {
-      title: 'Title unavailable',
-      detail: 'The connection ended before title data could be evaluated.',
-    },
-  },
-  questInfo: {
-    key: 'questInfo',
-    label: 'Quest info',
-    unsupported: {
-      title: 'Structured quests unavailable',
-      detail:
-        'Current Luminari-Source does not emit QUEST_INFO. Configure an override only for servers that do.',
-    },
-    waiting: {
-      title: 'Waiting for quests',
-      detail: 'A QUEST_INFO override is configured, but no structured quest payload has arrived.',
-    },
-    empty: {
-      title: 'No structured quests',
-      detail: 'The server reported an empty quest collection.',
-    },
-    offline: {
-      title: 'Quests offline',
-      detail: 'Connect before structured quest data can be evaluated.',
-    },
-    error: {
-      title: 'Quests unavailable',
-      detail: 'The connection ended before quest data could be evaluated.',
-    },
-  },
-  fortitude: createSavingThrowDescriptor('fortitude', 'Fortitude', 'FORTITUDE'),
-  reflex: createSavingThrowDescriptor('reflex', 'Reflex', 'REFLEX'),
-  willpower: createSavingThrowDescriptor('willpower', 'Willpower', 'WILLPOWER'),
-  damageBonus: {
-    key: 'damageBonus',
-    label: 'Damage bonus',
-    unsupported: {
-      title: 'Damage bonus unconfirmed',
-      detail: 'DAMAGE_BONUS is not reliably populated by the audited server source.',
-    },
-    waiting: {
-      title: 'Waiting for damage bonus',
-      detail: 'A DAMAGE_BONUS override is configured, but no value has arrived.',
-    },
-    empty: {
-      title: 'Damage bonus empty',
-      detail: 'The server reported a blank damage bonus.',
-    },
-    offline: {
-      title: 'Damage bonus offline',
-      detail: 'Connect before damage bonus data can be evaluated.',
-    },
-    error: {
-      title: 'Damage bonus unavailable',
-      detail: 'The connection ended before damage bonus data could be evaluated.',
-    },
-  },
-  minimap: {
-    key: 'minimap',
-    label: 'Minimap',
-    unsupported: {
-      title: 'Live minimap unavailable',
-      detail:
-        'MINIMAP is declared but not reliably populated. Room and exits remain the supported fallback.',
-    },
-    waiting: {
-      title: 'Waiting for minimap',
-      detail: 'A MINIMAP override is configured, but no live map payload has arrived.',
-    },
-    empty: {
-      title: 'Minimap empty',
-      detail: 'The server reported a blank minimap.',
-    },
-    offline: {
-      title: 'Map offline',
-      detail: 'Connect before room or minimap data can be evaluated.',
-    },
-    error: {
-      title: 'Map unavailable',
-      detail: 'The connection ended before map data could be evaluated.',
-    },
-  },
-  group: {
-    key: 'group',
-    label: 'Group',
-    unsupported: {
-      title: 'Group mapping disabled',
-      detail: 'GROUP is not currently requested by the client settings.',
-    },
-    waiting: {
-      title: 'Waiting for group',
-      detail: 'GROUP is requested, but no group payload has arrived in this session.',
-    },
-    empty: {
-      title: 'No group members',
-      detail: 'The server reported an empty group collection.',
-    },
-    offline: {
-      title: 'Group offline',
-      detail: 'Connect before group data can be evaluated.',
-    },
-    error: {
-      title: 'Group unavailable',
-      detail: 'The connection ended before group data could be evaluated.',
-    },
-  },
-  affects: {
-    key: 'affects',
-    label: 'Affects',
-    unsupported: {
-      title: 'Affects mapping disabled',
-      detail: 'AFFECTS is not currently requested by the client settings.',
-    },
-    waiting: {
-      title: 'Waiting for affects',
-      detail: 'AFFECTS is requested, but no affects payload has arrived in this session.',
-    },
-    empty: {
-      title: 'No active affects',
-      detail: 'The server reported an empty affects collection.',
-    },
-    offline: {
-      title: 'Affects offline',
-      detail: 'Connect before affects can be evaluated.',
-    },
-    error: {
-      title: 'Affects unavailable',
-      detail: 'The connection ended before affects could be evaluated.',
-    },
-  },
-};
 const MSDP_FIELD_SUPPORT_NOTES: Partial<Record<MsdpVariableKey, string>> = {
   title: 'Future server support or explicit override required.',
   fortitude: 'Future server support or explicit override required.',
@@ -1010,22 +841,40 @@ function App() {
     [clientSettings.sidebar.fontFamily, clientSettings.sidebar.fontSize],
   );
 
-  const mapOutput = useMemo(
-    () => buildMapOutput(mudState, status, activeMsdpVariables),
-    [activeMsdpVariables, mudState, status],
+  const mapDisplay = useMemo(
+    () =>
+      buildMapDisplayModel(
+        {
+          room: mudState.room,
+          roomName: mudState.roomName,
+          areaName: mudState.areaName,
+          roomVnum: mudState.roomVnum,
+          roomExits: mudState.roomExits,
+          worldTime: mudState.worldTime,
+          minimap: mudState.minimap,
+        },
+        status,
+        activeMsdpVariables,
+      ),
+    [
+      activeMsdpVariables,
+      mudState.areaName,
+      mudState.minimap,
+      mudState.room,
+      mudState.roomExits,
+      mudState.roomName,
+      mudState.roomVnum,
+      mudState.worldTime,
+      status,
+    ],
   );
   const selectedMudPreset = useMemo(
     () => uiSettings.connection.muds.find((mud) => mud.id === selectedMudId),
     [selectedMudId, uiSettings.connection.muds],
   );
-  const questInfoNotice = useMemo(
+  const questDisplay = useMemo(
     () =>
-      getMudValueAvailabilityNotice(
-        mudState.questInfo,
-        OPTIONAL_DATA_DESCRIPTORS.questInfo,
-        status,
-        activeMsdpVariables,
-      ),
+      buildQuestDisplayModel({ questInfo: mudState.questInfo }, status, activeMsdpVariables),
     [activeMsdpVariables, mudState.questInfo, status],
   );
   const handleXtermFitDimensions = useCallback(
@@ -1965,12 +1814,7 @@ function App() {
               </div>
             </div>
 
-            <AvailabilityNoticeBlock notice={mapOutput.notice} className="map-availability" />
-            <pre
-              className="minimap"
-              style={minimapStyle}
-              dangerouslySetInnerHTML={{ __html: renderMudHtml(mapOutput.text) }}
-            />
+            <MapPanel map={mapDisplay} minimapStyle={minimapStyle} />
           </section>
 
           <section className="panel tabbed-panel">
@@ -2056,13 +1900,7 @@ function App() {
 
               {activeSidebarTab === 'room' ? <RoomPanel room={roomDisplay} /> : null}
 
-              {activeSidebarTab === 'quests' ? (
-                questInfoNotice ? (
-                  <AvailabilityNoticeBlock notice={questInfoNotice} />
-                ) : (
-                  <QuestInfoPanel value={mudState.questInfo as MudValue} />
-                )
-              ) : null}
+              {activeSidebarTab === 'quests' ? <QuestPanel quest={questDisplay} /> : null}
 
               {activeSidebarTab === 'group' ? <GroupPanel group={groupDisplay} /> : null}
 
@@ -2718,118 +2556,8 @@ function pluralize(count: number) {
   return count === 1 ? '' : 's';
 }
 
-function createSavingThrowDescriptor(
-  key: MsdpVariableKey,
-  label: string,
-  variableName: string,
-): OptionalDataDescriptor {
-  return {
-    key,
-    label,
-    unsupported: {
-      title: 'Future server',
-      detail: `${label} requires ${variableName} support from the server or an explicit override.`,
-    },
-    waiting: {
-      title: 'Waiting',
-      detail: `${variableName} is configured, but no ${label.toLowerCase()} value has arrived.`,
-    },
-    empty: {
-      title: 'Empty',
-      detail: `The server reported a blank ${label.toLowerCase()} value.`,
-    },
-    offline: {
-      title: 'Offline',
-      detail: `Connect before ${label.toLowerCase()} can be evaluated.`,
-    },
-    error: {
-      title: 'Unavailable',
-      detail: `The connection ended before ${label.toLowerCase()} could be evaluated.`,
-    },
-  };
-}
-
 function getMsdpFieldSupportNote(key: MsdpVariableKey) {
   return MSDP_FIELD_SUPPORT_NOTES[key];
-}
-
-function getMudValueAvailabilityNotice(
-  value: MudValue | undefined,
-  descriptor: OptionalDataDescriptor,
-  status: ConnectionStatus,
-  msdpVariables: MsdpVariableMap,
-) {
-  if (value === undefined) {
-    return getMissingAvailabilityNotice(descriptor, status, msdpVariables);
-  }
-
-  if (isEmptyMudValue(value)) {
-    return createAvailabilityNotice('empty', descriptor.empty);
-  }
-
-  return null;
-}
-
-function getMissingAvailabilityNotice(
-  descriptor: OptionalDataDescriptor,
-  status: ConnectionStatus,
-  msdpVariables: MsdpVariableMap,
-) {
-  if (status === 'idle' || status === 'disconnected') {
-    return createAvailabilityNotice('offline', descriptor.offline);
-  }
-
-  if (status === 'error') {
-    return createAvailabilityNotice('error', descriptor.error);
-  }
-
-  if (descriptor.key && !isMsdpVariableConfigured(msdpVariables, descriptor.key)) {
-    return createAvailabilityNotice('unavailable', descriptor.unsupported);
-  }
-
-  if (status === 'connecting') {
-    return createAvailabilityNotice('loading', descriptor.waiting);
-  }
-
-  return createAvailabilityNotice('loading', descriptor.waiting);
-}
-
-function createAvailabilityNotice(
-  kind: AvailabilityKind,
-  notice: Omit<AvailabilityNotice, 'kind'>,
-): AvailabilityNotice {
-  return {
-    kind,
-    ...notice,
-  };
-}
-
-function formatAvailabilityAriaLabel(notice: AvailabilityNotice) {
-  return notice.ariaLabel ?? [notice.title, notice.detail].filter(Boolean).join('. ');
-}
-
-function isMsdpVariableConfigured(msdpVariables: MsdpVariableMap, key: MsdpVariableKey) {
-  return msdpVariables[key].trim().length > 0;
-}
-
-function isEmptyMudValue(value: MudValue) {
-  if (value === null) {
-    return true;
-  }
-
-  if (typeof value === 'string') {
-    return value.trim().length === 0;
-  }
-
-  if (Array.isArray(value)) {
-    return value.length === 0;
-  }
-
-  if (isMudRecord(value)) {
-    return Object.keys(value).length === 0;
-  }
-
-  return false;
 }
 
 type StatusBarProps = {
@@ -3065,6 +2793,128 @@ function AvailabilityValue({ notice }: { notice: AvailabilityNotice }) {
     >
       {notice.title}
     </span>
+  );
+}
+
+type MapPanelProps = {
+  map: MapDisplayModel;
+  minimapStyle: CSSProperties;
+};
+
+function MapPanel({ map, minimapStyle }: MapPanelProps) {
+  return (
+    <div className={`map-panel map-panel-${map.state}`} aria-label={map.ariaLabel}>
+      <AvailabilityNoticeBlock notice={map.availability} className="map-availability" />
+
+      {map.state === 'liveOverride' && map.minimapText ? (
+        <pre
+          className="minimap minimap-live-output"
+          data-prevent-command-focus
+          style={minimapStyle}
+          dangerouslySetInnerHTML={{ __html: renderMudHtml(map.minimapText) }}
+        />
+      ) : null}
+
+      {map.state === 'fallback' && map.fallback ? (
+        <MapFallbackView fallback={map.fallback} />
+      ) : null}
+
+      {map.source === 'none' ? (
+        <div className="map-state-output" aria-hidden="true">
+          {map.availability.title}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function MapFallbackView({ fallback }: { fallback: MapFallbackModel }) {
+  return (
+    <section className="map-fallback" aria-label={fallback.ariaLabel}>
+      <div className="map-fallback-heading">
+        <h3 dangerouslySetInnerHTML={{ __html: renderMudHtml(fallback.headingText) }} />
+        <span>Room fallback</span>
+      </div>
+
+      {fallback.identityFields.length > 0 ? (
+        <dl className="map-field-grid" aria-label="Map room identity">
+          {fallback.identityFields.map((field) => (
+            <MapIdentityField key={field.id} field={field} />
+          ))}
+        </dl>
+      ) : null}
+
+      {fallback.exits.length > 0 ? (
+        <section className="map-exit-section" aria-labelledby="map-exits-heading">
+          <h4 id="map-exits-heading">Exits</h4>
+          <div className="map-exit-grid" role="list" aria-label="Map exits">
+            {fallback.exits.map((exit) => (
+              <MapExitCard key={exit.id} exit={exit} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {fallback.rawRoomText ? (
+        <p
+          className="map-raw-room"
+          dangerouslySetInnerHTML={{ __html: renderMudHtml(fallback.rawRoomText) }}
+        />
+      ) : null}
+    </section>
+  );
+}
+
+function MapIdentityField({ field }: { field: MapFallbackIdentityField }) {
+  return (
+    <div className="map-field" aria-label={field.ariaLabel}>
+      <dt>{field.label}</dt>
+      <dd dangerouslySetInnerHTML={{ __html: renderMudHtml(field.valueText) }} />
+    </div>
+  );
+}
+
+function MapExitCard({ exit }: { exit: MapFallbackExit }) {
+  return (
+    <article
+      className={`map-exit map-exit-${exit.kind}`}
+      role="listitem"
+      aria-label={exit.ariaLabel}
+    >
+      <div className="map-exit-header">
+        <span
+          className="map-exit-direction"
+          dangerouslySetInnerHTML={{ __html: renderMudHtml(exit.directionText) }}
+        />
+        {exit.statusText ? (
+          <span
+            className="map-exit-status"
+            dangerouslySetInnerHTML={{ __html: renderMudHtml(exit.statusText) }}
+          />
+        ) : null}
+      </div>
+
+      {exit.destinationText ? (
+        <div className="map-exit-detail">
+          <span>To</span>
+          <strong dangerouslySetInnerHTML={{ __html: renderMudHtml(exit.destinationText) }} />
+        </div>
+      ) : null}
+
+      {exit.rawText ? (
+        <p
+          className="map-exit-raw"
+          dangerouslySetInnerHTML={{ __html: renderMudHtml(exit.rawText) }}
+        />
+      ) : null}
+
+      {exit.unknownFieldsText ? (
+        <p
+          className="map-exit-other"
+          dangerouslySetInnerHTML={{ __html: renderMudHtml(`Other: ${exit.unknownFieldsText}`) }}
+        />
+      ) : null}
+    </article>
   );
 }
 
@@ -3404,6 +3254,17 @@ function CollectionDetailLine({ label, value }: { label: string; value: string }
 type QuestInfoPanelProps = {
   value: MudValue;
 };
+
+function QuestPanel({ quest }: { quest: QuestDisplayModel }) {
+  return (
+    <div className={`quest-panel quest-panel-${quest.state}`} aria-label={quest.ariaLabel}>
+      <AvailabilityNoticeBlock notice={quest.availability} compact={quest.state === 'present'} />
+      {quest.state === 'present' && quest.value !== undefined ? (
+        <QuestInfoPanel value={quest.value} />
+      ) : null}
+    </div>
+  );
+}
 
 function QuestInfoPanel({ value }: QuestInfoPanelProps) {
   const normalizedValue = normalizeQuestValue(value);
@@ -3853,105 +3714,6 @@ function parseServerMessage(data: unknown): ServerMessage | null {
 
 function formatNumber(value: number | undefined) {
   return value === undefined ? undefined : new Intl.NumberFormat().format(value);
-}
-
-function buildMapOutput(
-  mudState: MudState,
-  status: ConnectionStatus,
-  msdpVariables: MsdpVariableMap,
-): MapOutput {
-  const minimap = mudState.minimap?.trimEnd();
-  if (minimap) {
-    return {
-      text: minimap,
-      notice: createAvailabilityNotice('present', {
-        title: 'Live MINIMAP',
-        detail: 'Using server-reported minimap data.',
-      }),
-    };
-  }
-
-  const roomOutput = buildRoomOutput(mudState);
-  if (roomOutput) {
-    return {
-      text: roomOutput,
-      notice: createAvailabilityNotice('present', {
-        title: 'Room fallback',
-        detail: 'Using source-confirmed room and exit data while live MINIMAP is unavailable.',
-      }),
-    };
-  }
-
-  if (status === 'connecting') {
-    return {
-      text: 'Loading room and map data...',
-      notice: createAvailabilityNotice('loading', {
-        title: 'Loading map data',
-        detail: 'Waiting for the first room or minimap update.',
-      }),
-    };
-  }
-
-  if (status === 'error') {
-    return {
-      text: 'Map data unavailable after connection error.',
-      notice: createAvailabilityNotice('error', OPTIONAL_DATA_DESCRIPTORS.minimap.error),
-    };
-  }
-
-  if (status === 'idle' || status === 'disconnected') {
-    return {
-      text: 'Map data unavailable while offline.',
-      notice: createAvailabilityNotice('offline', OPTIONAL_DATA_DESCRIPTORS.minimap.offline),
-    };
-  }
-
-  if (!isMsdpVariableConfigured(msdpVariables, 'minimap')) {
-    return {
-      text: 'No room fallback data reported yet.',
-      notice: createAvailabilityNotice('empty', {
-        title: 'No room data yet',
-        detail:
-          'ROOM and ROOM_EXITS are requested; live MINIMAP requires future server support or an override.',
-      }),
-    };
-  }
-
-  return {
-    text: 'No room or minimap data reported yet.',
-    notice: createAvailabilityNotice('loading', OPTIONAL_DATA_DESCRIPTORS.minimap.waiting),
-  };
-}
-
-function buildRoomOutput(mudState: MudState) {
-  const lines: string[] = [];
-  const heading = [mudState.roomName, mudState.areaName].filter(Boolean).join(' - ');
-
-  if (heading) {
-    lines.push(heading);
-  }
-
-  if (mudState.roomVnum !== undefined) {
-    lines.push(`Room #${mudState.roomVnum}`);
-  }
-
-  const exits = mudState.roomExits !== undefined ? formatMudValueAsText(mudState.roomExits) : '';
-  if (exits) {
-    lines.push(`Exits: ${exits}`);
-  }
-
-  if (mudState.worldTime) {
-    lines.push(`World time: ${mudState.worldTime}`);
-  }
-
-  if (lines.length === 0 && mudState.room !== undefined) {
-    const room = formatMudValueAsText(mudState.room);
-    if (room) {
-      lines.push(room);
-    }
-  }
-
-  return lines.join('\n');
 }
 
 function findMatchingMudPresetId(

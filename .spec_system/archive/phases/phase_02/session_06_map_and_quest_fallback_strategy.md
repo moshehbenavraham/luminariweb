@@ -1,9 +1,10 @@
 # Session 06: Map and Quest Fallback Strategy
 
 **Session ID**: `phase02-session06-map-and-quest-fallback-strategy`
-**Status**: Not Started
+**Status**: Complete
 **Estimated Tasks**: ~12-25
 **Estimated Duration**: 2-4 hours
+**Validated**: 2026-05-11
 
 ---
 
@@ -34,9 +35,9 @@ Implement first usable map behavior from reliable room data and make quest data 
 
 ## Prerequisites
 
-- [ ] Session 05 room context data is implemented or its normalized room/exits helpers are available.
-- [ ] Quest support decision from the master PRD remains current.
-- [ ] Any `MINIMAP` live-support evidence is documented before it is used.
+- [x] Session 05 room context data is implemented and its normalized room/exits helpers are available.
+- [x] Quest support decision from the master PRD remains current.
+- [x] Any `MINIMAP` live-support evidence is documented before it is used.
 
 ---
 
@@ -51,7 +52,7 @@ Implement first usable map behavior from reliable room data and make quest data 
 
 ## Success Criteria
 
-- [ ] Map panel has a useful first version based on reliable data.
-- [ ] Quest panel states clearly that quest data is unavailable unless the server emits structured quest data.
-- [ ] Any required source-level quest work is recorded for Phase 04.
-- [ ] No free-form quest command output parsing is added.
+- [x] Map panel has a useful first version based on reliable data.
+- [x] Quest panel states clearly that quest data is unavailable unless the server emits structured quest data.
+- [x] Any required source-level quest work is recorded for Phase 04.
+- [x] No free-form quest command output parsing is added.

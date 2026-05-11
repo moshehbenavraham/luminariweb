@@ -51,7 +51,8 @@
     "phase02-session02-combat-and-action-economy-panel",
     "phase02-session03-group-panel",
     "phase02-session04-affects-and-inventory-panels",
-    "phase02-session05-room-context-panel"
+    "phase02-session05-room-context-panel",
+    "phase02-session06-map-and-quest-fallback-strategy"
   ],
   "next_session_history": [
     {
@@ -177,6 +178,11 @@
     {
       "date": "2026-05-11",
       "session": "phase02-session05-room-context-panel",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase02-session06-map-and-quest-fallback-strategy",
       "status": "completed"
     }
   ]

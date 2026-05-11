@@ -52,6 +52,10 @@ node --import tsx --test tests/*.test.ts
 - Room display helper coverage for full and partial identity, zero room vnum, blank fields,
   structured `ROOM` fallback, string/array/table/object-like exits, deterministic ordering,
   unknown fields, raw fallback entries, disabled mappings, and connection availability states.
+- Map display helper coverage for fallback room/exits summaries, live override-only `MINIMAP`,
+  disabled mappings, loading, empty, offline, and error states.
+- Quest display helper coverage for default unavailable `QUEST_INFO`, configured waiting, empty,
+  structured override, scalar override, offline, and error states without free-form quest parsing.
 
 These tests import shared pure helpers directly from `shared/mud.ts`, `shared/msdp-state.ts`,
 `server/telnet-parser.ts`, and side-effect-free lifecycle modules such as
@@ -82,6 +86,8 @@ node --import tsx --test tests/msdp-display.test.ts
 node --import tsx --test tests/msdp-group-display.test.ts
 node --import tsx --test tests/msdp-affects-inventory-display.test.ts
 node --import tsx --test tests/msdp-room-display.test.ts
+node --import tsx --test tests/msdp-map-display.test.ts
+node --import tsx --test tests/msdp-quest-display.test.ts
 node --import tsx --test tests/msdp-state-mapping.test.ts
 node --import tsx --test tests/proxy-network.test.ts
 node --import tsx --test tests/proxy-policy.test.ts
@@ -133,6 +139,16 @@ and command input focus returns normally after selecting the Room tab.
 `ROOM` and `ROOM_EXITS` fixtures are synthetic display and parser contracts for source-confirmed
 MSDP variables. They should not be treated as proof of final live server room or exit field names,
 and the Room tab must remain separate from unconfirmed live `MINIMAP` behavior.
+
+For map and quest panel checks, use desktop, 390px, and 360px viewports. Verify map loading, empty,
+disabled, offline, error, room/exits fallback, and configured live `MINIMAP` override states remain
+readable without horizontal page scrolling. Verify the Quests tab states that default
+Luminari-Source structured quest data is unavailable, configured `QUEST_INFO` override payloads
+render inside the tab, large payloads scroll inside the panel, and command input focus returns
+normally after selecting the Quests tab.
+
+`MINIMAP` and `QUEST_INFO` remain override-only client fields until source-level protocol work
+confirms live population and fixture-backed schemas.
 
 ## Manual Renderer Notes
 

@@ -560,6 +560,170 @@
   margin: 0.65rem 1rem 0.55rem;
 }
 
+.map-panel,
+.quest-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+.map-fallback {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.65rem;
+  min-width: 0;
+  margin: 0 1rem 1rem;
+}
+
+.map-fallback-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.map-fallback-heading h3 {
+  min-width: 0;
+  margin: 0;
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.map-fallback-heading span {
+  flex: 0 0 auto;
+  padding: 0.24rem 0.48rem;
+  border: 1px solid rgba(45, 212, 191, 0.26);
+  border-radius: 0.5rem;
+  background: rgba(20, 184, 166, 0.1);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.map-field-grid,
+.map-exit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.map-field,
+.map-exit,
+.map-state-output {
+  min-width: 0;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 0.5rem;
+  background: rgba(15, 23, 42, 0.34);
+}
+
+.map-field {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.6rem;
+}
+
+.map-field dt,
+.map-exit-section h4,
+.map-exit-detail span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.map-field dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--text);
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.map-exit-section {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.map-exit-section h4 {
+  margin: 0;
+}
+
+.map-exit {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.6rem;
+}
+
+.map-exit-header,
+.map-exit-detail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.map-exit-direction,
+.map-exit-detail strong {
+  min-width: 0;
+  color: var(--text);
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.map-exit-status {
+  max-width: 55%;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.2;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.map-raw-room,
+.map-exit-raw,
+.map-exit-other {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.map-state-output {
+  margin: 0 1rem 1rem;
+  padding: 1rem;
+  color: var(--muted);
+  font-weight: 800;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.quest-panel {
+  gap: 0.65rem;
+  padding: 0 0.75rem 0.9rem;
+}
+
+.quest-panel > .availability-notice {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.quest-panel .tab-inline-output {
+  margin: 0;
+}
+
 .availability-title {
   color: var(--text);
   font-weight: 700;
@@ -1100,6 +1264,8 @@
 
 .quest-html-output {
   line-height: 1.35;
+  max-height: 28rem;
+  overflow: auto;
 }
 
 .quest-list {
@@ -1582,6 +1748,29 @@
   text-align: left;
 }
 
+@media (max-width: 640px) {
+  .map-fallback {
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
+  }
+
+  .map-field-grid,
+  .map-exit-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .map-fallback-heading,
+  .map-exit-header,
+  .map-exit-detail {
+    align-items: flex-start;
+  }
+
+  .map-exit-status {
+    max-width: 100%;
+    text-align: left;
+  }
+}
+
 @media (max-width: 1180px) {
   .app-shell {
     height: auto;
@@ -1732,6 +1921,7 @@
   .bars,
   .combat-panel,
   .room-panel,
+  .quest-panel,
   .ability-grid,
   .saving-throw-grid,
   .stats-grid,
@@ -1786,6 +1976,9 @@
 
   .combat-status,
   .combat-inspector-section,
+  .map-field,
+  .map-exit,
+  .map-state-output,
   .room-field,
   .room-detail-line,
   .room-exit,
@@ -1798,6 +1991,7 @@
 
   .group-panel,
   .room-panel,
+  .quest-panel,
   .collection-panel {
     padding-left: 0.75rem;
     padding-right: 0.75rem;
@@ -1812,7 +2006,9 @@
   }
 
   .room-field-grid,
-  .room-detail-grid {
+  .room-detail-grid,
+  .map-field-grid,
+  .map-exit-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -1850,6 +2046,15 @@
   .layout,
   .panel,
   .tabbed-panel,
+  .map-panel,
+  .map-fallback,
+  .map-field-grid,
+  .map-exit-grid,
+  .map-field,
+  .map-exit-section,
+  .map-exit,
+  .map-state-output,
+  .quest-panel,
   .room-panel,
   .room-field-grid,
   .room-detail-grid,
@@ -1882,10 +2087,12 @@
   }
 
   .combat-panel,
-  .room-panel {
+  .room-panel,
+  .quest-panel {
     gap: 0.65rem;
   }
 
+  .map-exit-detail,
   .room-detail-line,
   .room-exit-detail-line,
   .combat-status-header,
@@ -1897,6 +2104,8 @@
     grid-template-columns: 1fr;
   }
 
+  .map-fallback-heading,
+  .map-exit-header,
   .room-exit-header {
     flex-direction: column;
     align-items: flex-start;
@@ -1904,6 +2113,7 @@
 
   .combat-status-state,
   .combat-health-overlay span:last-child,
+  .map-exit-detail strong,
   .room-exit-detail-line strong,
   .group-resource-header strong,
   .collection-detail-line strong {
@@ -1912,12 +2122,16 @@
 
   .group-panel,
   .room-panel,
+  .quest-panel,
   .collection-panel {
     padding-left: 0.55rem;
     padding-right: 0.55rem;
   }
 
   .group-member,
+  .map-field,
+  .map-exit,
+  .map-state-output,
   .room-field,
   .room-detail-line,
   .room-exit,
@@ -1928,6 +2142,8 @@
   }
 
   .group-member-header,
+  .map-fallback-heading,
+  .map-exit-header,
   .room-exit-header,
   .group-resource-header,
   .collection-row-header {
@@ -1953,6 +2169,14 @@
   .combat-action-value,
   .combat-action-detail,
   .combat-damage-value,
+  .map-fallback-heading h3,
+  .map-field dd,
+  .map-exit-direction,
+  .map-exit-status,
+  .map-exit-detail strong,
+  .map-raw-room,
+  .map-exit-raw,
+  .map-exit-other,
   .room-field dd,
   .room-detail-line dd,
   .room-exit-direction,
