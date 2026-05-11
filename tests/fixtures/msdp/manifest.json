@@ -5,8 +5,8 @@
   "updatedAt": "2026-05-11",
   "totals": {
     "fixtureFiles": 7,
-    "fixtures": 29,
-    "syntheticFixtures": 29,
+    "fixtures": 32,
+    "syntheticFixtures": 32,
     "realCaptureFixtures": 0
   },
   "controlTokens": {
@@ -22,13 +22,13 @@
     "actions": 5,
     "affects": 2,
     "area": 1,
-    "array": 7,
+    "array": 9,
     "character": 3,
     "combat": 4,
-    "empty-values": 3,
+    "empty-values": 5,
     "empty-variable": 1,
     "experience": 2,
-    "group": 2,
+    "group": 5,
     "incomplete-array": 1,
     "incomplete-table": 1,
     "inventory": 3,
@@ -39,7 +39,9 @@
     "mixed-array-table": 1,
     "money": 2,
     "nested-table": 1,
-    "numeric-normalization": 40,
+    "movement-max": 1,
+    "numeric-normalization": 43,
+    "object-like": 1,
     "partial-data": 2,
     "position": 2,
     "practice": 2,
@@ -47,9 +49,11 @@
     "room": 3,
     "room-exits": 3,
     "scalar": 13,
-    "table": 9,
+    "status": 3,
+    "table": 11,
     "tank": 3,
     "truncated": 1,
+    "unknown-fields": 1,
     "world-time": 1
   },
   "files": [
@@ -133,11 +137,27 @@
     },
     {
       "file": "group-data.json",
-      "fixtureCount": 2,
+      "fixtureCount": 5,
       "originTypes": ["synthetic"],
-      "coverage": ["group", "array", "table", "partial-data"],
-      "fixtureIds": ["group.full.members", "group.partial.member"],
-      "parserExpectation": "Group payloads parse member tables and tolerate missing member fields."
+      "coverage": [
+        "group",
+        "array",
+        "table",
+        "partial-data",
+        "empty-values",
+        "unknown-fields",
+        "movement-max",
+        "object-like",
+        "status"
+      ],
+      "fixtureIds": [
+        "group.full.members",
+        "group.partial.member",
+        "group.empty.collection",
+        "group.unknown.fields",
+        "group.object.payload"
+      ],
+      "parserExpectation": "Group payloads parse member tables, empty arrays, unknown fields, and object-like top-level tables without asserting a final member schema."
     },
     {
       "file": "nested-tables.json",

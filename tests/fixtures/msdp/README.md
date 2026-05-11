@@ -13,7 +13,7 @@ The fixtures are intentionally small, synthetic unless explicitly labeled otherw
 | `combat-and-resources.json` | Resource, experience, combat, tank, position, money, and practice examples.             |
 | `room-and-exits.json`       | Room, area, vnum, exits, world time, and room table examples.                           |
 | `collections.json`          | Actions, inventory, affects, empty arrays, and simple table examples.                   |
-| `group-data.json`           | Representative group member table examples.                                             |
+| `group-data.json`           | Representative group member table, empty, unknown-field, and object-like examples.      |
 | `nested-tables.json`        | Mixed nested table and array payload examples.                                          |
 | `malformed-payloads.json`   | Malformed payload examples with safe expected parser output.                            |
 
@@ -116,6 +116,18 @@ The PRD source protocol facts confirm these variable groups from Luminari-Source
 | Collections            | `ACTIONS`, `INVENTORY`, `AFFECTS`, `GROUP`                                                                                     | `collections.json`, `group-data.json`, `nested-tables.json` |
 | Room/world             | `ROOM`, `AREA_NAME`, `ROOM_EXITS`, `ROOM_NAME`, `ROOM_VNUM`, `WORLD_TIME`                                                      | `room-and-exits.json`, `nested-tables.json`                 |
 | Parser safety          | Skipped leading bytes, truncated values, empty variable names, incomplete tables, incomplete arrays                            | `malformed-payloads.json`                                   |
+
+## Group Fixture Notes
+
+`group-data.json` confirms parser and display contracts for representative `GROUP` payloads:
+
+- Full member arrays with names, leader flags, health, movement, movement maximums, and status text.
+- Partial member arrays with missing names, missing maximums, blank status, and zero resource values.
+- Explicit empty arrays that remain present data rather than missing data.
+- Unknown member fields that display code may summarize conservatively.
+- Object-like top-level tables that preserve member records and raw entries without claiming final source member identifiers.
+
+These shapes are synthetic. They verify client parser, mapping, and display behavior for a source-confirmed `GROUP` variable, but they do not prove final server member field names.
 
 ### Override-Only Exclusions
 

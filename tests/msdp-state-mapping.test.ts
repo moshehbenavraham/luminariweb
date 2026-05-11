@@ -229,6 +229,21 @@ test('preserves structured room and collection payloads without lossy coercion',
   assert.deepEqual(mapMsdpUpdate('QUEST_INFO', questInfo, overrideMap), { questInfo });
 });
 
+test('preserves GROUP fixture variants and ignores disabled GROUP mappings', async () => {
+  const corpus = await loadMsdpFixtureCorpus();
+  const fullMembers = readFixtureValue(corpus.fixtures, 'group.full.members');
+  const partialMembers = readFixtureValue(corpus.fixtures, 'group.partial.member');
+  const emptyGroup = readFixtureValue(corpus.fixtures, 'group.empty.collection');
+  const objectPayload = readFixtureValue(corpus.fixtures, 'group.object.payload');
+  const disabledMap: MsdpVariableMap = { ...defaultMap, group: '' };
+
+  assert.deepEqual(mapMsdpUpdate('GROUP', fullMembers, defaultMap), { group: fullMembers });
+  assert.deepEqual(mapMsdpUpdate('GROUP', partialMembers, defaultMap), { group: partialMembers });
+  assert.deepEqual(mapMsdpUpdate('GROUP', emptyGroup, defaultMap), { group: emptyGroup });
+  assert.deepEqual(mapMsdpUpdate('GROUP', objectPayload, defaultMap), { group: objectPayload });
+  assert.deepEqual(mapMsdpUpdate('GROUP', fullMembers, disabledMap), {});
+});
+
 test('ignores unknown variables, blank mappings, and unsupported defaults', () => {
   assert.deepEqual(mapMsdpUpdate('UNKNOWN_VARIABLE', 1, defaultMap), {});
   assert.deepEqual(mapMsdpUpdate('TITLE', 'the brave', defaultMap), {});
@@ -293,4 +308,15 @@ function withOverrides(overrides: Partial<MsdpVariableMap>) {
     ...defaultMsdpVariables,
     ...overrides,
   });
+}
+
+function readFixtureValue(
+  fixtures: Awaited<ReturnType<typeof loadMsdpFixtureCorpus>>['fixtures'],
+  fixtureId: string,
+) {
+  const fixture = fixtures.find((entry) => entry.id === fixtureId);
+  assert.ok(fixture, `${fixtureId} fixture should exist`);
+  const groupPair = fixture.expectedPairs.find(([variable]) => variable === 'GROUP');
+  assert.ok(groupPair, `${fixtureId} should contain a GROUP expected pair`);
+  return groupPair[1];
 }

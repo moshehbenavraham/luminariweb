@@ -19,6 +19,12 @@ import type {
 } from '../shared/msdp-combat-display.ts';
 import { buildCoreDisplayModel } from '../shared/msdp-display.ts';
 import type { CharacterFieldModel, HudBarModel } from '../shared/msdp-display.ts';
+import { buildGroupDisplayModel } from '../shared/msdp-group-display.ts';
+import type {
+  GroupDisplayModel,
+  GroupMemberModel,
+  GroupResourceModel,
+} from '../shared/msdp-group-display.ts';
 import {
   defaultMsdpVariables,
   normalizeMsdpVariableMap,
@@ -910,6 +916,10 @@ function App() {
     () => buildCombatDisplayModel(mudState, status, activeMsdpVariables),
     [activeMsdpVariables, mudState, status],
   );
+  const groupDisplay = useMemo(
+    () => buildGroupDisplayModel({ group: mudState.group }, status, activeMsdpVariables),
+    [activeMsdpVariables, mudState.group, status],
+  );
   const terminalOutputStyle = useMemo<CSSProperties>(
     () => ({
       fontSize: `${clientSettings.terminal.fontSize}px`,
@@ -956,16 +966,6 @@ function App() {
         activeMsdpVariables,
       ),
     [activeMsdpVariables, mudState.questInfo, status],
-  );
-  const groupNotice = useMemo(
-    () =>
-      getMudValueAvailabilityNotice(
-        mudState.group,
-        OPTIONAL_DATA_DESCRIPTORS.group,
-        status,
-        activeMsdpVariables,
-      ),
-    [activeMsdpVariables, mudState.group, status],
   );
   const affectsNotice = useMemo(
     () =>
@@ -2003,13 +2003,7 @@ function App() {
                 )
               ) : null}
 
-              {activeSidebarTab === 'group' ? (
-                groupNotice ? (
-                  <AvailabilityNoticeBlock notice={groupNotice} />
-                ) : (
-                  <GroupPanel value={mudState.group as MudValue} />
-                )
-              ) : null}
+              {activeSidebarTab === 'group' ? <GroupPanel group={groupDisplay} /> : null}
 
               {activeSidebarTab === 'affects' ? (
                 affectsNotice ? (
@@ -3028,49 +3022,80 @@ function EmptyTabMessage({ message }: { message: string }) {
 }
 
 type GroupPanelProps = {
-  value: MudValue;
+  group: GroupDisplayModel;
 };
 
-type GroupMember = {
-  name?: string;
-  isLeader: boolean;
-  health?: string;
-  healthMax?: string;
-  move?: string;
-  moveMax?: string;
-};
-
-function GroupPanel({ value }: GroupPanelProps) {
-  const members = parseGroupMembers(value);
-
-  if (members.length === 0) {
-    return <MudValuePanel value={value} emptyMessage="No group data reported yet." />;
+function GroupPanel({ group }: GroupPanelProps) {
+  if (group.state !== 'present') {
+    return <AvailabilityNoticeBlock notice={group.availability} />;
   }
 
   return (
-    <div className="tab-inline-output">
-      {members.map((member, index) => {
-        const healthText =
-          member.health !== undefined && member.healthMax !== undefined
-            ? `Health ${member.health}/${member.healthMax}`
-            : null;
-        const moveText =
-          member.move !== undefined && member.moveMax !== undefined
-            ? `Move ${member.move}/${member.moveMax}`
-            : null;
+    <div className="group-panel" role="list" aria-label={group.ariaLabel}>
+      {group.members.map((member) => (
+        <GroupMemberRow key={member.id} member={member} />
+      ))}
+    </div>
+  );
+}
 
-        return (
-          <div key={`${member.name ?? 'member'}-${index}`} className="group-member">
-            <div>
-              {member.name ?? 'Unknown'}
-              {member.isLeader ? ' (Leader)' : ''}
-            </div>
-            {healthText || moveText ? (
-              <div>{[healthText, moveText].filter(Boolean).join(' ')}</div>
-            ) : null}
-          </div>
-        );
-      })}
+function GroupMemberRow({ member }: { member: GroupMemberModel }) {
+  const className = [
+    'group-member',
+    `group-member-${member.kind}`,
+    member.isNameMissing ? 'group-member-missing-name' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <article className={className} role="listitem" aria-label={member.ariaLabel}>
+      <div className="group-member-header">
+        <span className="group-member-name">{member.nameText}</span>
+        {member.leaderText ? (
+          <span className="group-leader-badge" aria-label={`${member.nameText} is group leader`}>
+            {member.leaderText}
+          </span>
+        ) : null}
+      </div>
+
+      {member.statusText ? (
+        <div className="group-status-line">
+          <span>Status</span>
+          <strong>{member.statusText}</strong>
+        </div>
+      ) : null}
+
+      {member.rawText ? <p className="group-raw-text">{member.rawText}</p> : null}
+
+      {member.resources.length > 0 ? (
+        <div className="group-resources">
+          {member.resources.map((resource) => (
+            <GroupResource key={resource.id} resource={resource} />
+          ))}
+        </div>
+      ) : null}
+
+      {member.unknownFieldsText ? (
+        <p className="group-unknown-fields">Other: {member.unknownFieldsText}</p>
+      ) : null}
+    </article>
+  );
+}
+
+function GroupResource({ resource }: { resource: GroupResourceModel }) {
+  return (
+    <div
+      className={`group-resource group-resource-${resource.id} group-resource-${resource.availability.kind}`}
+      aria-label={resource.ariaLabel}
+    >
+      <div className="group-resource-header">
+        <span>{resource.label}</span>
+        <strong>{resource.valueText}</strong>
+      </div>
+      <div className="group-resource-track" aria-hidden="true">
+        <span style={{ width: `${resource.percentage}%` }} />
+      </div>
     </div>
   );
 }
@@ -3127,43 +3152,6 @@ function formatMudValueAsText(value: MudValue): string {
     .filter(Boolean);
 
   return entries.join(' | ');
-}
-
-function parseGroupMembers(value: MudValue): GroupMember[] {
-  const entries = asCollection(value);
-
-  return entries.flatMap((entry) => {
-    if (!isMudRecord(entry)) {
-      return [];
-    }
-
-    const name = asOptionalText(
-      readAnyKey(entry, [
-        'name',
-        'NAME',
-        'member_name',
-        'MEMBER_NAME',
-        'character_name',
-        'CHARACTER_NAME',
-      ]),
-    );
-    const health = asOptionalText(readAnyKey(entry, ['health', 'HEALTH']));
-    const healthMax = asOptionalText(
-      readAnyKey(entry, ['health_max', 'HEALTH_MAX', 'max_health', 'MAX_HEALTH']),
-    );
-    const move = asOptionalText(readAnyKey(entry, ['move', 'MOVE', 'movement', 'MOVEMENT']));
-    const moveMax = asOptionalText(
-      readAnyKey(entry, ['move_max', 'MOVE_MAX', 'movement_max', 'MOVEMENT_MAX']),
-    );
-    const isLeader =
-      asOptionalBoolean(readAnyKey(entry, ['is_leader', 'IS_LEADER', 'leader', 'LEADER'])) ?? false;
-
-    if (!name && !health && !healthMax && !move && !moveMax) {
-      return [];
-    }
-
-    return [{ name, isLeader, health, healthMax, move, moveMax }];
-  });
 }
 
 function renderQuestNode(value: MudValue): ReactNode {
@@ -3384,18 +3372,6 @@ function isMudValue(value: unknown): value is MudValue {
   return false;
 }
 
-function asCollection(value: MudValue): MudValue[] {
-  if (Array.isArray(value)) {
-    return value;
-  }
-
-  if (isMudRecord(value)) {
-    return Object.values(value);
-  }
-
-  return [];
-}
-
 function isMudRecord(value: unknown): value is Record<string, MudValue> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -3417,28 +3393,6 @@ function asOptionalText(value: MudValue | undefined): string | undefined {
 
   const formatted = formatMudValueAsText(value);
   return formatted || undefined;
-}
-
-function asOptionalBoolean(value: MudValue | undefined): boolean | undefined {
-  if (typeof value === 'boolean') {
-    return value;
-  }
-
-  if (typeof value === 'number') {
-    return value !== 0;
-  }
-
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase();
-    if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'y') {
-      return true;
-    }
-    if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'n') {
-      return false;
-    }
-  }
-
-  return undefined;
 }
 
 function formatMudLabel(value: string) {

@@ -43,6 +43,9 @@ node --import tsx --test tests/*.test.ts
 - Combat display helper coverage for opponent and tank status, zero and partial health values,
   quiet inactive states, `ACTIONS` arrays and fallback payloads, and override-only damage bonus
   availability.
+- Group display helper coverage for full and partial members, missing names, zero values, movement
+  maximums, leader flags, status text, unknown fields, object-like payloads, raw fallback entries,
+  disabled mappings, and connection availability states.
 
 These tests import shared pure helpers directly from `shared/mud.ts`, `shared/msdp-state.ts`,
 `server/telnet-parser.ts`, and side-effect-free lifecycle modules such as
@@ -70,6 +73,7 @@ lookups, open TCP sockets, or require a live MUD. Focused commands:
 
 ```sh
 node --import tsx --test tests/msdp-display.test.ts
+node --import tsx --test tests/msdp-group-display.test.ts
 node --import tsx --test tests/msdp-state-mapping.test.ts
 node --import tsx --test tests/proxy-network.test.ts
 node --import tsx --test tests/proxy-policy.test.ts
@@ -92,6 +96,15 @@ For combat panel checks, use desktop, 390px, and 360px viewports. Verify inactiv
 opponent-only, tank-only, opponent+tank, empty actions, mixed action entries, and damage-bonus
 availability states remain readable, the Combat tab wraps without horizontal page scrolling, and
 command input focus returns normally after selecting the combat tab.
+
+For group panel checks, use desktop, 390px, and 360px viewports. Verify waiting, empty, full, partial,
+long-name, leader, status, health, movement, raw fallback, and unknown-field states remain readable,
+resource text stays visible with or without maximum values, the Group tab wraps without horizontal
+page scrolling, and command input focus returns normally after selecting the group tab.
+
+`GROUP` fixtures are synthetic display and parser contracts for a source-confirmed MSDP variable.
+They should not be treated as proof of final live server member field names until source-level
+protocol work confirms the member schema.
 
 ## Manual Renderer Notes
 
