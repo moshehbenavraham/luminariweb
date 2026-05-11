@@ -81,18 +81,22 @@ WebSocket details are documented in [api/http-and-websocket.md](api/http-and-web
 
 ## Protocol Support Boundary
 
-The current supported protocol path is browser JSON over `/ws`, an integrated
-proxy Telnet socket, and MSDP-backed state mapping. Maintainers should use the
-[Protocol Feature Checklist](protocol-feature-checklist.md) before changing or
-claiming protocol support.
+The current supported protocol path is uncompressed browser JSON over `/ws`, an
+integrated proxy Telnet socket, and MSDP-backed state mapping. Maintainers
+should use the [Protocol Feature Checklist](protocol-feature-checklist.md) and
+[ADR 0002](adr/0002-mccp-and-gmcp-protocol-direction.md) before changing or
+claiming MCCP or GMCP support.
 
 Current high-level boundaries:
 
 - Client and proxy support ANSI terminal rendering, UTF-8 decoding, TTYPE,
   NAWS, and MSDP for the documented app workflow.
-- The proxy rejects MCCP, MXP, and CHARSET today.
-- GMCP, MSP, MSSP consumption, native source WebSocket, live `DAMAGE_BONUS`,
-  and structured `QUEST_INFO` remain source-level or validation-gap work.
+- The proxy rejects MCCP, MXP, and CHARSET today. MCCP remains rejected until
+  source compression and proxy decompression are implemented and tested.
+- GMCP remains deferred until source modules, schemas, proxy parsing, client
+  mappings, MSDP coexistence, fixtures, and rollback are planned.
+- MSP, MSSP consumption, native source WebSocket, live `DAMAGE_BONUS`, and
+  structured `QUEST_INFO` remain source-level or validation-gap work.
 - `TITLE`, saves, and `MINIMAP` are source-backed MSDP defaults, but older
   servers may still omit them and must keep explicit fallback states.
 

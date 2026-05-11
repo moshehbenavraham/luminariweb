@@ -55,6 +55,10 @@ Run the focused protocol status tests after changing protocol claims:
 node --import tsx --test tests/protocol-feature-status.test.ts
 ```
 
+Protocol direction decisions are documented in ADRs. Read
+[ADR 0002](adr/0002-mccp-and-gmcp-protocol-direction.md) before changing MCCP
+or GMCP claims.
+
 Treat protocol claims conservatively:
 
 - Source facts prove source capability, not automatic web client support.
@@ -63,8 +67,11 @@ Treat protocol claims conservatively:
   are source-backed defaults with fixture coverage.
 - Live `DAMAGE_BONUS` and `QUEST_INFO` remain unavailable or override-only
   until side-effect-free damage and structured quest source contracts exist.
-- MCCP and GMCP stay unsupported until Phase 04 documents and tests real server
-  and proxy behavior.
+- MCCP stays rejected in Luminari Web until source compression and proxy
+  decompression are implemented, tested, and rolled out through a dedicated
+  spec.
+- GMCP stays deferred until source modules, schemas, proxy parsing, client
+  mappings, MSDP coexistence, fixtures, and rollback are planned.
 - Native source WebSocket remains deferred until Phase 04 validates a source-
   level transport path without replacing the integrated proxy first.
 

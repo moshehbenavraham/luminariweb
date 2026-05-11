@@ -4,7 +4,7 @@
 **Sessions**: 5
 **Estimated Duration**: 5-8 days
 
-**Progress**: 4/5 sessions (80%)
+**Progress**: 4/5 sessions completed (80%)
 
 ---
 
@@ -21,7 +21,7 @@ Phase 04 defines and implements only the source-level protocol work justified af
 | 01 | Luminari-Source Protocol TODO Audit | Completed | ~12-18 | 2026-05-11 |
 | 02 | Protocol Parser Test Harness | Completed | ~15-22 | 2026-05-11 |
 | 03 | Missing MSDP Variables | Completed | ~18-24 | 2026-05-11 |
-| 04 | MCCP and GMCP Decision | Not Started | ~12-18 | - |
+| 04 | MCCP and GMCP Decision | Completed | ~12-18 | 2026-05-11 |
 | 05 | Native WebSocket Feasibility | Not Started | ~12-18 | - |
 
 ---
@@ -31,13 +31,14 @@ Phase 04 defines and implements only the source-level protocol work justified af
 - `phase04-session01-luminari-source-protocol-todo-audit` - Completed on 2026-05-11.
 - `phase04-session02-protocol-parser-test-harness` - Completed on 2026-05-11.
 - `phase04-session03-missing-msdp-variables` - Completed on 2026-05-11.
+- `phase04-session04-mccp-and-gmcp-decision` - Completed on 2026-05-11.
 
 ---
 
 ## Upcoming Sessions
 
-- Session 04: MCCP and GMCP Decision
 - Session 05: Native WebSocket Feasibility
+
 
 ---
 

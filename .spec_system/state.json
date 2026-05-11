@@ -62,7 +62,9 @@
     "phase03-session05-bridge-deployment-options",
     "phase03-session06-protocol-feature-checklist",
     "phase04-session01-luminari-source-protocol-todo-audit",
-    "phase04-session02-protocol-parser-test-harness"
+    "phase04-session02-protocol-parser-test-harness",
+    "phase04-session03-missing-msdp-variables",
+    "phase04-session04-mccp-and-gmcp-decision"
   ],
   "next_session_history": [
     {
@@ -273,6 +275,11 @@
     {
       "date": "2026-05-11",
       "session": "phase04-session03-missing-msdp-variables",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase04-session04-mccp-and-gmcp-decision",
       "status": "completed"
     }
   ]

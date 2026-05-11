@@ -85,6 +85,22 @@ test('keeps deferred and rejected protocol claims conservative', () => {
   assert.equal(byId.get('mccp')?.status, 'rejected');
   assert.notEqual(byId.get('gmcp')?.status, 'supported');
   assert.equal(byId.get('gmcp')?.status, 'deferred');
+  assert.ok(
+    byId
+      .get('mccp')
+      ?.evidence.some(
+        (evidence) => evidence.path === 'docs/adr/0002-mccp-and-gmcp-protocol-direction.md',
+      ),
+  );
+  assert.ok(
+    byId
+      .get('gmcp')
+      ?.evidence.some(
+        (evidence) => evidence.path === 'docs/adr/0002-mccp-and-gmcp-protocol-direction.md',
+      ),
+  );
+  assert.ok(!byId.get('mccp')?.nextAction.includes('Decide'));
+  assert.ok(!byId.get('gmcp')?.nextAction.includes('Decide'));
   assert.equal(byId.get('mxp')?.status, 'rejected');
   assert.equal(byId.get('charset')?.status, 'rejected');
   assert.equal(byId.get('override-only-msdp-fields')?.status, 'validation-gap');

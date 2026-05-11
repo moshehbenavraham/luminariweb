@@ -255,16 +255,16 @@ export const protocolFeatureRecords = [
     groupId: 'source',
     status: 'deferred',
     scope: 'Luminari-Source and proxy future work',
-    summary: 'GMCP is not supported by the web client or proxy today.',
+    summary: 'GMCP is deferred for the web client and proxy.',
     detail:
-      'The PRD records source negotiation and send/parse functions, but not a full modern JSON module API or proxy/client contract.',
+      'ADR 0002 records source negotiation and helper code as evidence, not web support. Future work needs source-owned modules, schemas, proxy parsing, client mappings, MSDP coexistence, fixtures, and rollback.',
     nextAction:
-      'Decide GMCP direction in Phase 04 before adding server, proxy, or client behavior.',
+      'Plan GMCP only as a dedicated module/schema contract while preserving MSDP as the supported game-state path.',
     evidence: [
       {
-        kind: 'spec',
-        label: 'Source protocol facts and Phase 04 GMCP decision',
-        path: '.spec_system/PRD/PRD.md',
+        kind: 'doc',
+        label: 'ADR keeps GMCP deferred behind module and schema gates',
+        path: 'docs/adr/0002-mccp-and-gmcp-protocol-direction.md',
       },
       {
         kind: 'gap',
@@ -332,9 +332,9 @@ export const protocolFeatureRecords = [
     scope: 'proxy Telnet negotiation',
     summary: 'The proxy rejects MCCP today.',
     detail:
-      'The PRD records Luminari-Source compression functions as stubs, and the proxy has no decompression path.',
+      'ADR 0002 keeps MCCP rejected because Luminari-Source compression functions are stubs and the proxy has no decompression path.',
     nextAction:
-      'Keep rejecting MCCP until both server compression and proxy decompression are real and tested.',
+      'Keep rejecting MCCP unless a future source/proxy spec implements compression, decompression, reconnect, failure, and rollback gates.',
     evidence: [
       {
         kind: 'code',
@@ -342,9 +342,9 @@ export const protocolFeatureRecords = [
         path: 'server/telnet-parser.ts',
       },
       {
-        kind: 'spec',
-        label: 'MCCP source stubs and Phase 04 decision',
-        path: '.spec_system/PRD/PRD.md',
+        kind: 'doc',
+        label: 'ADR keeps MCCP rejected until source and proxy gates pass',
+        path: 'docs/adr/0002-mccp-and-gmcp-protocol-direction.md',
       },
       {
         kind: 'test',

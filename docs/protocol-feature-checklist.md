@@ -32,7 +32,7 @@ tests, or documented runtime contracts.
 | TTYPE   | Supported | Proxy agrees to TTYPE and replies to SEND with a fixed web client name.                          | [`server/telnet-parser.ts`](../server/telnet-parser.ts), [`tests/telnet-parser-edge-cases.test.ts`](../tests/telnet-parser-edge-cases.test.ts)                                                 | Keep TTYPE negotiation tests passing.                              |
 | NAWS    | Supported | Proxy negotiates NAWS and sends bounded dimensions after support is known.                       | [`server/telnet-parser.ts`](../server/telnet-parser.ts), [`tests/proxy-lifecycle.test.ts`](../tests/proxy-lifecycle.test.ts)                                                                   | Keep lifecycle and resize tests passing.                           |
 | MXP     | Rejected  | Proxy rejects MXP; server markup is not trusted UI input.                                        | [`server/telnet-parser.ts`](../server/telnet-parser.ts), [Phase 03 session 06](../.spec_system/specs/phase03-session06-protocol-feature-checklist/implementation-notes.md)                  | Keep rejected until a safe parser/UI design exists.                |
-| MCCP    | Rejected  | Proxy rejects MCCP; source compression is recorded as stubbed and proxy decompression is absent. | [`server/telnet-parser.ts`](../server/telnet-parser.ts), [`tests/telnet-parser-edge-cases.test.ts`](../tests/telnet-parser-edge-cases.test.ts), [PRD source facts](../.spec_system/PRD/PRD.md) | Decide MCCP direction in Phase 04 before implementation.           |
+| MCCP    | Rejected  | Proxy rejects MCCP; source compression is stubbed and proxy decompression is absent.              | [`server/telnet-parser.ts`](../server/telnet-parser.ts), [`tests/telnet-parser-edge-cases.test.ts`](../tests/telnet-parser-edge-cases.test.ts), [ADR 0002](adr/0002-mccp-and-gmcp-protocol-direction.md) | Keep rejected unless a future source/proxy spec implements compression, decompression, reconnect, failure, and rollback gates. |
 | CHARSET | Rejected  | Proxy rejects CHARSET and keeps UTF-8 decoding fixed.                                            | [`server/telnet-parser.ts`](../server/telnet-parser.ts), [`tests/telnet-parser-edge-cases.test.ts`](../tests/telnet-parser-edge-cases.test.ts)                                                 | Defer alternate encodings until tested source/proxy policy exists. |
 
 ## Game State Protocols
@@ -47,7 +47,7 @@ tests, or documented runtime contracts.
 
 | Feature                 | Status         | Current boundary                                                                                     | Evidence                                                                                                        | Next action                                                         |
 | ----------------------- | -------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| GMCP                    | Deferred       | Source functions exist, but the web client and proxy have no GMCP parser, module contract, or tests. | [PRD source facts](../.spec_system/PRD/PRD.md), [`tests/README.md`](../tests/README.md)                         | Decide GMCP direction in Phase 04.                                  |
+| GMCP                    | Deferred       | Source helpers exist, but the web client and proxy have no GMCP module contract, parser, schemas, mappings, or tests. | [ADR 0002](adr/0002-mccp-and-gmcp-protocol-direction.md), [`tests/README.md`](../tests/README.md)                         | Defer until source module ownership, schema validation, MSDP coexistence, proxy parsing, client mapping, fixtures, and rollback are planned. |
 | MSP                     | Deferred       | Source negotiation code exists; browser audio behavior is not specified or implemented.              | [PRD source facts](../.spec_system/PRD/PRD.md), [`tests/README.md`](../tests/README.md)                         | Defer until product requirements define audio behavior and tests.   |
 | MSSP                    | Validation gap | Source support is recorded, but the web client does not consume MSSP data.                           | [PRD source facts](../.spec_system/PRD/PRD.md), [`tests/README.md`](../tests/README.md)                         | Decide whether the web client needs MSSP before parser/UI work.     |
 | Native source WebSocket | Deferred       | Integrated proxy and `/ws` application messages remain the supported app transport.                  | [`docs/bridge-deployment-options.md`](bridge-deployment-options.md), [Phase 04 PRD](../.spec_system/PRD/PRD.md) | Evaluate feasibility in Phase 04 without replacing the proxy first. |
@@ -85,13 +85,13 @@ to split source work into:
 - `p4-source-todo-audit` - Re-read Luminari-Source protocol TODOs and rank source changes; current audit output is [Source Protocol Backlog](source-protocol-backlog.md).
 - `p4-parser-harness` - Add source-level protocol parser fixtures before changing behavior.
 - `p4-missing-msdp-variables` - Decide and implement only selected source-owned MSDP variables.
-- `p4-mccp-gmcp-decision` - Decide whether MCCP and GMCP become real supported features.
+- `p4-mccp-gmcp-decision` - Completed by [ADR 0002](adr/0002-mccp-and-gmcp-protocol-direction.md): MCCP remains rejected today and GMCP remains deferred.
 - `p4-native-websocket-feasibility` - Evaluate native WebSocket transport without displacing the current proxy first.
 
 ## Claim Boundaries
 
-- Do not claim MCCP support while source compression functions are stubs and proxy decompression is absent.
-- Do not claim GMCP support without a source module API, proxy parser, client contract, and tests.
+- Do not claim MCCP support while source compression functions are stubs and proxy decompression is absent; ADR 0002 keeps it rejected in the current web path.
+- Do not claim GMCP support without a source module API, proxy parser, client contract, schema validation, MSDP coexistence plan, and tests; ADR 0002 keeps it deferred.
 - Do not claim live `DAMAGE_BONUS` or `QUEST_INFO` support from synthetic fixtures alone.
 - Do not claim full support for selected `TITLE`, saves, or `MINIMAP` without source emission, web mapping fixtures, and older-server fallback coverage.
 - Do not treat a blind WebSocket-to-TCP bridge as an implementation of the `/ws` application protocol.

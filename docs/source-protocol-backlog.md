@@ -22,6 +22,7 @@ Rejected items should not be implemented on the current product path.
 | `/home/aiwithapex/projects/Luminari-Source/docs/systems/MSDP_VARIABLES.md` | Source MSDP variable catalog and documented update expectations. |
 | `/home/aiwithapex/projects/Luminari-Source/unittests/CuTest/test_protocol_parser.c` | Session 02 source protocol harness for synthetic Telnet, MSDP, GMCP, TTYPE, NAWS, unsupported option, and bounded response-path validation. |
 | `/home/aiwithapex/projects/Luminari-Source/docs/testing/PROTOCOL_PARSER_HARNESS.md` | Runnable source harness command, privacy rules, case matrix, and known parser gaps. |
+| [ADR 0002 - MCCP and GMCP Protocol Direction](adr/0002-mccp-and-gmcp-protocol-direction.md) | Session 04 decision: keep MCCP rejected today and defer GMCP behind module/schema work. |
 | [Protocol Feature Checklist](protocol-feature-checklist.md) | Current Luminari Web support, rejected, deferred, and validation-gap boundaries. |
 | [Bridge Deployment Options](bridge-deployment-options.md) | Supported public transport boundary for the integrated `/ws` proxy. |
 | [Tests README](../tests/README.md) | Existing fixture and protocol test coverage in Luminari Web. |
@@ -65,6 +66,17 @@ this session is intentionally narrow:
 | `ALIGNMENT` | Confirmed upstream source-backed as text. | Read-only string from `get_align_by_num(GET_ALIGNMENT(ch))`. | Accept old numeric fixtures during transition; display should not fail closed on older numeric values. |
 | `DAMAGE_BONUS` | Deferred. | No live source payload is selected because the existing source path still depends on a side-effect-prone damage helper. | Keep unavailable or override-only. |
 | `QUEST_INFO` | Deferred. | No source-owned structured quest payload exists in this session. | Keep quest data unavailable or explicit override-only; never parse free-form quest command output. |
+
+## Session 04 MCCP and GMCP Decision Update
+
+Session 04 accepted
+[ADR 0002 - MCCP and GMCP Protocol Direction](adr/0002-mccp-and-gmcp-protocol-direction.md).
+It does not add runtime support.
+
+| Candidate | Decision | Required Ownership | Current Web Claim |
+| --------- | -------- | ------------------ | ----------------- |
+| MCCP | Rejected for the current Luminari Web path. Future reconsideration requires a dedicated implementation spec. | Source owns real `CompressStart()`/`CompressEnd()` behavior and zlib integration. The proxy owns decompression before Telnet parsing, reconnect cleanup, timeout/failure handling, and rollback tests. | Rejected. The proxy continues to send `DONT MCCP`. |
+| GMCP | Deferred for the web client and proxy. Source helper code is not a web-supported module API. | Source owns module names, versions, payload schemas, and update timing. The proxy/client own parser negotiation, schema validation, state mapping, MSDP coexistence, fixtures, and rollback. | Deferred. MSDP remains the supported first-party game-state path. |
 
 ## Ranking Rules
 
@@ -113,8 +125,8 @@ listed preconditions are satisfied.
 
 | Rank | Feature | Current Decision | Player Value | Risk | Validation Requirement | Evidence |
 | ---- | ------- | ---------------- | ------------ | ---- | ---------------------- | -------- |
-| O1 | MCCP | Keep rejected in Luminari Web until Session 04 decides whether to implement source compression and proxy decompression. | Medium - can reduce bandwidth, but current app works without it. | High - changes byte stream framing and failure handling across source, proxy, and client transport. | Source compression tests, proxy decompression tests, compressed and uncompressed reconnect fixtures, timeout/failure behavior, and sanitized error boundaries. | `src/protocol.c` `CompressStart`/`CompressEnd`; `src/protocol.h` MCCP framework notes; [Protocol Feature Checklist](protocol-feature-checklist.md). |
-| O2 | GMCP | Deferred to Session 04; source fallback does not equal a web-supported module API. | Medium - could provide modern structured modules if schemas are designed. | High - requires source module schemas, proxy parser support, client contracts, fixtures, and overlap decisions with MSDP. | Schema versioning, source parser tests, proxy GMCP parsing tests, client mapping tests, and migration notes for data already supplied by MSDP. | `src/protocol.c` `ParseGMCP` and `SendGMCP`; `src/protocol.h` GMCP comments; [Protocol Feature Checklist](protocol-feature-checklist.md). |
+| O1 | MCCP | Rejected for the current Luminari Web path; future support requires a dedicated source/proxy implementation spec. | Medium - can reduce bandwidth, but current app works without it. | High - changes byte stream framing and failure handling across source, proxy, and client transport. | Source compression tests, proxy decompression tests, compressed and uncompressed reconnect fixtures, timeout/failure behavior, sanitized error boundaries, and rollback to the uncompressed path. | `src/protocol.c` `CompressStart`/`CompressEnd`; `src/protocol.h` MCCP framework notes; [ADR 0002](adr/0002-mccp-and-gmcp-protocol-direction.md); [Protocol Feature Checklist](protocol-feature-checklist.md). |
+| O2 | GMCP | Deferred as a future module contract; source fallback does not equal a web-supported module API. | Medium - could provide modern structured modules if schemas are designed. | High - requires source module schemas, proxy parser support, client contracts, fixtures, and overlap decisions with MSDP. | Module names and versions, schema validation, source parser tests, proxy GMCP parsing tests, client mapping tests, malformed/reconnect fixtures, and migration notes for data already supplied by MSDP. | `src/protocol.c` `ParseGMCP` and `SendGMCP`; `src/protocol.h` GMCP comments; [ADR 0002](adr/0002-mccp-and-gmcp-protocol-direction.md); [Protocol Feature Checklist](protocol-feature-checklist.md). |
 | O3 | Native source WebSocket | Deferred to Session 05; integrated `/ws` proxy remains the supported path. | Medium - may simplify one deployment topology later. | High - would move browser validation, origin policy, routing, rate limits, and app message contracts into or beside source. | Threat model, application-message contract, origin and destination policy, rate-limit behavior, typed client compatibility, and rollback plan. | [Bridge Deployment Options](bridge-deployment-options.md); [HTTP and WebSocket Contracts](api/http-and-websocket.md). |
 | O4 | MXP | Keep rejected for the first-party web client. Reconsider only with a safe parser and UI trust design. | Low to medium - clickable links could help, but unsafe markup is not needed for current panels. | High - turns server text into interactive browser UI unless aggressively constrained. | Source MXP parser tests, proxy rejection/allowlist policy, browser rendering threat model, and accessibility checks before any UI path. | `src/protocol.c` MXP negotiation and tag handling; [Protocol Feature Checklist](protocol-feature-checklist.md). |
 | O5 | MSP | Deferred until product requirements define browser audio behavior. | Low - no current first-party audio UX requirement. | Medium - browser autoplay, asset trust, volume, and user consent need design. | Product decision, asset allowlist policy, mute controls, fixture coverage, and no transcript/command persistence. | `src/protocol.c` `SoundSend`; `src/protocol.h` MSP comments; [Protocol Feature Checklist](protocol-feature-checklist.md). |
@@ -158,7 +170,7 @@ audit.
 | --------- | ------------- | --------------- |
 | Session 02 - Protocol Parser Test Harness | A1, A2, A3, A4, O8, O9 | Build source harness coverage before parser, negotiation, compression, GMCP, or MSDP behavior changes. Include malformed, split, doubled, short, and oversized payloads. |
 | Session 03 - Missing MSDP Variables | A5, A6, A7 | Start with `TITLE` and saves if Session 02 gives enough confidence for emission changes. Take `DAMAGE_BONUS` only if a side-effect-free calculation exists or is created in scope. |
-| Session 04 - MCCP and GMCP Decision | O1, O2 | Decide pursue, defer, or reject. Do not implement runtime support unless source, proxy, client, and test responsibilities fit the session or are split into new specs. |
+| Session 04 - MCCP and GMCP Decision | O1, O2 | Completed by ADR 0002. MCCP stays rejected today; GMCP stays deferred. Runtime support must be planned as new source, proxy, client, and test specs. |
 | Session 05 - Native WebSocket Feasibility | O3 | Compare source-native transport against the current integrated proxy. Preserve `/ws` until a typed, validated, and operable migration path exists. |
 | Future source hardening phase | A2, A3, O4, O5, O6, O7 | Use only after Session 02 and product decisions identify concrete value. These are not required to complete the current web client protocol path. |
 | Future mapper or quest phase | `QUEST_INFO` and richer mapper contracts | Revisit quest data after a source payload contract exists. Keep room/exits fallback alongside source-backed `MINIMAP` for older servers and empty map payloads. |
@@ -175,8 +187,8 @@ audit.
 | `DAMAGE_BONUS` | Deferred until side-effect-free source calculation exists | Future | Override-only/unavailable until emitted and tested. |
 | `MINIMAP` | Confirmed upstream source-backed | Session 03 | Source-backed after web fixtures pass; room/exits fallback remains supported. |
 | `QUEST_INFO` | Deferred | Future quest or Session 03 reconsideration | Override-only/unavailable; no free-form quest parsing. |
-| MCCP | Deferred decision, rejected today | Session 04 | Rejected. |
-| GMCP | Deferred decision | Session 04 | Deferred. |
+| MCCP | Rejected for current path; future implementation gated | Future dedicated source/proxy spec | Rejected. |
+| GMCP | Deferred behind module/schema contract | Future dedicated GMCP contract spec | Deferred. |
 | Native source WebSocket | Deferred decision | Session 05 | Deferred; integrated proxy remains supported. |
 | MXP | Rejected today; possible future parser/UI design | Future | Rejected. |
 | MSP | Deferred | Future | Deferred. |
@@ -187,8 +199,8 @@ audit.
 
 ## Claim Boundaries
 
-- Do not claim MCCP support while source compression and proxy decompression are absent.
-- Do not claim GMCP support without source module schemas, a proxy parser contract, client mappings, and tests.
+- Do not claim MCCP support while source compression and proxy decompression are absent; ADR 0002 keeps it rejected in the current web path.
+- Do not claim GMCP support without source module schemas, a proxy parser contract, client mappings, and tests; ADR 0002 keeps it deferred for the web client and proxy.
 - Do not claim web support for source-selected `TITLE`, saves, or `MINIMAP` until Luminari Web requests the values and has fixtures.
 - Do not claim live `DAMAGE_BONUS` or `QUEST_INFO` support until Luminari-Source emits side-effect-free structured values and Luminari Web has fixtures.
 - Do not replace the first-party `/ws` application protocol with a blind WebSocket-to-TCP bridge.

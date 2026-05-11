@@ -27,6 +27,12 @@ serve this endpoint for the first-party React app because it forwards bytes
 without validating the app message schema, negotiating MSDP for the app,
 mapping state, or producing the documented status details.
 
+The first-party `/ws` path is uncompressed browser WebSocket traffic carrying
+application JSON messages. Telnet compression is not negotiated at the browser
+application layer. MCCP remains rejected by the proxy, and GMCP remains
+deferred until a source module contract, proxy parser, client mapping, and
+fixtures exist. ADR 0002 records those boundaries.
+
 Protocol feature support is tracked in the
 [Protocol Feature Checklist](../protocol-feature-checklist.md). That checklist
 documents which Telnet, terminal, MSDP, and deferred source protocols are
@@ -173,6 +179,10 @@ Partial MUD state update:
 Blank MSDP mapping values disable requests for that client field. They are normalized and preserved in browser settings, but the proxy filters them out before sending MSDP `REPORT` or `SEND` requests.
 
 The browser renders room, map, and quest panels from the resulting `state` messages. `ROOM`, `ROOM_EXITS`, and `MINIMAP` use explicit source-backed or fallback paths; `QUEST_INFO` remains override-only until the server emits a structured live value.
+
+MSDP remains the supported first-party structured game-state path. GMCP helper
+code in Luminari-Source is not exposed through `/ws` as a supported browser
+contract.
 
 ## Validation
 
