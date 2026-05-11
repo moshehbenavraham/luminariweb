@@ -523,7 +523,7 @@ GitHub metadata was checked on 2026-05-10. Local clone state is listed in the Re
 | ----- | ----------------------------- | -------- | ----------- |
 | 0     | Align With Real Luminari Data | 5        | Complete    |
 | 1     | Harden Terminal and Proxy     | 6        | Complete    |
-| 2     | Build Luminari Game Panels    | 6        | Planned     |
+| 2     | Build Luminari Game Panels    | 6        | In Progress |
 | 3     | Borrow the Best Ideas         | 6        | Planned     |
 | 4     | Source-Level Protocol Path    | 5        | Planned     |
 
@@ -737,6 +737,8 @@ Acceptance:
 
 Objective: turn confirmed Luminari data into useful game UI panels while keeping fallbacks explicit for data that requires future server support.
 
+Status: in progress. Phase 02 artifacts were created for six right-sized implementation sessions, and session 01 is complete.
+
 ### P2-S1: Core HUD and Character Panel
 
 Clear objective: make core resource and character data complete and source-aligned.
@@ -753,6 +755,8 @@ Acceptance:
 - Confirmed character/resource fields render from MSDP state.
 - Optional fields fail gracefully.
 - HUD remains readable at desktop and 390px mobile width.
+
+Status: complete. Session 01 was validated and marked complete on 2026-05-11.
 
 ### P2-S2: Combat and Action Economy Panel
 
