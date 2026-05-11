@@ -20,18 +20,25 @@
 
 ## Environment Variables
 
-| Variable                            | Default           | Purpose                                                                 |
-| ----------------------------------- | ----------------- | ----------------------------------------------------------------------- |
-| `PORT`                              | `5191`            | Override the Express and WebSocket server port                          |
-| `VITE_WS_URL`                       | same-origin `/ws` | Override the browser WebSocket target                                   |
-| `PROXY_PUBLIC_MODE`                 | `true`            | Keep proxy in allowlisted public mode when `true`                       |
-| `PROXY_ALLOWED_ORIGINS`             | local dev origins | Comma-separated allowed browser origins such as `https://play.example`  |
-| `PROXY_ALLOWED_DESTINATIONS`        | curated presets   | Comma-separated server-only `host:port` additions                       |
-| `PROXY_ALLOW_CUSTOM_DESTINATIONS`   | `false` in public | Permit custom public-routable hostnames when explicitly enabled         |
-| `PROXY_CONNECT_TIMEOUT_MS`          | `10000`           | MUD TCP connect timeout, clamped to `1000..30000`                       |
-| `PROXY_IDLE_TIMEOUT_MS`             | `300000`          | Connected MUD idle timeout, clamped to `30000..3600000`                 |
-| `PROXY_DNS_TIMEOUT_MS`              | `3000`            | Destination DNS lookup timeout, clamped to `500..10000`                 |
-| `PROXY_DNS_RETRY_COUNT`             | `1`               | DNS retry count, clamped to `0..2`                                      |
+| Variable                          | Default           | Purpose                                                                |
+| --------------------------------- | ----------------- | ---------------------------------------------------------------------- |
+| `PORT`                            | `5191`            | Override the Express and WebSocket server port                         |
+| `VITE_WS_URL`                     | same-origin `/ws` | Override the browser WebSocket target                                  |
+| `PROXY_PUBLIC_MODE`               | `true`            | Keep proxy in allowlisted public mode when `true`                      |
+| `PROXY_ALLOWED_ORIGINS`           | local dev origins | Comma-separated allowed browser origins such as `https://play.example` |
+| `PROXY_ALLOWED_DESTINATIONS`      | curated presets   | Comma-separated server-only `host:port` additions                      |
+| `PROXY_ALLOW_CUSTOM_DESTINATIONS` | `false` in public | Permit custom public-routable hostnames when explicitly enabled        |
+| `PROXY_CONNECT_TIMEOUT_MS`        | `10000`           | MUD TCP connect timeout, clamped to `1000..30000`                      |
+| `PROXY_IDLE_TIMEOUT_MS`           | `300000`          | Connected MUD idle timeout, clamped to `30000..3600000`                |
+| `PROXY_DNS_TIMEOUT_MS`            | `3000`            | Destination DNS lookup timeout, clamped to `500..10000`                |
+| `PROXY_DNS_RETRY_COUNT`           | `1`               | DNS retry count, clamped to `0..2`                                     |
+
+## Deployment Variables
+
+| Variable               | Default | Purpose                                                                                         |
+| ---------------------- | ------- | ----------------------------------------------------------------------------------------------- |
+| `DEPLOY_WEBHOOK_URL`   | none    | Required by the GitHub Actions deploy workflow to trigger the operator-hosted deployment target |
+| `DEPLOY_WEBHOOK_TOKEN` | none    | Optional bearer token sent with the deployment webhook request                                  |
 
 ## Public Deployment Notes
 

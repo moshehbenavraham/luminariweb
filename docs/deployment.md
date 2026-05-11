@@ -85,7 +85,18 @@ pm2 delete luminari-web-client
 
 ## CI/CD Pipeline
 
-No CI/CD workflow is committed yet. Until one exists, release verification is local:
+The repository includes a manual GitHub Actions deploy workflow at [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml). It builds the app and posts a deployment webhook when the required secret is configured.
+
+Required secret:
+
+| Variable               | Purpose                                                                    |
+| ---------------------- | -------------------------------------------------------------------------- |
+| `DEPLOY_WEBHOOK_URL`   | Deployment trigger endpoint for the operator-hosted production environment |
+| `DEPLOY_WEBHOOK_TOKEN` | Optional bearer token for webhook authentication                           |
+
+The workflow can be run from the GitHub Actions UI and pointed at a branch or tag ref. It uses `scripts/deploy-webhook.mjs` to send build metadata, rollback guidance, and the source revision to the deployment trigger.
+
+Local release verification remains:
 
 ```bash
 npm run lint
@@ -95,6 +106,6 @@ curl http://localhost:5191/health
 
 ## Rollback
 
-No automated rollback is configured in this repository. For PM2 deployment, keep the previous build artifact or git revision available, then redeploy that revision and restart the process.
+Rollback is operator-managed. Redeploy the previous approved git revision or release artifact through the same webhook or PM2 process, then confirm `/health` and WebSocket reconnect behavior.
 
 Rollback when the health check fails after deploy, the app cannot establish WebSocket connections, or critical connection behavior regresses.

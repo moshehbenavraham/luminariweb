@@ -47,7 +47,8 @@
     "phase01-session04-dynamic-naws-resize",
     "phase01-session05-xterm-js-migration-spike",
     "phase01-session06-proxy-limits-deployment-safety",
-    "phase02-session01-core-hud-and-character-panel"
+    "phase02-session01-core-hud-and-character-panel",
+    "phase02-session02-combat-and-action-economy-panel"
   ],
   "next_session_history": [
     {
@@ -143,6 +144,16 @@
     {
       "date": "2026-05-11",
       "session": "phase02-session01-core-hud-and-character-panel",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase02-session02-combat-and-action-economy-panel",
+      "status": "planned"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase02-session02-combat-and-action-economy-panel",
       "status": "completed"
     }
   ]

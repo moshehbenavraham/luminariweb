@@ -26,7 +26,10 @@ test('converts Luminari foreground, background, and reset codes', () => {
   assert.equal(luminariRgbToAnsi('B005'), '\u001b[48;2;0;0;255m');
 
   assert.equal(renderMudHtml('^Rred^n'), '<span style="color:#ff0000">red</span>');
-  assert.equal(renderMudHtml('^[B005]blue background^n'), '<span style="background-color:#0000ff">blue background</span>');
+  assert.equal(
+    renderMudHtml('^[B005]blue background^n'),
+    '<span style="background-color:#0000ff">blue background</span>',
+  );
 });
 
 test('keeps literal caret escapes and unknown codes visible', () => {

@@ -154,9 +154,7 @@ export class FakeMudSessionTimerController {
   }
 
   getLastTimer(delayMs?: number) {
-    const timers = delayMs
-      ? this.timers.filter((timer) => timer.delayMs === delayMs)
-      : this.timers;
+    const timers = delayMs ? this.timers.filter((timer) => timer.delayMs === delayMs) : this.timers;
     const timer = timers.at(-1);
     if (!timer) {
       throw new Error('Expected a fake session timer to exist.');

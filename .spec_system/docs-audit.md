@@ -6,11 +6,11 @@
 **Project**: Luminari Web
 **Audit Mode**: Phase-Focused
 
-Phase 00 was just completed, so this pass focused on documentation drift introduced by the completed sessions:
+Phase 01 was just completed, so this pass focused on documentation drift introduced by the completed sessions:
 
-- Added `npm test` to the top-level workflow and development/onboarding docs.
-- Documented the shared MSDP mapping helper in architecture and service READMEs.
-- Clarified fixture-backed MSDP test coverage in the tests documentation.
+- Updated the root README to reflect completed Phase 00 and Phase 01 work.
+- Clarified incident-response guidance for unsupported MSDP variables.
+- Verified the existing architecture, deployment, and environment docs already cover resize handling, xterm spike context, and proxy safety controls.
 
 ## Previous Audit
 
@@ -51,6 +51,8 @@ Full audit mode was used because no implementation sessions are completed yet an
 ## Files Updated
 
 - `README.md`
+- `docs/runbooks/incident-response.md`
+- `.spec_system/docs-audit.md`
 
 ## Files Verified
 
@@ -81,8 +83,8 @@ Full audit mode was used because no implementation sessions are completed yet an
 
 ## Spec System Sync
 
-Current phase is Phase 00: Align With Real Luminari Data. The docs now distinguish current implementation from planned Phase 00 work, especially around MSDP variables that the audited Luminari-Source server does not currently confirm.
+Phase 00 is complete and Phase 01 is complete. The docs now distinguish completed parser, lifecycle, resize, renderer, and proxy-safety work from later phase goals in the PRD.
 
 ## Next Action
 
-Manual testing and LLM audit are recommended after this documentation pass. Since Phase 00 has already been built and no sessions are complete yet, the workflow-consistent next command is `apex-spec plansession`.
+Manual testing and LLM audit are recommended after this documentation pass. Since Phase 01 has already been built and the next phase has not started, the workflow-consistent next step is to review the PRD and then begin the next planning cycle if another phase remains.

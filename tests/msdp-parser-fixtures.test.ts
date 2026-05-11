@@ -19,7 +19,10 @@ test('encodes every manifest-listed fixture payload token stream', async () => {
   assert.equal(corpus.fixtures.length, corpus.manifest.totals.fixtures);
 
   for (const fixture of corpus.fixtures) {
-    assert.deepEqual(validateMsdpPayloadTokens(fixture.payloadTokens, { fixtureId: fixture.id }), []);
+    assert.deepEqual(
+      validateMsdpPayloadTokens(fixture.payloadTokens, { fixtureId: fixture.id }),
+      [],
+    );
     assert.ok(
       Buffer.isBuffer(encodeMsdpPayloadTokens(fixture.payloadTokens, { fixtureId: fixture.id })),
       `${fixture.id} should encode to a Buffer`,
@@ -136,5 +139,7 @@ function findFixturesByCoverage(fixtures: readonly MsdpFixture[], tags: readonly
 }
 
 function parseFixture(fixture: MsdpFixture) {
-  return parseMsdpPayload(encodeMsdpPayloadTokens(fixture.payloadTokens, { fixtureId: fixture.id }));
+  return parseMsdpPayload(
+    encodeMsdpPayloadTokens(fixture.payloadTokens, { fixtureId: fixture.id }),
+  );
 }

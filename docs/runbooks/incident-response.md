@@ -67,4 +67,4 @@ npm run dev
 1. Confirm the MUD negotiated MSDP.
 2. Check the MSDP variable mapping in the UI settings.
 3. Compare requested variables with `.spec_system/PRD/PRD.md`.
-4. Treat unsupported variables as expected gaps until Phase 00 alignment work is complete.
+4. Treat unsupported variables as expected gaps unless the current PRD or a completed session explicitly adds support for them.

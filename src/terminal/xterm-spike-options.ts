@@ -63,7 +63,8 @@ export function createXtermSpikeOptions(settings?: {
     cursorBlink: false,
     cursorInactiveStyle: 'none',
     disableStdin: true,
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace',
+    fontFamily:
+      'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace',
     fontSize: settings?.fontSize,
     lineHeight: settings?.lineHeight,
     rightClickSelectsWord: true,

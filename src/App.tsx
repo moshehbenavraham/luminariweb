@@ -9,6 +9,16 @@ import type {
 import type { ReactNode } from 'react';
 import { appSettings } from '../shared/app-settings.ts';
 import type { AppSettings } from '../shared/app-settings.ts';
+import { buildCombatDisplayModel } from '../shared/msdp-combat-display.ts';
+import type {
+  ActionEconomyModel,
+  ActionEntryModel,
+  CombatDisplayModel,
+  CombatParticipantModel,
+  DamageBonusCombatModel,
+} from '../shared/msdp-combat-display.ts';
+import { buildCoreDisplayModel } from '../shared/msdp-display.ts';
+import type { CharacterFieldModel, HudBarModel } from '../shared/msdp-display.ts';
 import {
   defaultMsdpVariables,
   normalizeMsdpVariableMap,
@@ -32,10 +42,7 @@ import {
   renderMudStreamHtml,
 } from './terminal/render-mud-html.ts';
 import { XtermTerminalSpike } from './terminal/XtermTerminalSpike.tsx';
-import {
-  isXtermSpikeRenderer,
-  parseTerminalRendererMode,
-} from './terminal/xterm-spike-options.ts';
+import { isXtermSpikeRenderer, parseTerminalRendererMode } from './terminal/xterm-spike-options.ts';
 import './App.css';
 
 const DEFAULT_HOST = appSettings.connection.defaultHost;
@@ -99,15 +106,7 @@ const NUMPAD_COMMANDS: Record<string, string> = {
   NumpadDecimal: 'out',
 };
 
-type BarConfig = {
-  label: string;
-  overlayLabel?: string;
-  value?: number;
-  max?: number;
-  accentClass: string;
-};
-
-type SidebarTabId = 'character' | 'quests' | 'group' | 'affects';
+type SidebarTabId = 'character' | 'combat' | 'quests' | 'group' | 'affects';
 
 type SidebarTab = {
   id: SidebarTabId;
@@ -479,6 +478,7 @@ const MSDP_VARIABLE_GROUPS: Array<{
 
 const SIDEBAR_TABS: SidebarTab[] = [
   { id: 'character', label: 'Character' },
+  { id: 'combat', label: 'Combat' },
   { id: 'quests', label: 'Quests' },
   { id: 'group', label: 'Group' },
   { id: 'affects', label: 'Affects' },
@@ -506,9 +506,7 @@ function App() {
   const [terminalChunks, setTerminalChunks] = useState<string[]>([
     `<span class="terminal-muted">${INITIAL_TERMINAL_TEXT}</span>`,
   ]);
-  const [terminalRawChunks, setTerminalRawChunks] = useState<string[]>([
-    INITIAL_TERMINAL_TEXT,
-  ]);
+  const [terminalRawChunks, setTerminalRawChunks] = useState<string[]>([INITIAL_TERMINAL_TEXT]);
   const [terminalResetKey, setTerminalResetKey] = useState(0);
   const [proxyReady, setProxyReady] = useState(false);
   const [status, setStatus] = useState<ConnectionStatus>('idle');
@@ -658,7 +656,10 @@ function App() {
 
   const sendTerminalResize = useCallback(
     (dimensions: TerminalDimensions) => {
-      if (!isWebSocketOpen() || areTerminalDimensionsEqual(dimensions, lastSentTerminalDimensionsRef.current)) {
+      if (
+        !isWebSocketOpen() ||
+        areTerminalDimensionsEqual(dimensions, lastSentTerminalDimensionsRef.current)
+      ) {
         return;
       }
 
@@ -895,55 +896,19 @@ function App() {
     }
   }, [clientSettings.terminal.autoScroll, terminalChunks]);
 
-  const bars = useMemo<BarConfig[]>(
-    () => [
-      {
-        label: 'HP',
-        value: mudState.health,
-        max: mudState.healthMax,
-        accentClass: 'bar-health',
-      },
-      {
-        label: 'PSP',
-        value: mudState.psp,
-        max: mudState.pspMax,
-        accentClass: 'bar-psp',
-      },
-      {
-        label: 'Move',
-        value: mudState.movement,
-        max: mudState.movementMax,
-        accentClass: 'bar-movement',
-      },
-      {
-        label: 'EXP',
-        value: getExperienceProgress(mudState),
-        max: mudState.experienceMax,
-        accentClass: 'bar-exp',
-      },
-      {
-        label: 'Opp',
-        overlayLabel: mudState.opponentName,
-        value: mudState.opponentHealth,
-        max: mudState.opponentHealthMax,
-        accentClass: 'bar-opponent',
-      },
-      {
-        label: 'Tank',
-        overlayLabel: mudState.tankName,
-        value: mudState.tankHealth,
-        max: mudState.tankHealthMax,
-        accentClass: 'bar-tank',
-      },
-    ],
-    [mudState],
-  );
-
   const canConnect = proxyReady && status !== 'connecting';
   const connected = status === 'connected';
   const activeMsdpVariables = useMemo(
     () => normalizeMsdpVariableMap(clientSettings.msdp),
     [clientSettings.msdp],
+  );
+  const coreDisplay = useMemo(
+    () => buildCoreDisplayModel(mudState, status, activeMsdpVariables),
+    [activeMsdpVariables, mudState, status],
+  );
+  const combatDisplay = useMemo(
+    () => buildCombatDisplayModel(mudState, status, activeMsdpVariables),
+    [activeMsdpVariables, mudState, status],
   );
   const terminalOutputStyle = useMemo<CSSProperties>(
     () => ({
@@ -982,87 +947,6 @@ function App() {
     () => uiSettings.connection.muds.find((mud) => mud.id === selectedMudId),
     [selectedMudId, uiSettings.connection.muds],
   );
-  const abilityScores = useMemo(
-    () => [
-      { label: 'STR', value: mudState.strength },
-      { label: 'DEX', value: mudState.dexterity },
-      { label: 'CON', value: mudState.constitution },
-      { label: 'INT', value: mudState.intelligence },
-      { label: 'WIS', value: mudState.wisdom },
-      { label: 'CHA', value: mudState.charisma },
-    ],
-    [
-      mudState.charisma,
-      mudState.constitution,
-      mudState.dexterity,
-      mudState.intelligence,
-      mudState.strength,
-      mudState.wisdom,
-    ],
-  );
-  const savingThrows = useMemo(
-    () => [
-      {
-        label: 'Fort',
-        value: mudState.fortitude,
-        notice: getNumberAvailabilityNotice(
-          mudState.fortitude,
-          OPTIONAL_DATA_DESCRIPTORS.fortitude,
-          status,
-          activeMsdpVariables,
-        ),
-      },
-      {
-        label: 'Refl',
-        value: mudState.reflex,
-        notice: getNumberAvailabilityNotice(
-          mudState.reflex,
-          OPTIONAL_DATA_DESCRIPTORS.reflex,
-          status,
-          activeMsdpVariables,
-        ),
-      },
-      {
-        label: 'Will',
-        value: mudState.willpower,
-        notice: getNumberAvailabilityNotice(
-          mudState.willpower,
-          OPTIONAL_DATA_DESCRIPTORS.willpower,
-          status,
-          activeMsdpVariables,
-        ),
-      },
-    ],
-    [activeMsdpVariables, mudState.fortitude, mudState.reflex, mudState.willpower, status],
-  );
-  const characterHeading = useMemo(
-    () => formatCharacterHeading(mudState.characterName, mudState.title),
-    [mudState.characterName, mudState.title],
-  );
-  const titleNotice = useMemo(
-    () =>
-      getTextAvailabilityNotice(
-        mudState.title,
-        OPTIONAL_DATA_DESCRIPTORS.title,
-        status,
-        activeMsdpVariables,
-      ),
-    [activeMsdpVariables, mudState.title, status],
-  );
-  const damageBonusNotice = useMemo(() => {
-    if (
-      hasReportedNumber(mudState.damageBonus) ||
-      !isMsdpVariableConfigured(activeMsdpVariables, 'damageBonus')
-    ) {
-      return null;
-    }
-
-    return getMissingAvailabilityNotice(
-      OPTIONAL_DATA_DESCRIPTORS.damageBonus,
-      status,
-      activeMsdpVariables,
-    );
-  }, [activeMsdpVariables, mudState.damageBonus, status]);
   const questInfoNotice = useMemo(
     () =>
       getMudValueAvailabilityNotice(
@@ -1099,6 +983,12 @@ function App() {
     },
     [queueTerminalResize],
   );
+  const handleSidebarTabClick = useCallback((tabId: SidebarTabId) => {
+    setActiveSidebarTab(tabId);
+    requestAnimationFrame(() => {
+      focusCommandInput(commandInputRef.current);
+    });
+  }, []);
 
   useEffect(() => {
     if (!proxyReady) {
@@ -1992,15 +1882,8 @@ function App() {
           )}
 
           <div className="bars">
-            {bars.map((bar) => (
-              <StatusBar
-                key={bar.label}
-                label={bar.label}
-                overlayLabel={bar.overlayLabel}
-                value={bar.value}
-                max={bar.max}
-                accentClass={bar.accentClass}
-              />
+            {coreDisplay.hudBars.map((bar) => (
+              <StatusBar key={bar.id} bar={bar} />
             ))}
           </div>
 
@@ -2048,7 +1931,7 @@ function App() {
                   role="tab"
                   aria-selected={activeSidebarTab === tab.id}
                   className={`tab-button${activeSidebarTab === tab.id ? ' tab-button-active' : ''}`}
-                  onClick={() => setActiveSidebarTab(tab.id)}
+                  onClick={() => handleSidebarTabClick(tab.id)}
                 >
                   {tab.label}
                 </button>
@@ -2060,67 +1943,56 @@ function App() {
                 <>
                   <div className="identity-block">
                     <strong
+                      aria-label={coreDisplay.character.identity.ariaLabel}
                       dangerouslySetInnerHTML={{
-                        __html: renderMudHtml(characterHeading),
+                        __html: renderMudHtml(coreDisplay.character.identity.headingText),
                       }}
                     />
                     <span
                       dangerouslySetInnerHTML={{
-                        __html: renderMudHtml(
-                          [
-                            hasReportedNumber(mudState.level)
-                              ? `Level ${mudState.level}`
-                              : undefined,
-                            mudState.race,
-                            mudState.className,
-                          ]
-                            .filter(Boolean)
-                            .join(' | ') || 'Awaiting MSDP profile',
-                        ),
+                        __html: renderMudHtml(coreDisplay.character.identity.profileText),
                       }}
                     />
-                    {titleNotice ? <AvailabilityNoticeBlock notice={titleNotice} compact /> : null}
+                    {coreDisplay.character.identity.titleNotice ? (
+                      <AvailabilityNoticeBlock
+                        notice={coreDisplay.character.identity.titleNotice}
+                        compact
+                      />
+                    ) : null}
                   </div>
 
                   <div className="ability-grid" aria-label="Ability scores">
-                    {abilityScores.map((score) => (
-                      <div key={score.label} className="ability-cell">
+                    {coreDisplay.character.abilityScores.map((score) => (
+                      <div key={score.id} className="ability-cell">
                         <span className="ability-label">{score.label}</span>
-                        <span className="ability-value">{formatNumber(score.value) ?? '-'}</span>
+                        <CharacterFieldValue field={score} className="ability-value" />
                       </div>
                     ))}
                   </div>
 
                   <div className="saving-throw-grid" aria-label="Saving throws">
-                    {savingThrows.map((save) => (
-                      <div key={save.label} className="saving-throw-cell">
+                    {coreDisplay.character.savingThrows.map((save) => (
+                      <div key={save.id} className="saving-throw-cell">
                         <span className="saving-throw-label">{save.label}</span>
-                        <span className="saving-throw-value">
-                          {hasReportedNumber(save.value) ? (
-                            formatSignedNumber(save.value)
-                          ) : save.notice ? (
-                            <AvailabilityValue notice={save.notice} />
-                          ) : (
-                            '-'
-                          )}
-                        </span>
+                        <CharacterFieldValue field={save} className="saving-throw-value" />
                       </div>
                     ))}
                   </div>
 
                   <dl className="stats-grid">
-                    <Stat label="Position" value={mudState.position} />
-                    <Stat label="Attack" value={formatNumber(mudState.attackBonus)} />
-                    {hasReportedNumber(mudState.damageBonus) ? (
-                      <Stat label="Damage" value={formatSignedNumber(mudState.damageBonus)} />
-                    ) : damageBonusNotice ? (
-                      <AvailabilityStat label="Damage" notice={damageBonusNotice} />
-                    ) : null}
-                    <Stat label="Armor Class" value={formatNumber(mudState.armorClass)} />
-                    <Stat label="Alignment" value={mudState.alignment} />
-                    <Stat label="Money" value={formatNumber(mudState.money)} />
+                    {coreDisplay.character.stats.map((stat) =>
+                      stat.notice ? (
+                        <AvailabilityStat key={stat.id} label={stat.label} notice={stat.notice} />
+                      ) : (
+                        <Stat key={stat.id} label={stat.label} value={stat.valueText} />
+                      ),
+                    )}
                   </dl>
                 </>
+              ) : null}
+
+              {activeSidebarTab === 'combat' ? (
+                <CombatInspectorPanel combat={combatDisplay} />
               ) : null}
 
               {activeSidebarTab === 'quests' ? (
@@ -2831,36 +2703,6 @@ function getMsdpFieldSupportNote(key: MsdpVariableKey) {
   return MSDP_FIELD_SUPPORT_NOTES[key];
 }
 
-function getTextAvailabilityNotice(
-  value: string | undefined,
-  descriptor: OptionalDataDescriptor,
-  status: ConnectionStatus,
-  msdpVariables: MsdpVariableMap,
-) {
-  if (value === undefined) {
-    return getMissingAvailabilityNotice(descriptor, status, msdpVariables);
-  }
-
-  if (!value.trim()) {
-    return createAvailabilityNotice('empty', descriptor.empty);
-  }
-
-  return null;
-}
-
-function getNumberAvailabilityNotice(
-  value: number | undefined,
-  descriptor: OptionalDataDescriptor,
-  status: ConnectionStatus,
-  msdpVariables: MsdpVariableMap,
-) {
-  if (hasReportedNumber(value)) {
-    return null;
-  }
-
-  return getMissingAvailabilityNotice(descriptor, status, msdpVariables);
-}
-
 function getMudValueAvailabilityNotice(
   value: MudValue | undefined,
   descriptor: OptionalDataDescriptor,
@@ -2916,10 +2758,6 @@ function formatAvailabilityAriaLabel(notice: AvailabilityNotice) {
   return notice.ariaLabel ?? [notice.title, notice.detail].filter(Boolean).join('. ');
 }
 
-function hasReportedNumber(value: number | undefined): value is number {
-  return typeof value === 'number' && Number.isFinite(value);
-}
-
 function isMsdpVariableConfigured(msdpVariables: MsdpVariableMap, key: MsdpVariableKey) {
   return msdpVariables[key].trim().length > 0;
 }
@@ -2944,57 +2782,168 @@ function isEmptyMudValue(value: MudValue) {
   return false;
 }
 
-function formatCharacterHeading(characterName?: string, title?: string) {
-  const trimmedName = characterName?.trim();
-  const trimmedTitle = title?.trim();
-
-  if (!trimmedTitle) {
-    return trimmedName || 'Unknown adventurer';
-  }
-
-  if (!trimmedName) {
-    return trimmedTitle;
-  }
-
-  const normalizedName = trimmedName.toLowerCase();
-  const normalizedTitle = trimmedTitle.toLowerCase();
-
-  if (normalizedTitle.includes(normalizedName)) {
-    return trimmedTitle;
-  }
-
-  return `${trimmedName} ${trimmedTitle}`;
-}
-
 type StatusBarProps = {
-  label: string;
-  overlayLabel?: string;
-  value?: number;
-  max?: number;
-  accentClass: string;
+  bar: HudBarModel;
 };
 
-function StatusBar({ label, overlayLabel, value, max, accentClass }: StatusBarProps) {
-  const safeMax = max && max > 0 ? max : 0;
-  const percentage =
-    safeMax > 0 && value !== undefined ? Math.min((value / safeMax) * 100, 100) : 0;
-  const counter =
-    value !== undefined && max !== undefined
-      ? `${formatNumber(value)} / ${formatNumber(max)}`
-      : 'Waiting';
-  const trimmedOverlayLabel = overlayLabel?.trim();
-  const displayLabel = trimmedOverlayLabel ? `${label}: ${trimmedOverlayLabel}` : label;
-
+function StatusBar({ bar }: StatusBarProps) {
   return (
     <div className="status-bar">
-      <div className="bar-track">
-        <div className={`bar-fill ${accentClass}`} style={{ width: `${percentage}%` }} />
+      <div
+        className={`bar-track bar-state-${bar.availability.kind}`}
+        role="meter"
+        aria-label={bar.ariaLabel}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(bar.percentage)}
+        title={bar.ariaLabel}
+      >
+        <div className={`bar-fill ${bar.accentClass}`} style={{ width: `${bar.percentage}%` }} />
         <div className="bar-overlay">
-          <span className="bar-label">{displayLabel}</span>
-          <span className="bar-counter">{counter}</span>
+          <span className="bar-label">{bar.label}</span>
+          <span className="bar-counter">{bar.valueText}</span>
         </div>
       </div>
     </div>
+  );
+}
+
+function CombatParticipantStatus({ participant }: { participant: CombatParticipantModel }) {
+  return (
+    <section
+      className={`combat-status combat-status-${participant.id} combat-status-state-${participant.availability.kind}`}
+      aria-label={participant.ariaLabel}
+    >
+      <div className="combat-status-header">
+        <span className="combat-status-label">{participant.label}</span>
+        <span className="combat-status-state">{participant.availability.title}</span>
+      </div>
+      <strong
+        className="combat-status-name"
+        dangerouslySetInnerHTML={{ __html: renderMudHtml(participant.nameText) }}
+      />
+      <div
+        className={`combat-health-track bar-state-${participant.availability.kind}`}
+        role="meter"
+        aria-label={participant.ariaLabel}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(participant.percentage)}
+        title={participant.ariaLabel}
+      >
+        <div
+          className={`combat-health-fill ${participant.accentClass}`}
+          style={{ width: `${participant.percentage}%` }}
+        />
+        <div className="combat-health-overlay">
+          <span>Health</span>
+          <span>{participant.valueText}</span>
+        </div>
+      </div>
+      {participant.availability.detail ? (
+        <p className="combat-status-detail">{participant.availability.detail}</p>
+      ) : null}
+    </section>
+  );
+}
+
+function CombatInspectorPanel({ combat }: { combat: CombatDisplayModel }) {
+  return (
+    <div className="combat-panel" aria-label="Combat state">
+      <div className="combat-status-list" aria-label="Combat participants">
+        <CombatParticipantStatus participant={combat.opponent} />
+        <CombatParticipantStatus participant={combat.tank} />
+      </div>
+
+      <section className="combat-inspector-section" aria-labelledby="combat-actions-heading">
+        <h3 id="combat-actions-heading">Action economy</h3>
+        <AvailabilityNoticeBlock notice={combat.actions.availability} compact />
+        <ActionEconomyEntries actions={combat.actions} />
+      </section>
+
+      <section className="combat-inspector-section" aria-labelledby="combat-damage-heading">
+        <h3 id="combat-damage-heading">Damage bonus</h3>
+        <DamageBonusAvailability damageBonus={combat.damageBonus} />
+      </section>
+    </div>
+  );
+}
+
+function DamageBonusAvailability({ damageBonus }: { damageBonus: DamageBonusCombatModel }) {
+  return (
+    <div
+      className={`combat-damage combat-damage-${damageBonus.availability.kind}`}
+      aria-label={damageBonus.ariaLabel}
+    >
+      <span className="combat-damage-label">{damageBonus.label}</span>
+      <span
+        className={`combat-damage-value availability-value-${damageBonus.availability.kind}`}
+        title={damageBonus.ariaLabel}
+      >
+        {damageBonus.valueText}
+      </span>
+      <AvailabilityNoticeBlock notice={damageBonus.availability} compact />
+    </div>
+  );
+}
+
+function ActionEconomyEntries({ actions }: { actions: ActionEconomyModel }) {
+  if (actions.entries.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="combat-actions" aria-label={actions.ariaLabel}>
+      {actions.entries.map((entry) => (
+        <ActionEconomyEntry key={entry.id} entry={entry} />
+      ))}
+    </div>
+  );
+}
+
+function ActionEconomyEntry({ entry }: { entry: ActionEntryModel }) {
+  return (
+    <article
+      className={`combat-action-entry combat-action-entry-${entry.kind}`}
+      aria-label={entry.ariaLabel}
+    >
+      <span className="combat-action-label">{entry.label}</span>
+      <span
+        className="combat-action-value"
+        dangerouslySetInnerHTML={{ __html: renderMudHtml(entry.valueText) }}
+      />
+      {entry.detailText ? (
+        <span
+          className="combat-action-detail"
+          dangerouslySetInnerHTML={{ __html: renderMudHtml(entry.detailText) }}
+        />
+      ) : null}
+    </article>
+  );
+}
+
+function CharacterFieldValue({
+  field,
+  className,
+}: {
+  field: CharacterFieldModel;
+  className: string;
+}) {
+  if (field.notice) {
+    return (
+      <span className={className} aria-label={field.ariaLabel}>
+        <AvailabilityValue notice={field.notice} />
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={className}
+      aria-label={field.ariaLabel}
+      title={field.ariaLabel}
+      dangerouslySetInnerHTML={{ __html: renderMudHtml(field.valueText) }}
+    />
   );
 }
 
@@ -3513,10 +3462,7 @@ function getSettingsUrl() {
   return '/api/settings';
 }
 
-function areTerminalDimensionsEqual(
-  left: TerminalDimensions,
-  right: TerminalDimensions | null,
-) {
+function areTerminalDimensionsEqual(left: TerminalDimensions, right: TerminalDimensions | null) {
   return Boolean(right && left.columns === right.columns && left.rows === right.rows);
 }
 
@@ -3661,30 +3607,6 @@ function parseServerMessage(data: unknown): ServerMessage | null {
 
 function formatNumber(value: number | undefined) {
   return value === undefined ? undefined : new Intl.NumberFormat().format(value);
-}
-
-function formatSignedNumber(value: number | undefined) {
-  if (value === undefined) {
-    return '-';
-  }
-
-  if (value > 0) {
-    return `+${value}`;
-  }
-
-  return String(value);
-}
-
-function getExperienceProgress(mudState: MudState) {
-  if (mudState.experienceMax === undefined) {
-    return undefined;
-  }
-
-  if (mudState.experienceTnl === undefined) {
-    return mudState.experience;
-  }
-
-  return Math.max(mudState.experienceMax - mudState.experienceTnl, 0);
 }
 
 function buildMapOutput(

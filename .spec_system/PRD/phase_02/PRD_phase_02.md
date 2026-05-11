@@ -4,7 +4,7 @@
 **Sessions**: 6
 **Estimated Duration**: 3-6 days
 
-**Progress**: 1/6 sessions (17%)
+**Progress**: 2/6 sessions (33%)
 
 ---
 
@@ -19,7 +19,7 @@ Turn confirmed Luminari MSDP data into useful game UI panels while keeping fallb
 | Session | Name | Status | Est. Tasks | Validated |
 |---------|------|--------|------------|-----------|
 | 01 | Core HUD and Character Panel | Complete | ~12-25 | 2026-05-11 |
-| 02 | Combat and Action Economy Panel | Not Started | ~12-25 | - |
+| 02 | Combat and Action Economy Panel | Complete | ~12-25 | 2026-05-11 |
 | 03 | Group Panel | Not Started | ~12-25 | - |
 | 04 | Affects and Inventory Panels | Not Started | ~12-25 | - |
 | 05 | Room Context Panel | Not Started | ~12-25 | - |
@@ -30,13 +30,12 @@ Turn confirmed Luminari MSDP data into useful game UI panels while keeping fallb
 ## Completed Sessions
 
 1. Session 01: Core HUD and Character Panel - complete on 2026-05-11
+2. Session 02: Combat and Action Economy Panel - complete on 2026-05-11
 
 ---
 
 ## Upcoming Sessions
 
-- Session 01: Core HUD and Character Panel
-- Session 02: Combat and Action Economy Panel
 - Session 03: Group Panel
 - Session 04: Affects and Inventory Panels
 - Session 05: Room Context Panel

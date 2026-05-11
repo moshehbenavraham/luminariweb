@@ -105,7 +105,10 @@ test('public mode blocks direct IP literals unless explicitly allowlisted', asyn
     port: 4000,
   });
   assert.equal(customDirectIpDecision.allowed, false);
-  assert.equal(customDirectIpDecision.allowed ? null : customDirectIpDecision.code, 'public-ip-literal');
+  assert.equal(
+    customDirectIpDecision.allowed ? null : customDirectIpDecision.code,
+    'public-ip-literal',
+  );
 
   const allowlistedPolicy = createTestPolicy({
     env: {
@@ -175,8 +178,14 @@ test('DNS failures and unsafe resolved addresses return sanitized rejection deta
   });
   assert.equal(dnsFailureDecision.allowed, false);
   assert.equal(dnsFailureDecision.allowed ? null : dnsFailureDecision.code, 'dns-failed');
-  assert.equal(dnsFailureDecision.allowed ? '' : dnsFailureDecision.detail.includes('secret'), false);
-  assert.equal(dnsFailureDecision.allowed ? '' : dnsFailureDecision.detail.includes('resolver'), false);
+  assert.equal(
+    dnsFailureDecision.allowed ? '' : dnsFailureDecision.detail.includes('secret'),
+    false,
+  );
+  assert.equal(
+    dnsFailureDecision.allowed ? '' : dnsFailureDecision.detail.includes('resolver'),
+    false,
+  );
 
   const unsafeDnsPolicy = createTestPolicy({
     env: {
@@ -216,11 +225,13 @@ test('environment parsing fails closed or clamps malformed settings', () => {
   assert.ok(policy.configurationWarnings.length >= 5);
 });
 
-function createTestPolicy(options: {
-  dnsLookup?: DnsLookup;
-  env?: NodeJS.ProcessEnv;
-  localOriginPorts?: readonly number[];
-} = {}) {
+function createTestPolicy(
+  options: {
+    dnsLookup?: DnsLookup;
+    env?: NodeJS.ProcessEnv;
+    localOriginPorts?: readonly number[];
+  } = {},
+) {
   return createProxyPolicy({
     dnsLookup: options.dnsLookup ?? publicDnsLookup,
     env: options.env,

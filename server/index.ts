@@ -320,7 +320,9 @@ function validClientMessage(message: ClientMessage): ClientMessageParseResult {
   };
 }
 
-function invalidClientMessage(errorDetail = INVALID_BROWSER_MESSAGE_DETAIL): ClientMessageParseResult {
+function invalidClientMessage(
+  errorDetail = INVALID_BROWSER_MESSAGE_DETAIL,
+): ClientMessageParseResult {
   return {
     errorDetail,
     message: null,

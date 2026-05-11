@@ -9,25 +9,24 @@
 
 Items requiring attention in upcoming phases. Review before each session.
 
-### Technical Debt <!-- Max 5 items -->
+### Technical Debt
 
-- [P01] `server/index.ts` still owns proxy routes, Telnet session handling, parser setup, and lifecycle glue. Keep parser and reconnect coverage ahead of any further extraction.
-- [P01] `src/App.tsx` remains a large integration point for terminal UI, connection state, aliases, triggers, and settings persistence. Split only after the next session boundary is covered by tests.
+- [P01] `server/index.ts` is thinner after parser and lifecycle extraction, but it still owns proxy routes, policy wiring, and session bootstrap. Keep further extraction behind tests so routing stays easy to reason about.
+- [P01] `src/App.tsx` still concentrates renderer selection, resize observation, and command-shell wiring. Avoid broad UI refactors until the renderer boundary and resize path remain covered.
 
-### External Dependencies <!-- Max 5 items -->
+### External Dependencies
 
-- [P01] `ansi-to-html` remains the terminal renderer. Preserve XML escaping or replace it with a fully validated renderer before changing HTML output paths.
-- [P01] Compatibility still depends on external MUD host behavior and the audited Luminari-Source protocol contract. Prefer fixtures and source audits over live-only verification.
+- [P01] The terminal renderer now has an opt-in xterm spike, but the production path still depends on `ansi-to-html` escaping staying intact. Keep the escape invariant and tests in place before any renderer swap.
+- [P01] Proxy destination policy depends on external MUD host behavior and DNS answers. Keep allowlists and DNS/IP classification fail-closed as destinations expand.
 
-### Performance / Security <!-- Max 5 items -->
+### Performance / Security
 
-- [P01] Public proxy exposure still requires destination allowlists, private-network blocking, origin checks, quotas, and connect/idle timeouts before production use.
-- [P01] Browser settings, aliases, and triggers are persisted in cookies. Move them to localStorage or IndexedDB before storing any sensitive preferences or growing the payload.
-- [P01] Automated regression coverage still needs WebSocket validation, unsafe-host rejection, parser edge cases, and reconnect cleanup tests.
+- [P01] Browser settings, aliases, and triggers still persist in cookies. Move them to localStorage or IndexedDB before adding sensitive preferences or larger payloads.
+- [P01] Public proxy exposure now has allowlists, origin checks, and timeouts; preserve sanitized rejection text and quota defaults as routes expand.
 
-### Architecture <!-- Max 5 items -->
+### Architecture
 
-- [P01] xterm.js is the preferred long-term terminal path, but the migration should stay separate from protocol work and only start after a bounded spike proves input, scrollback, resize, and copy/paste behavior.
+- [P01] Parser, lifecycle, NAWS resize, and deployment policy now live in separate helpers. Keep later changes aligned to those seams instead of recombining them in `server/index.ts`.
 
 ---
 
@@ -35,27 +34,24 @@ Items requiring attention in upcoming phases. Review before each session.
 
 Proven patterns and anti-patterns. Reference during implementation.
 
-### What Worked <!-- Max 15 items -->
+### What Worked
 
-- [P01] Shared pure mapping helpers in `shared/msdp-state.ts` made the proxy, fixtures, and Node tests line up without starting the server.
-- [P01] Fixture corpora with manifest-verified expected pairs make MSDP parser and state tests deterministic.
-- [P01] Source-backed availability checks are clearer when the UI says why data is missing instead of treating zero values as absent.
-- [P01] Keeping `renderMudHtml()` escaping intact let the UI stay honest about optional data without opening new HTML injection paths.
-- [P01] `node --import tsx --test` was enough for focused protocol tests; no extra test framework was needed.
-- [P01] `minmax(0, 1fr)` and tight cell constraints prevented mobile overflow in the unavailable-data layouts.
+- [P01] Pure helper extraction (`server/telnet-parser.ts`, `server/mud-session.ts`, `server/proxy-policy.ts`) made protocol, lifecycle, and deployment rules testable without booting the full server.
+- [P01] Deterministic harnesses and fixture-based tests gave stable coverage for Telnet edge cases, MSDP shapes, reconnect cleanup, resize routing, and public proxy rejection paths.
+- [P01] Negotiation-gated NAWS writes and stale-socket guards prevented reconnect races from leaking old terminal state.
+- [P01] Keeping the xterm migration opt-in preserved the stable escaped HTML renderer while still proving the long-term terminal path.
+- [P01] Sanitized browser-facing rejection messages made proxy policy failures actionable without exposing internal network details.
 
-### What to Avoid <!-- Max 10 items -->
+### What to Avoid
 
-- [P01] Do not treat unconfirmed MSDP variables as reliable defaults just because the UI has fields for them.
-- [P01] Do not log raw player commands or imported automation content by default.
-- [P01] Do not add broad parser rewrites without fixtures for split IAC, doubled IAC, tables, arrays, malformed payloads, and reconnect cleanup.
-- [P01] Do not change HTML terminal rendering without preserving XML escaping or replacing the renderer entirely.
-- [P01] Do not add account sync or cloud persistence without a separate auth/privacy design.
+- [P01] Do not broaden parser or lifecycle rewrites without byte-level or socket-level fixtures for the edge cases already covered in phase 01.
+- [P01] Do not treat cookie-based client state as a long-term store for settings that may grow or become sensitive.
+- [P01] Do not replace the terminal renderer or command input path without rechecking escaping, focus handling, and resize behavior together.
 
-### Tool/Library Notes <!-- Max 5 items -->
+### Tool/Library Notes
 
-- [P01] `npm run lint`, `npm run build`, and `npm test` passed by the end of phase 00.
-- [P01] The fixture loader validates manifest structure before tests trust the expected pairs.
+- [P01] `node --import tsx --test`, `npm run lint`, and `npm run build` were sufficient to validate the phase 01 protocol, lifecycle, and deployment changes.
+- [P01] `@xterm/xterm` v6 requires its option types to stay aligned with the package API; older `cols`/`rows` style assumptions break the spike helpers.
 
 ---
 
@@ -66,9 +62,12 @@ Recently closed items (buffer - rotates out after 2 phases).
 | Phase | Item | Resolution |
 |-------|------|------------|
 | P00 | Default MSDP map alignment | Default requests and server mapping were aligned to confirmed Luminari-Source variables, with unsupported values left as explicit overrides. |
-| P00 | Uncommitted test foundation | A committed `npm test` path and fixture-driven MSDP tests now exist. |
+| P00 | Uncommitted test foundation | A committed `npm test` path and fixture-driven MSDP tests now exist across the parser, lifecycle, resize, renderer, and deployment coverage added in phase 01. |
 | P00 | Source-aware unavailable-data UX | The UI now distinguishes unavailable, empty, waiting, offline, and present states without treating `0` as missing. |
 | P00 | MSDP fixture corpus | Versioned fixture sets and a manifest now support repeatable parser/state coverage. |
 | P00 | Shared state mapping extraction | Pure MSDP mapping helpers were extracted into `shared/msdp-state.ts` and imported by the proxy. |
+| P00 | Public proxy arbitrary hosts and ports | Phase 01 added destination allowlists, origin checks, DNS/IP classification, banned ports, and connect/idle timeouts before socket creation. |
+| P00 | HTML rendering depends on escaping invariants | Phase 01 preserved escaped HTML rendering in shared helpers and added renderer coverage before any xterm opt-in path was exposed. |
+| P00 | No automated security regression tests | Phase 01 added parser, lifecycle, resize, policy, and renderer tests that cover the main protocol and deployment boundaries. |
 
-_Auto-generated by initspec. Updated by carryforward between phases._
+_Auto-generated by carryforward. Manual edits allowed but may be overwritten._

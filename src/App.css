@@ -9,6 +9,7 @@
   height: 100dvh;
   min-height: 100dvh;
   overflow: hidden;
+  overflow-x: hidden;
 }
 
 .app-header {
@@ -225,6 +226,11 @@
   grid-template-columns: 1fr auto;
   gap: 0.75rem;
   padding: 0 1rem 0.65rem;
+  min-width: 0;
+}
+
+.command-form input {
+  min-width: 0;
 }
 
 .command-form input,
@@ -497,7 +503,7 @@
 
 .tab-strip {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.45rem;
   padding: 0.8rem 0.8rem 0;
 }
@@ -701,22 +707,215 @@
   margin-top: 0.85rem;
 }
 
+.combat-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0 1rem 1rem;
+  min-width: 0;
+}
+
+.combat-status-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.combat-status,
+.combat-inspector-section {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.combat-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.7rem;
+  overflow: hidden;
+}
+
+.combat-status-state-present {
+  border-color: rgba(45, 212, 191, 0.24);
+}
+
+.combat-status-state-empty,
+.combat-status-state-loading {
+  border-color: rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.28);
+}
+
+.combat-status-state-offline,
+.combat-status-state-error {
+  border-color: rgba(248, 113, 113, 0.24);
+}
+
+.combat-status-header,
+.combat-health-overlay,
+.combat-damage {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.combat-status-label,
+.combat-action-label,
+.combat-damage-label {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.combat-status-state {
+  min-width: 0;
+  color: var(--text);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.combat-status-name {
+  min-width: 0;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.combat-health-track {
+  position: relative;
+  min-height: 1.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.combat-health-fill {
+  min-height: 1.55rem;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.combat-health-overlay {
+  position: absolute;
+  inset: 0;
+  padding: 0 0.55rem;
+  color: #f8fafc;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-shadow: 0 1px 1px rgba(2, 6, 23, 0.75);
+}
+
+.combat-health-overlay span:last-child {
+  min-width: 0;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.combat-status-detail {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.combat-inspector-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.7rem;
+}
+
+.combat-inspector-section h3 {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.25;
+}
+
+.combat-inspector-section .availability-notice-compact {
+  margin: 0;
+}
+
+.combat-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.combat-action-entry {
+  display: grid;
+  grid-template-columns: minmax(4.8rem, max-content) minmax(0, 1fr);
+  gap: 0.25rem 0.55rem;
+  align-items: start;
+  min-width: 0;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 0.65rem;
+  background: rgba(2, 6, 23, 0.22);
+}
+
+.combat-action-value,
+.combat-action-detail,
+.combat-damage-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.combat-action-value {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.combat-action-detail {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.combat-damage {
+  min-width: 0;
+}
+
+.combat-damage-value {
+  color: var(--text);
+  font-weight: 700;
+  text-align: right;
+}
+
 .identity-block,
 .room-heading {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
   padding: 0 1rem;
+  min-width: 0;
 }
 
 .identity-block strong,
 .room-heading strong {
   font-size: 1.35em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
 .identity-block span,
 .room-heading span {
   color: var(--muted);
+  overflow-wrap: anywhere;
 }
 
 .room-meta {
@@ -727,8 +926,8 @@
 
 .bars {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.3rem;
+  grid-template-columns: repeat(4, minmax(7rem, 1fr));
+  gap: 0.35rem;
   padding: 0 1rem 1rem;
   min-width: 0;
 }
@@ -739,24 +938,31 @@
 
 .bar-track {
   position: relative;
-  height: 1.35rem;
+  min-height: 1.5rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
-  max-height: 18px;
 }
 
 .bar-fill {
   height: 100%;
   border-radius: inherit;
+  min-height: 1.5rem;
+}
+
+.bar-state-loading .bar-fill,
+.bar-state-offline .bar-fill,
+.bar-state-error .bar-fill,
+.bar-state-unavailable .bar-fill {
+  opacity: 0.35;
 }
 
 .bar-overlay {
   position: absolute;
   inset: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(2.6rem, max-content) minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 0.4rem;
   padding: 0 0.55rem;
   font-size: 0.68rem;
@@ -771,6 +977,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.bar-counter {
+  text-align: right;
 }
 
 .bar-health {
@@ -799,10 +1009,11 @@
 
 .stats-grid {
   display: grid;
-  grid-template-columns: max-content 1fr;
+  grid-template-columns: minmax(5.8rem, max-content) minmax(0, 1fr);
   gap: 0.5rem 0.9rem;
   margin: 0;
   padding: 0 1rem 1rem;
+  min-width: 0;
 }
 
 .ability-grid {
@@ -828,6 +1039,8 @@
   border-radius: 0.65rem;
   background: rgba(15, 23, 42, 0.45);
   padding: 0.35rem 0.5rem;
+  min-width: 0;
+  min-height: 2.2rem;
 }
 
 .saving-throw-cell {
@@ -845,26 +1058,36 @@
 }
 
 .ability-label {
+  flex: 0 0 auto;
   color: var(--muted);
   font-size: 0.88em;
   letter-spacing: 0.08em;
 }
 
 .ability-value {
+  min-width: 0;
   font-size: 1.1em;
   font-weight: 700;
+  overflow-wrap: anywhere;
+  text-align: right;
 }
 
 .saving-throw-label {
+  max-width: 100%;
   color: var(--muted);
   font-size: 0.82em;
   letter-spacing: 0.04em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .saving-throw-value {
   font-size: 1em;
   font-weight: 700;
   min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .stats-grid dt {
@@ -873,7 +1096,9 @@
 
 .stats-grid dd {
   margin: 0;
+  min-width: 0;
   text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .exit-list {
@@ -931,6 +1156,10 @@
 
   .sidebar {
     overflow: visible;
+  }
+
+  .bars {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .automation-fields,
@@ -1035,5 +1264,165 @@
   .automation-item-header {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+@media (max-width: 430px) {
+  .app-shell {
+    padding: 0.55rem;
+  }
+
+  .panel-header {
+    padding: 0.75rem 0.75rem 0;
+  }
+
+  .terminal-output {
+    margin: 0.65rem;
+    padding: 0.75rem;
+  }
+
+  .command-form,
+  .bars,
+  .combat-panel,
+  .ability-grid,
+  .saving-throw-grid,
+  .stats-grid,
+  .identity-block,
+  .room-heading {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .tab-strip {
+    gap: 0.35rem;
+    padding: 0.65rem 0.65rem 0;
+  }
+
+  .tab-button {
+    min-height: 2.35rem;
+    padding: 0.35rem 0.4rem;
+    font-size: 0.7rem;
+  }
+
+  .bar-track,
+  .bar-fill {
+    min-height: 1.65rem;
+  }
+
+  .bar-overlay {
+    font-size: 0.66rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: minmax(4.8rem, max-content) minmax(0, 1fr);
+    gap: 0.45rem 0.65rem;
+  }
+
+  .saving-throw-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .saving-throw-cell {
+    min-height: 2.4rem;
+  }
+
+  .availability-notice {
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
+  }
+
+  .availability-notice-compact {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .combat-status,
+  .combat-inspector-section {
+    padding: 0.6rem;
+  }
+
+  .combat-action-entry,
+  .combat-damage {
+    grid-template-columns: 1fr;
+  }
+
+  .combat-action-value,
+  .combat-damage-value {
+    text-align: left;
+  }
+
+  .minimap {
+    max-width: calc(100% - 1.5rem);
+  }
+}
+
+@media (max-width: 370px) {
+  .app-shell {
+    padding: 0.45rem;
+  }
+
+  .terminal-output {
+    margin: 0.55rem;
+    padding: 0.65rem;
+  }
+
+  .app-shell,
+  .layout,
+  .panel,
+  .tabbed-panel,
+  .combat-panel,
+  .combat-status,
+  .combat-inspector-section,
+  .combat-action-entry,
+  .command-form,
+  .command-form input {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .ability-grid,
+  .tab-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .combat-panel {
+    gap: 0.65rem;
+  }
+
+  .combat-status-header,
+  .combat-health-overlay,
+  .combat-action-entry,
+  .combat-damage {
+    grid-template-columns: 1fr;
+  }
+
+  .combat-status-state,
+  .combat-health-overlay span:last-child {
+    text-align: left;
+  }
+
+  .combat-health-overlay {
+    gap: 0.1rem;
+    align-content: center;
+    line-height: 1.05;
+  }
+
+  .combat-status-name,
+  .combat-status-state,
+  .combat-action-label,
+  .combat-action-value,
+  .combat-action-detail,
+  .combat-damage-value {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .bar-overlay {
+    grid-template-columns: minmax(2.3rem, max-content) minmax(0, 1fr);
+    padding: 0 0.45rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: minmax(4.4rem, max-content) minmax(0, 1fr);
   }
 }

@@ -143,7 +143,9 @@ test('malformed and partial MSDP boundaries do not throw or emit stale callbacks
   const malformedHarness = createHarness();
 
   assert.doesNotThrow(() => {
-    partialHarness.parser.push(packet([IAC, SB, TELOPT_MSDP, MSDP_VAR], 'HEALTH', [MSDP_VAL], '99'));
+    partialHarness.parser.push(
+      packet([IAC, SB, TELOPT_MSDP, MSDP_VAR], 'HEALTH', [MSDP_VAL], '99'),
+    );
   });
   assert.deepEqual(partialHarness.msdpPairs, []);
 

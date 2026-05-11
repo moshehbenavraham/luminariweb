@@ -38,6 +38,11 @@ node --import tsx --test tests/*.test.ts
   Luminari caret/RGB color conversion, reset handling, and streaming output.
 - xterm spike helper coverage for query-parameter fallback, option defaults, accessibility settings,
   scrollback, and bounded fit dimensions.
+- Core MSDP display helper coverage for HUD bars, XP/TNL progress, character stats, zero values,
+  negative values, missing max values, unavailable fields, and override-only waiting states.
+- Combat display helper coverage for opponent and tank status, zero and partial health values,
+  quiet inactive states, `ACTIONS` arrays and fallback payloads, and override-only damage bonus
+  availability.
 
 These tests import shared pure helpers directly from `shared/mud.ts`, `shared/msdp-state.ts`,
 `server/telnet-parser.ts`, and side-effect-free lifecycle modules such as
@@ -64,6 +69,8 @@ Proxy policy tests use injected DNS lookup functions and fake timers. They do no
 lookups, open TCP sockets, or require a live MUD. Focused commands:
 
 ```sh
+node --import tsx --test tests/msdp-display.test.ts
+node --import tsx --test tests/msdp-state-mapping.test.ts
 node --import tsx --test tests/proxy-network.test.ts
 node --import tsx --test tests/proxy-policy.test.ts
 node --import tsx --test tests/proxy-lifecycle.test.ts
@@ -76,8 +83,15 @@ start the local app, open the client in a desktop browser, connect to an availab
 the terminal pane or browser window, and verify command input focus, auto-scroll, aliases, triggers,
 and terminal rendering still behave normally.
 
-For mobile-width checks, use a 390px viewport and verify there is no horizontal page scrolling, the
-command dock remains usable, and terminal resize updates do not visibly interrupt input.
+For core HUD and character panel checks, use desktop, 390px, and 360px viewports. Verify there is no
+horizontal page scrolling, the command dock remains usable, HP/PSP/movement/XP bars show visible
+text, character stats wrap inside the sidebar, unavailable title/saves/damage states remain
+explicit, and terminal resize updates do not visibly interrupt input.
+
+For combat panel checks, use desktop, 390px, and 360px viewports. Verify inactive combat stays quiet,
+opponent-only, tank-only, opponent+tank, empty actions, mixed action entries, and damage-bonus
+availability states remain readable, the Combat tab wraps without horizontal page scrolling, and
+command input focus returns normally after selecting the combat tab.
 
 ## Manual Renderer Notes
 

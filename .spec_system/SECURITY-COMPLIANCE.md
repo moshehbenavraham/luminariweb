@@ -7,27 +7,46 @@
 
 ## Current Security Posture
 
-### Overall: NEEDS HARDENING BEFORE PUBLIC DEPLOYMENT
+### Overall: AT RISK
 
 | Metric | Value |
 |--------|-------|
-| Open Findings | 4 |
-| Critical/High | 1 |
-| Medium/Low | 3 |
-| Phases Audited | 1 |
+| Open Findings | 1 |
+| Critical/High | 0 |
+| Medium/Low | 1 |
+| Phases Audited | 2 |
 | Last Clean Phase | -- |
+
+---
 
 ## Open Findings
 
-### Critical / High
-
-- **HIGH P00-SEC-001: Public proxy can target arbitrary hosts and ports.** `server/index.ts` validates only host syntax and port range before `net.createConnection()`. Before public deployment, add configured destination allowlists, DNS/IP checks that reject loopback/private/link-local/multicast/metadata ranges, banned service ports, origin checks, connection quotas, rate limits, and connect/idle timeouts.
+Active security or GDPR issues requiring attention. Ordered by severity.
 
 ### Medium / Low
 
-- **MEDIUM P00-SEC-002: Browser settings are stored in cookies.** `src/App.tsx` stores aliases, triggers, and client settings in chunked cookies with `SameSite=Lax` and `path=/`. They are not passwords, but they are sent to the server on HTTP/WebSocket requests. Prefer localStorage or IndexedDB and keep secrets out of client persistence.
-- **LOW P00-SEC-004: HTML rendering depends on escaping invariants.** Terminal and panel rendering use `dangerouslySetInnerHTML`, currently through `ansi-to-html` with `escapeXML: true`. Preserve that invariant, and add tests around HTML escaping before renderer changes.
-- **LOW P00-SEC-005: No automated security regression tests.** Lint/build pass, but parser, WebSocket validation, reconnect cleanup, and unsafe host rejection are not covered by committed tests yet.
+- **[P00-SEC-002] Browser settings are stored in cookies**
+  - Severity: Medium
+  - File: `src/App.tsx`
+  - Description: Aliases, triggers, and client settings are stored in chunked cookies with `SameSite=Lax` and `path=/`, so they are sent on HTTP and WebSocket requests.
+  - Remediation: Move browser settings to localStorage or IndexedDB and keep any secrets out of client persistence.
+  - Status: Open
+  - Opened: P00 (2026-05-10)
+
+---
+
+## Resolved Findings
+
+Recently closed issues are retained here for phase history and regression awareness.
+
+| Finding | Severity | Resolution | Closed |
+|---------|----------|------------|--------|
+| P00-SEC-001 Public proxy can target arbitrary hosts and ports | High | Phase 01 added destination allowlists, origin checks, DNS/IP classification, banned service ports, and connect/idle timeouts before socket creation. | P01 |
+| P00-SEC-003 Command/input rate limiting implemented locally | Medium | HTTP requests are rate limited per IP, browser command input is throttled per WebSocket session, and concurrent WebSocket connections are capped per IP. | P00 |
+| P00-SEC-004 HTML rendering depends on escaping invariants | Low | Phase 01 preserved escaped HTML rendering in shared helpers and added renderer coverage before any xterm opt-in path was exposed. | P01 |
+| P00-SEC-005 No automated security regression tests | Low | Phase 01 added parser, lifecycle, resize, policy, and renderer tests, plus passing lint/build/test coverage. | P01 |
+
+---
 
 ## GDPR Compliance Status
 
@@ -54,19 +73,21 @@ Potentially sensitive operational data:
 
 | Requirement | Status | Notes |
 |-------------|--------|-------|
-| Data collection has documented purpose | Partial | Browser-local settings support gameplay preferences; no server-side account data exists |
-| Consent obtained before data storage | Partial | Settings are saved by using app controls, but there is no explicit storage notice |
-| Data minimization verified | Partial | No secrets are required; cookies should be replaced for local settings |
-| Deletion/erasure path exists | Partial | Users can clear browser storage/cookies; no in-app clear-all control is documented |
-| No PII in application logs | Pass | Current code logs startup and settings-load errors, not command text |
-| Third-party transfers documented | Partial | Commands and connection data are sent to selected MUD hosts; production policy is not finalized |
+| Data collection has documented purpose | Partial | Browser-local settings support gameplay preferences; no server-side account data exists. |
+| Consent obtained before data storage | Partial | Settings are saved through app controls, but there is no explicit storage notice. |
+| Data minimization verified | Partial | No secrets are required; cookies should be replaced for local settings. |
+| Deletion/erasure path exists | Partial | Users can clear browser storage/cookies; no in-app clear-all control is documented. |
+| No PII in application logs | Pass | Current code logs startup and settings-load errors, not command text. |
+| Third-party transfers documented | Partial | Commands and connection data are sent to selected MUD hosts; production policy is now documented and enforced. |
 
 ## Dependency Security
 
-`npm audit --omit=dev --audit-level=moderate` reported 0 production dependency vulnerabilities on 2026-05-10.
+`npm audit --omit=dev --audit-level=moderate` reported 0 production dependency vulnerabilities after the phase 01 xterm spike and proxy hardening.
 
 Top-level runtime dependencies observed:
 
+- `@xterm/addon-fit`
+- `@xterm/xterm`
 - `ansi-to-html`
 - `express`
 - `react`
@@ -75,22 +96,19 @@ Top-level runtime dependencies observed:
 
 Development dependencies include Vite, TypeScript, ESLint, React plugin packages, `tsx`, and `concurrently`.
 
-## Resolved Findings
-
-- **MEDIUM P00-SEC-003: Command/input rate limiting implemented locally.** `server/index.ts` now rate limits HTTP requests per IP, throttles browser command input per WebSocket session, and caps concurrent WebSocket connections per IP. Public deployment still needs allowlists, origin checks, private-network blocking, and WAF policy.
-
 ## Phase History
 
 | Phase | Sessions | Security | GDPR | Findings Opened | Findings Closed |
 |-------|----------|----------|------|-----------------|-----------------|
 | 00 | 5/5 complete | Initial code scan | Local-only baseline | 4 | 1 |
+| 01 | 6/6 complete | Proxy safety hardened and renderer coverage expanded | Local-only baseline retained | 0 | 4 |
 
 ## Recommendations
 
-1. Prioritize proxy allowlist, origin, DNS/IP, and WAF work before any public deployment. The in-repo HTTP and command rate limits now cover the basic abuse path.
-2. Move browser-local settings, aliases, and triggers out of cookies before storing larger data or any sensitive values.
-3. Add tests for WebSocket message validation, host rejection, HTML escaping, parser malformed input, and reconnect cleanup.
+1. Prioritize moving browser settings, aliases, and triggers out of cookies before storing larger or sensitive values.
+2. Keep the public proxy allowlist, origin, DNS/IP, and timeout checks in place before any broader exposure.
+3. Retain HTML escaping tests and the default escaped renderer path if the terminal renderer changes again.
 4. Keep command logging disabled by default.
 5. Document any production MUD host policy in `docs/deployment.md` and `.spec_system/PRD/PRD.md`.
 
-_Auto-generated by initspec. Updated by carryforward between phases._
+_Auto-generated by carryforward. Updated between phases._

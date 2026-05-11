@@ -737,7 +737,7 @@ Acceptance:
 
 Objective: turn confirmed Luminari data into useful game UI panels while keeping fallbacks explicit for data that requires future server support.
 
-Status: in progress. Phase 02 artifacts were created for six right-sized implementation sessions, and session 01 is complete.
+Status: in progress. Phase 02 artifacts were created for six right-sized implementation sessions, and sessions 01 and 02 are complete.
 
 ### P2-S1: Core HUD and Character Panel
 
@@ -774,6 +774,8 @@ Acceptance:
 - Combat state updates without full page or panel resets.
 - Empty combat state is visually quiet.
 - `ACTIONS` rendering is covered by fixture or mapping tests.
+
+Status: complete. Session 02 was validated and marked complete on 2026-05-11.
 
 ### P2-S3: Group Panel
 

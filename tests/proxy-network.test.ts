@@ -76,9 +76,5 @@ test('identifies banned service ports while leaving MUD ports available', () => 
 function assertUnsafeAddress(address: string, risk: NetworkRisk) {
   const classification = classifyIpAddress(address);
   assert.equal(classification.isPublic, false, `${address} should not be public`);
-  assert.equal(
-    classification.risks.includes(risk),
-    true,
-    `${address} should include ${risk}`,
-  );
+  assert.equal(classification.risks.includes(risk), true, `${address} should include ${risk}`);
 }

@@ -594,10 +594,7 @@ function allow<T>(value: T): ProxyPolicyDecision<T> {
   };
 }
 
-function reject<T>(
-  code: ProxyPolicyRejectionCode,
-  detail: string,
-): ProxyPolicyDecision<T> {
+function reject<T>(code: ProxyPolicyRejectionCode, detail: string): ProxyPolicyDecision<T> {
   return {
     allowed: false,
     code,

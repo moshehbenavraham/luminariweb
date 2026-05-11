@@ -53,15 +53,17 @@ Default local services:
 - Browser terminal output rendered from Telnet text and ANSI sequences.
 - React HUD and side panels for character, combat, quest, group, and affects data when matching MSDP values arrive.
 - Command input with history, tab completion, numpad movement, aliases, triggers, and import/export for client configuration.
+- Dynamic terminal resize updates the proxy NAWS state when the server has negotiated support.
 - Runtime app settings endpoint at `/api/settings`.
 - WebSocket endpoint at `/ws` that bridges browser messages to a Telnet MUD connection.
 - Telnet negotiation for MSDP, TTYPE, NAWS, ECHO, and SGA, with MCCP, MXP, and CHARSET currently rejected.
+- Public proxy guardrails for origin checks, destination allowlists, banned ports, DNS/IP safety, quotas, and timeouts.
 - Fixture-backed MSDP mapping tests and normalized shared state helpers for parser and state coverage.
-- Curated MUD presets plus manual host and port input.
+- Curated MUD presets plus manual host and port input for private or operator-approved routing.
 
 ## Protocol Status
 
-The code currently requests and maps several MSDP variables. The product plan records that some defaults, including `TITLE`, `QUEST_INFO`, save fields, and live `MINIMAP`, are not confirmed as emitted by the audited Luminari-Source server. Phase 00 is planned to align defaults with confirmed source variables and make missing data states explicit.
+Phase 00 aligned the client with confirmed Luminari-Source MSDP data and made unsupported data states explicit. Phase 01 hardened the Telnet parser, reconnect lifecycle, resize handling, renderer decision, and public proxy safety. The product plan still tracks future panel, mapper, and source-protocol work in later phases.
 
 ## Tech Stack
 

@@ -121,6 +121,16 @@
 | Testing        | not configured | Add during fixture/parser work        |
 | Database       | not configured | No DB signals detected                |
 
+## CI/CD
+
+| Bundle       | Status         | Workflow                         |
+| ------------ | -------------- | -------------------------------- |
+| Code Quality | configured     | `.github/workflows/quality.yml`  |
+| Build & Test | configured     | `.github/workflows/test.yml`     |
+| Security     | configured     | `.github/workflows/security.yml` |
+| Integration  | not configured | -                                |
+| Operations   | configured     | `.github/workflows/deploy.yml`   |
+
 ## Git and Review
 
 - Keep commits to one logical change.

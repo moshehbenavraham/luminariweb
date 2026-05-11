@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { defaultMsdpVariables, normalizeMsdpVariableMap } from '../shared/mud.ts';
 import { mapMsdpUpdate } from '../shared/msdp-state.ts';
+import { loadMsdpFixtureCorpus } from './helpers/msdp-fixtures.ts';
 import type { MsdpVariableMap, MudState, MudValue } from '../shared/mud.ts';
 
 const defaultMap = normalizeMsdpVariableMap(defaultMsdpVariables);
@@ -92,11 +93,94 @@ test('maps resources, combat, economy, position, and zero values', () => {
   );
 });
 
+test('maps core panel scalar fixture into confirmed MudState fields', async () => {
+  const corpus = await loadMsdpFixtureCorpus();
+  const fixture = corpus.fixtures.find((entry) => entry.id === 'core.panel.confirmed.scalars');
+
+  assert.ok(fixture, 'core.panel.confirmed.scalars fixture should exist');
+  assert.deepEqual(mapPairs(fixture.expectedPairs, defaultMap), {
+    characterName: 'Fixture Hero',
+    level: 17,
+    race: 'Human',
+    className: 'Wizard',
+    position: 'fighting',
+    alignment: 'neutral good',
+    money: 0,
+    practice: 3,
+    health: 0,
+    healthMax: 120,
+    psp: 34,
+    pspMax: 44,
+    movement: 91,
+    movementMax: 110,
+    experience: 451200,
+    experienceMax: 500000,
+    experienceTnl: 48800,
+    attackBonus: -2,
+    armorClass: 0,
+  });
+});
+
+test('maps combat participant fixture variants without dropping partial or empty values', async () => {
+  const corpus = await loadMsdpFixtureCorpus();
+  const fixtureIds = [
+    'combat.opponent.and.tank',
+    'combat.opponent.partial.zero',
+    'combat.empty.names',
+  ];
+
+  const mappedByFixture = Object.fromEntries(
+    fixtureIds.map((fixtureId) => {
+      const fixture = corpus.fixtures.find((entry) => entry.id === fixtureId);
+      assert.ok(fixture, `${fixtureId} fixture should exist`);
+      return [fixtureId, mapPairs(fixture.expectedPairs, defaultMap)];
+    }),
+  );
+
+  assert.deepEqual(mappedByFixture['combat.opponent.and.tank'], {
+    opponentName: 'training dummy',
+    opponentHealth: 25,
+    opponentHealthMax: 100,
+    tankName: 'Shield Ally',
+    tankHealth: 80,
+    tankHealthMax: 100,
+    attackBonus: 7,
+    armorClass: -4,
+  });
+  assert.deepEqual(mappedByFixture['combat.opponent.partial.zero'], {
+    opponentName: 'sparring shade',
+    opponentHealth: 0,
+    tankName: 'Front Line',
+    tankHealth: 50,
+  });
+  assert.deepEqual(mappedByFixture['combat.empty.names'], {
+    opponentName: '',
+    tankName: '',
+  });
+});
+
 test('maps nonnumeric numeric values to undefined fields', () => {
   assert.deepEqual(mapMsdpUpdate('HEALTH', 'bad-value', defaultMap), { health: undefined });
   assert.deepEqual(mapMsdpUpdate('SERVER_TIME', { time: 1 }, defaultMap), {
     serverTime: undefined,
   });
+});
+
+test('maps ACTIONS arrays, empty collections, mixed entries, and object payloads conservatively', () => {
+  const emptyActions: MudValue = [];
+  const mixedActions: MudValue = ['standard', { name: 'quick draw', cost: 1 }];
+  const objectActions: MudValue = { standard: 'available', move: 'spent' };
+
+  assert.deepEqual(mapMsdpUpdate('ACTIONS', emptyActions, defaultMap), {
+    actions: emptyActions,
+  });
+  assert.deepEqual(mapMsdpUpdate('ACTIONS', mixedActions, defaultMap), {
+    actions: mixedActions,
+  });
+  assert.deepEqual(mapMsdpUpdate('ACTIONS', objectActions, defaultMap), {
+    actions: objectActions,
+  });
+  assert.deepEqual(mapMsdpUpdate('DAMAGE_BONUS', 3, defaultMap), {});
 });
 
 test('preserves structured room and collection payloads without lossy coercion', () => {

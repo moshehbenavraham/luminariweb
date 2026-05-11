@@ -11,7 +11,7 @@ test('loads every manifest-listed MSDP fixture file without live MUD access', as
   const corpus = await loadMsdpFixtureCorpus();
 
   assert.equal(corpus.manifest.totals.fixtureFiles, 7);
-  assert.equal(corpus.manifest.totals.fixtures, 25);
+  assert.equal(corpus.manifest.totals.fixtures, 29);
   assert.equal(corpus.manifest.totals.realCaptureFixtures, 0);
   assert.equal(corpus.fixtures.length, corpus.manifest.totals.fixtures);
   assert.ok(corpus.fixtures.every((fixture) => fixture.sanitized));

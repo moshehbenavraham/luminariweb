@@ -152,6 +152,80 @@
       "notes": ["Combat names are generic synthetic labels."]
     },
     {
+      "id": "combat.opponent.partial.zero",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from Session 02 partial combat display requirements.",
+        "sanitized": true
+      },
+      "description": "Opponent and tank values can arrive without matching maximum values, preserving zero current health.",
+      "coverage": ["combat", "tank", "partial-data", "scalar", "numeric-normalization"],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms OPPONENT_NAME, OPPONENT_HEALTH, TANK_NAME, and TANK_HEALTH.",
+        "Session 02 requires partial combat values to render without clearing unrelated state."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "OPPONENT_NAME",
+        "VAL",
+        "sparring shade",
+        "VAR",
+        "OPPONENT_HEALTH",
+        "VAL",
+        "0",
+        "VAR",
+        "TANK_NAME",
+        "VAL",
+        "Front Line",
+        "VAR",
+        "TANK_HEALTH",
+        "VAL",
+        "50"
+      ],
+      "expectedPairs": [
+        ["OPPONENT_NAME", "sparring shade"],
+        ["OPPONENT_HEALTH", 0],
+        ["TANK_NAME", "Front Line"],
+        ["TANK_HEALTH", 50]
+      ],
+      "notes": [
+        "Missing maximum values are intentional so display helpers can test partial health handling."
+      ]
+    },
+    {
+      "id": "combat.empty.names",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from Session 02 empty combat display requirements.",
+        "sanitized": true
+      },
+      "description": "Blank opponent and tank names remain explicit empty values.",
+      "coverage": ["combat", "tank", "empty-values", "scalar"],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms OPPONENT_NAME and TANK_NAME.",
+        "Session 02 requires empty combat state to stay quiet and non-alarming."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "OPPONENT_NAME",
+        "VAL",
+        "",
+        "VAR",
+        "TANK_NAME",
+        "VAL",
+        ""
+      ],
+      "expectedPairs": [
+        ["OPPONENT_NAME", ""],
+        ["TANK_NAME", ""]
+      ],
+      "notes": ["Blank names are synthetic and are not live player data."]
+    },
+    {
       "id": "combat.position.money.practice",
       "version": 1,
       "origin": {

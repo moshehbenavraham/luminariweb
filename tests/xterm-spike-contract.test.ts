@@ -17,7 +17,10 @@ test('parses xterm spike mode and falls back for invalid values', () => {
     XTERM_SPIKE_RENDERER_MODE,
   );
   assert.equal(parseTerminalRendererMode('?terminalRenderer=html'), DEFAULT_TERMINAL_RENDERER_MODE);
-  assert.equal(parseTerminalRendererMode('?terminalRenderer=<script>'), DEFAULT_TERMINAL_RENDERER_MODE);
+  assert.equal(
+    parseTerminalRendererMode('?terminalRenderer=<script>'),
+    DEFAULT_TERMINAL_RENDERER_MODE,
+  );
   assert.equal(parseTerminalRendererMode(''), DEFAULT_TERMINAL_RENDERER_MODE);
 });
 
@@ -44,13 +47,10 @@ test('normalizes bounded fit dimensions and rejects unusable sizes', () => {
     columns: terminalDimensionBounds.columns.min,
     rows: terminalDimensionBounds.rows.min,
   });
-  assert.deepEqual(
-    normalizeXtermFitDimensions({ columns: 999999, rows: 999999 }),
-    {
-      columns: terminalDimensionBounds.columns.max,
-      rows: terminalDimensionBounds.rows.max,
-    },
-  );
+  assert.deepEqual(normalizeXtermFitDimensions({ columns: 999999, rows: 999999 }), {
+    columns: terminalDimensionBounds.columns.max,
+    rows: terminalDimensionBounds.rows.max,
+  });
   assert.equal(normalizeXtermFitDimensions({ columns: 0, rows: 40 }), null);
   assert.equal(normalizeXtermFitDimensions({ columns: Number.NaN, rows: 40 }), null);
   assert.equal(normalizeXtermFitDimensions(null), null);

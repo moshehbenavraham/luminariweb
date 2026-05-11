@@ -35,6 +35,49 @@
       "notes": ["Action names are synthetic placeholders for later rendering tests."]
     },
     {
+      "id": "collections.actions.table",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from Session 02 action economy fallback requirements.",
+        "sanitized": true
+      },
+      "description": "ACTIONS can be preserved as a top-level table for conservative display fallback.",
+      "coverage": ["actions", "table"],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms ACTIONS.",
+        "Session 02 renders object-like ACTIONS payloads without claiming action automation semantics."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "ACTIONS",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "standard",
+        "VAL",
+        "available",
+        "VAR",
+        "move",
+        "VAL",
+        "spent",
+        "TABLE_CLOSE"
+      ],
+      "expectedPairs": [
+        [
+          "ACTIONS",
+          {
+            "standard": "available",
+            "move": "spent"
+          }
+        ]
+      ],
+      "notes": [
+        "Action labels and values are synthetic placeholders for raw fallback rendering only."
+      ]
+    },
+    {
       "id": "collections.inventory.table",
       "version": 1,
       "origin": {

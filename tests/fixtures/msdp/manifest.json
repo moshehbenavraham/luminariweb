@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "corpusVersion": "0.1.0",
   "description": "Versioned MSDP fixture corpus for Luminari Web parser and state-mapping tests.",
-  "updatedAt": "2026-05-10",
+  "updatedAt": "2026-05-11",
   "totals": {
     "fixtureFiles": 7,
-    "fixtures": 25,
-    "syntheticFixtures": 25,
+    "fixtures": 29,
+    "syntheticFixtures": 29,
     "realCaptureFixtures": 0
   },
   "controlTokens": {
@@ -19,15 +19,15 @@
   },
   "coverageSummary": {
     "abilities": 1,
-    "actions": 4,
+    "actions": 5,
     "affects": 2,
     "area": 1,
     "array": 7,
-    "character": 2,
-    "combat": 1,
-    "empty-values": 2,
+    "character": 3,
+    "combat": 4,
+    "empty-values": 3,
     "empty-variable": 1,
-    "experience": 1,
+    "experience": 2,
     "group": 2,
     "incomplete-array": 1,
     "incomplete-table": 1,
@@ -37,44 +37,58 @@
     "metadata": 1,
     "missing-marker": 1,
     "mixed-array-table": 1,
-    "money": 1,
+    "money": 2,
     "nested-table": 1,
-    "numeric-normalization": 19,
-    "partial-data": 1,
-    "position": 1,
-    "practice": 1,
-    "resources": 1,
+    "numeric-normalization": 40,
+    "partial-data": 2,
+    "position": 2,
+    "practice": 2,
+    "resources": 2,
     "room": 3,
     "room-exits": 3,
-    "scalar": 11,
-    "table": 8,
-    "tank": 1,
+    "scalar": 13,
+    "table": 9,
+    "tank": 3,
     "truncated": 1,
     "world-time": 1
   },
   "files": [
     {
       "file": "core-scalars.json",
-      "fixtureCount": 4,
+      "fixtureCount": 5,
       "originTypes": ["synthetic"],
-      "coverage": ["metadata", "character", "abilities", "numeric-normalization", "scalar"],
+      "coverage": [
+        "metadata",
+        "character",
+        "abilities",
+        "numeric-normalization",
+        "scalar",
+        "resources",
+        "experience",
+        "money",
+        "position",
+        "combat"
+      ],
       "fixtureIds": [
         "core.server.metadata",
         "core.character.identity",
         "core.ability.scores",
-        "core.numeric.normalization"
+        "core.numeric.normalization",
+        "core.panel.confirmed.scalars"
       ],
       "parserExpectation": "Scalars parse into pairs and integer strings normalize to numbers."
     },
     {
       "file": "combat-and-resources.json",
-      "fixtureCount": 4,
+      "fixtureCount": 6,
       "originTypes": ["synthetic"],
       "coverage": [
         "resources",
         "experience",
         "combat",
         "tank",
+        "partial-data",
+        "empty-values",
         "position",
         "money",
         "practice",
@@ -84,9 +98,11 @@
         "combat.resources.current",
         "combat.experience.progression",
         "combat.opponent.and.tank",
+        "combat.opponent.partial.zero",
+        "combat.empty.names",
         "combat.position.money.practice"
       ],
-      "parserExpectation": "Confirmed combat and resource variables parse as scalar strings or normalized numbers."
+      "parserExpectation": "Confirmed combat and resource variables parse as scalar strings or normalized numbers, including partial and blank combat values."
     },
     {
       "file": "room-and-exits.json",
@@ -103,16 +119,17 @@
     },
     {
       "file": "collections.json",
-      "fixtureCount": 4,
+      "fixtureCount": 5,
       "originTypes": ["synthetic"],
       "coverage": ["actions", "inventory", "affects", "array", "table", "empty-values"],
       "fixtureIds": [
         "collections.actions.array",
+        "collections.actions.table",
         "collections.inventory.table",
         "collections.affects.array",
         "collections.empty.values"
       ],
-      "parserExpectation": "Collection payloads preserve array and table structure, including empty values."
+      "parserExpectation": "Collection payloads preserve array and table structure, including empty values and top-level ACTIONS tables."
     },
     {
       "file": "group-data.json",
