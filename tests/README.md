@@ -52,10 +52,14 @@ node --import tsx --test tests/*.test.ts
 - Room display helper coverage for full and partial identity, zero room vnum, blank fields,
   structured `ROOM` fallback, string/array/table/object-like exits, deterministic ordering,
   unknown fields, raw fallback entries, disabled mappings, and connection availability states.
-- Map display helper coverage for fallback room/exits summaries, live override-only `MINIMAP`,
-  disabled mappings, loading, empty, offline, and error states.
+- Map display helper coverage for fallback room/exits summaries, current-room mapper nodes,
+  deterministic directional branch placement, raw malformed exit fallback, live override-only
+  `MINIMAP`, disabled mappings, loading, empty, offline, and error states.
 - Quest display helper coverage for default unavailable `QUEST_INFO`, configured waiting, empty,
   structured override, scalar override, offline, and error states without free-form quest parsing.
+- Layout preference helper coverage for default inspector state, valid saved payloads, corrupt JSON,
+  unknown tab ids, invalid density values, missing fields, future versions, and storage-safe
+  serialization.
 
 These tests import shared pure helpers directly from `shared/mud.ts`, `shared/msdp-state.ts`,
 `server/telnet-parser.ts`, and side-effect-free lifecycle modules such as
@@ -88,6 +92,7 @@ node --import tsx --test tests/msdp-affects-inventory-display.test.ts
 node --import tsx --test tests/msdp-room-display.test.ts
 node --import tsx --test tests/msdp-map-display.test.ts
 node --import tsx --test tests/msdp-quest-display.test.ts
+node --import tsx --test tests/client-layout-preferences.test.ts
 node --import tsx --test tests/msdp-state-mapping.test.ts
 node --import tsx --test tests/proxy-network.test.ts
 node --import tsx --test tests/proxy-policy.test.ts
@@ -142,13 +147,25 @@ and the Room tab must remain separate from unconfirmed live `MINIMAP` behavior.
 
 For map and quest panel checks, use desktop, 390px, and 360px viewports. Verify map loading, empty,
 disabled, offline, error, room/exits fallback, and configured live `MINIMAP` override states remain
-readable without horizontal page scrolling. Verify the Quests tab states that default
+readable without horizontal page scrolling. For room/exits fallback, verify the compact mapper keeps
+the current-room node highlighted, compass exits placed around it, vertical/custom exits listed
+below it, raw malformed exits preserved as fallback text, and the command input unobstructed. Verify
+the Quests tab states that default
 Luminari-Source structured quest data is unavailable, configured `QUEST_INFO` override payloads
 render inside the tab, large payloads scroll inside the panel, and command input focus returns
 normally after selecting the Quests tab.
 
 `MINIMAP` and `QUEST_INFO` remain override-only client fields until source-level protocol work
 confirms live population and fixture-backed schemas.
+
+For inspector layout checks, use desktop, 390px, and 360px viewports. Verify the Map, Room,
+Character, Combat, Group, Inventory, Affects, and Quests tabs are reachable from one inspector,
+the active tab, collapsed state, and density restore after refresh, corrupt `lwc.layout`
+`localStorage` falls back to the Map tab without breaking startup, and the command input remains
+visible before and after tab switches, collapse/expand, density changes, settings menu close, and
+terminal clicks. At 390px and 360px, verify there is no horizontal page scrolling, short tab labels
+fit inside the inspector, long panel fallback text wraps or scrolls inside the panel, and the command
+form remains reachable without being covered by the inspector.
 
 ## Manual Renderer Notes
 

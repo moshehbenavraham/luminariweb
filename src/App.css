@@ -165,12 +165,20 @@
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+  grid-template-columns: minmax(0, 1fr) clamp(18rem, 26vw, 24rem);
   flex: 1;
-  gap: 1rem;
+  gap: 0.85rem;
   min-height: 0;
   min-width: 0;
   align-items: stretch;
+}
+
+.layout-inspector-collapsed {
+  grid-template-columns: minmax(0, 1fr) minmax(10.5rem, 12rem);
+}
+
+.layout-density-compact {
+  gap: 0.65rem;
 }
 
 .terminal-column {
@@ -243,11 +251,108 @@
 .sidebar {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.85rem;
   width: 100%;
   max-width: 100%;
   min-height: 0;
   overflow: auto;
+}
+
+.inspector-sidebar {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.inspector-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.inspector-header {
+  flex: 0 0 auto;
+  align-items: flex-start;
+  padding: 0.85rem 0.85rem 0;
+}
+
+.inspector-header h2 {
+  font-size: 1rem;
+}
+
+.inspector-header p {
+  max-width: 13rem;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.inspector-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.inspector-density-controls {
+  display: flex;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.inspector-control {
+  min-height: 1.85rem;
+  border-color: var(--border);
+  border-radius: 0.45rem;
+  padding: 0.3rem 0.48rem;
+  background: rgba(15, 23, 42, 0.46);
+  color: var(--muted);
+  font-size: 0.67rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.inspector-control:hover,
+.inspector-control:focus-visible,
+.inspector-density-button-active {
+  border-color: rgba(45, 212, 191, 0.42);
+  background: rgba(20, 184, 166, 0.14);
+  color: var(--text);
+}
+
+.inspector-control:focus-visible,
+.inspector-tab-button:focus-visible {
+  outline: 2px solid rgba(45, 212, 191, 0.7);
+  outline-offset: 2px;
+}
+
+.inspector-collapsed-summary {
+  display: grid;
+  place-items: center;
+  min-height: 5rem;
+  margin: 0.85rem;
+  padding: 0.75rem;
+  border: 1px dashed rgba(148, 163, 184, 0.28);
+  border-radius: 0.65rem;
+  background: rgba(15, 23, 42, 0.32);
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.inspector-density-compact .inspector-header {
+  padding: 0.65rem 0.65rem 0;
+}
+
+.inspector-density-compact .inspector-control {
+  min-height: 1.65rem;
+  padding: 0.22rem 0.38rem;
+  font-size: 0.62rem;
 }
 
 .window-menu-bar {
@@ -503,31 +608,68 @@
 
 .tab-strip {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.45rem;
   padding: 0.8rem 0.8rem 0;
+}
+
+.inspector-tab-strip {
+  flex: 0 0 auto;
+  gap: 0.38rem;
+  padding: 0.72rem 0.72rem 0;
 }
 
 .tab-button {
   min-height: 2rem;
   border-color: var(--border);
-  border-radius: 0.7rem;
+  border-radius: 0.5rem;
   padding: 0.45rem 0.55rem;
   background: rgba(15, 23, 42, 0.45);
   color: var(--muted);
   font-size: 0.74rem;
   font-weight: 700;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tab-button-active {
-  border-color: rgba(216, 180, 254, 0.45);
-  background: linear-gradient(180deg, rgba(168, 85, 247, 0.26), rgba(124, 58, 237, 0.16));
+  border-color: rgba(45, 212, 191, 0.46);
+  background: linear-gradient(180deg, rgba(45, 212, 191, 0.2), rgba(14, 116, 144, 0.14));
   color: var(--text);
+}
+
+.inspector-tab-short-label {
+  display: none;
+}
+
+.inspector-density-compact .inspector-tab-strip {
+  gap: 0.28rem;
+  padding: 0.55rem 0.55rem 0;
+}
+
+.inspector-density-compact .tab-button {
+  min-height: 1.75rem;
+  padding: 0.28rem 0.34rem;
+  font-size: 0.64rem;
 }
 
 .tab-panel {
   min-height: 0;
   padding: 0.8rem 0 0.2rem;
+}
+
+.inspector-tab-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-top: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
+.inspector-density-compact .inspector-tab-panel {
+  padding-top: 0.55rem;
 }
 
 .tab-empty-message {
@@ -603,6 +745,120 @@
   font-weight: 800;
   line-height: 1.2;
   text-transform: uppercase;
+}
+
+.mapper-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0.65rem;
+  border: 1px solid rgba(45, 212, 191, 0.22);
+  border-radius: 0.5rem;
+  background: rgba(8, 47, 73, 0.26);
+}
+
+.mapper-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(3.35rem, auto);
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.mapper-cell,
+.mapper-branch,
+.mapper-current-room {
+  min-width: 0;
+  min-height: 3.35rem;
+}
+
+.mapper-cell {
+  display: flex;
+  align-items: stretch;
+}
+
+.mapper-cell-empty {
+  border: 1px dashed rgba(148, 163, 184, 0.16);
+  border-radius: 0.45rem;
+  background: rgba(15, 23, 42, 0.18);
+}
+
+.mapper-current-room {
+  display: grid;
+  align-content: center;
+  gap: 0.22rem;
+  padding: 0.45rem;
+  border: 1px solid rgba(251, 191, 36, 0.58);
+  border-radius: 0.5rem;
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.18), rgba(15, 23, 42, 0.48));
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.32);
+  text-align: center;
+}
+
+.mapper-current-label,
+.mapper-current-detail,
+.mapper-branch-direction,
+.mapper-branch-destination,
+.mapper-branch-status,
+.mapper-branch-other {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mapper-current-label {
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.mapper-current-detail {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.mapper-branch {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.18rem;
+  width: 100%;
+  padding: 0.42rem;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  border-radius: 0.45rem;
+  background: rgba(30, 41, 59, 0.54);
+  color: var(--text);
+  text-align: center;
+}
+
+.mapper-branch-direction {
+  color: var(--text);
+  font-size: 0.76rem;
+  font-weight: 900;
+  line-height: 1.12;
+}
+
+.mapper-branch-destination,
+.mapper-branch-status,
+.mapper-branch-other {
+  color: var(--muted);
+  font-size: 0.64rem;
+  font-weight: 700;
+  line-height: 1.14;
+}
+
+.mapper-branch-destination strong {
+  color: var(--text);
+}
+
+.mapper-auxiliary-branches {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  min-width: 0;
 }
 
 .map-field-grid,
@@ -1754,6 +2010,15 @@
     margin-right: 0.75rem;
   }
 
+  .mapper-board {
+    padding: 0.55rem;
+  }
+
+  .mapper-grid {
+    gap: 0.35rem;
+  }
+
+  .mapper-auxiliary-branches,
   .map-field-grid,
   .map-exit-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -1768,6 +2033,36 @@
   .map-exit-status {
     max-width: 100%;
     text-align: left;
+  }
+}
+
+@media (max-width: 430px) {
+  .mapper-board {
+    padding: 0.45rem;
+  }
+
+  .mapper-grid {
+    grid-auto-rows: minmax(2.85rem, auto);
+    gap: 0.28rem;
+  }
+
+  .mapper-current-room,
+  .mapper-branch {
+    min-height: 2.85rem;
+    padding: 0.34rem;
+  }
+
+  .mapper-current-label,
+  .mapper-branch-direction {
+    font-size: 0.7rem;
+    line-height: 1.08;
+  }
+
+  .mapper-current-detail,
+  .mapper-branch-destination,
+  .mapper-branch-status,
+  .mapper-branch-other {
+    font-size: 0.58rem;
   }
 }
 
@@ -1792,6 +2087,14 @@
 
   .sidebar {
     overflow: visible;
+  }
+
+  .inspector-sidebar {
+    overflow: visible;
+  }
+
+  .inspector-panel {
+    height: auto;
   }
 
   .bars {
@@ -1891,6 +2194,14 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .inspector-header {
+    gap: 0.65rem;
+  }
+
+  .inspector-controls {
+    align-items: flex-end;
+  }
+
   .connection-form button,
   .command-form button {
     width: 100%;
@@ -1934,6 +2245,25 @@
   .tab-strip {
     gap: 0.35rem;
     padding: 0.65rem 0.65rem 0;
+  }
+
+  .inspector-header {
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .inspector-header p {
+    max-width: 100%;
+  }
+
+  .inspector-controls {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .inspector-density-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .tab-button {
@@ -2046,8 +2376,20 @@
   .layout,
   .panel,
   .tabbed-panel,
+  .inspector-panel,
+  .inspector-sidebar,
+  .inspector-tab-panel,
+  .inspector-tab-strip,
+  .inspector-controls,
+  .inspector-density-controls,
   .map-panel,
   .map-fallback,
+  .mapper-board,
+  .mapper-grid,
+  .mapper-cell,
+  .mapper-branch,
+  .mapper-current-room,
+  .mapper-auxiliary-branches,
   .map-field-grid,
   .map-exit-grid,
   .map-field,
@@ -2203,5 +2545,84 @@
 
   .stats-grid {
     grid-template-columns: minmax(4.4rem, max-content) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 390px) {
+  .layout {
+    gap: 0.5rem;
+  }
+
+  .inspector-tab-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.25rem;
+    padding: 0.5rem 0.5rem 0;
+  }
+
+  .inspector-tab-label {
+    display: none;
+  }
+
+  .inspector-tab-short-label {
+    display: inline;
+  }
+
+  .inspector-tab-button {
+    min-height: 2rem;
+    padding: 0.28rem 0.22rem;
+    font-size: 0.62rem;
+  }
+
+  .inspector-tab-panel {
+    padding-top: 0.5rem;
+  }
+
+  .command-form {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+@media (max-width: 360px) {
+  .app-shell {
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+  }
+
+  .inspector-header {
+    padding: 0.55rem 0.55rem 0;
+  }
+
+  .inspector-control {
+    min-height: 1.75rem;
+    padding-left: 0.26rem;
+    padding-right: 0.26rem;
+    font-size: 0.6rem;
+  }
+
+  .inspector-tab-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.2rem;
+  }
+
+  .inspector-tab-button {
+    min-height: 1.9rem;
+    padding-left: 0.16rem;
+    padding-right: 0.16rem;
+    font-size: 0.58rem;
+  }
+
+  .terminal-output,
+  .command-form,
+  .bars {
+    margin-left: 0.45rem;
+    margin-right: 0.45rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inspector-control,
+  .inspector-tab-button {
+    transition: none;
   }
 }

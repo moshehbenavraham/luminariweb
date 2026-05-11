@@ -524,7 +524,7 @@ GitHub metadata was checked on 2026-05-10. Local clone state is listed in the Re
 | 0     | Align With Real Luminari Data | 5        | Complete    |
 | 1     | Harden Terminal and Proxy     | 6        | Complete    |
 | 2     | Build Luminari Game Panels    | 6        | Complete    |
-| 3     | Borrow the Best Ideas         | 6        | Planned     |
+| 3     | Borrow the Best Ideas         | 6        | Not Started |
 | 4     | Source-Level Protocol Path    | 5        | Planned     |
 
 ## Phase 0: Align With Real Luminari Data
@@ -876,6 +876,8 @@ Acceptance:
 ### P3-S2: Windows and Layout Ergonomics
 
 Clear objective: improve multi-panel organization without weakening the terminal-first workflow.
+
+Completed: 2026-05-11.
 
 Scope:
 

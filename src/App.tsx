@@ -10,6 +10,19 @@ import type { ReactNode } from 'react';
 import { appSettings } from '../shared/app-settings.ts';
 import type { AppSettings } from '../shared/app-settings.ts';
 import {
+  CLIENT_LAYOUT_PREFERENCES_STORAGE_KEY,
+  DEFAULT_CLIENT_LAYOUT_PREFERENCES,
+  INSPECTOR_TAB_IDS,
+  parseClientLayoutPreferencesJson,
+  parseClientLayoutPreferencesPayload,
+  serializeClientLayoutPreferences,
+} from '../shared/client-layout-preferences.ts';
+import type {
+  ClientLayoutPreferences,
+  InspectorDensity,
+  InspectorTabId,
+} from '../shared/client-layout-preferences.ts';
+import {
   buildAffectsDisplayModel,
   buildInventoryDisplayModel,
 } from '../shared/msdp-affects-inventory-display.ts';
@@ -28,10 +41,7 @@ import type {
   CombatParticipantModel,
   DamageBonusCombatModel,
 } from '../shared/msdp-combat-display.ts';
-import {
-  buildCoreDisplayModel,
-  formatAvailabilityAriaLabel,
-} from '../shared/msdp-display.ts';
+import { buildCoreDisplayModel, formatAvailabilityAriaLabel } from '../shared/msdp-display.ts';
 import type {
   CharacterFieldModel,
   DisplayAvailabilityNotice,
@@ -49,6 +59,10 @@ import type {
   MapFallbackExit,
   MapFallbackIdentityField,
   MapFallbackModel,
+  MapMapperBranch,
+  MapMapperBranchPlacement,
+  MapMapperCurrentRoomNode,
+  MapMapperModel,
 } from '../shared/msdp-map-display.ts';
 import { buildQuestDisplayModel } from '../shared/msdp-quest-display.ts';
 import type { QuestDisplayModel } from '../shared/msdp-quest-display.ts';
@@ -146,18 +160,10 @@ const NUMPAD_COMMANDS: Record<string, string> = {
   NumpadDecimal: 'out',
 };
 
-type SidebarTabId =
-  | 'character'
-  | 'room'
-  | 'combat'
-  | 'quests'
-  | 'group'
-  | 'inventory'
-  | 'affects';
-
-type SidebarTab = {
-  id: SidebarTabId;
+type InspectorTab = {
+  id: InspectorTabId;
   label: string;
+  shortLabel: string;
 };
 
 type AliasDefinition = {
@@ -338,15 +344,23 @@ const MSDP_VARIABLE_GROUPS: Array<{
   },
 ];
 
-const SIDEBAR_TABS: SidebarTab[] = [
-  { id: 'character', label: 'Character' },
-  { id: 'room', label: 'Room' },
-  { id: 'combat', label: 'Combat' },
-  { id: 'quests', label: 'Quests' },
-  { id: 'group', label: 'Group' },
-  { id: 'inventory', label: 'Inventory' },
-  { id: 'affects', label: 'Affects' },
-];
+const INSPECTOR_TAB_METADATA: Record<InspectorTabId, InspectorTab> = {
+  map: { id: 'map', label: 'Map', shortLabel: 'Map' },
+  room: { id: 'room', label: 'Room', shortLabel: 'Room' },
+  character: { id: 'character', label: 'Character', shortLabel: 'Char' },
+  combat: { id: 'combat', label: 'Combat', shortLabel: 'Combat' },
+  group: { id: 'group', label: 'Group', shortLabel: 'Group' },
+  inventory: { id: 'inventory', label: 'Inventory', shortLabel: 'Inv' },
+  affects: { id: 'affects', label: 'Affects', shortLabel: 'Affects' },
+  quests: { id: 'quests', label: 'Quests', shortLabel: 'Quests' },
+};
+const INSPECTOR_TABS: InspectorTab[] = INSPECTOR_TAB_IDS.map(
+  (tabId) => INSPECTOR_TAB_METADATA[tabId],
+);
+const INSPECTOR_DENSITY_LABELS: Record<InspectorDensity, string> = {
+  comfortable: 'Comfort',
+  compact: 'Compact',
+};
 
 function App() {
   const [uiSettings, setUiSettings] = useState<AppSettings>(appSettings);
@@ -377,10 +391,13 @@ function App() {
   const [statusDetail, setStatusDetail] = useState('Awaiting connection.');
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [openAutomationMenu, setOpenAutomationMenu] = useState<AutomationMenuId | null>(null);
-  const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTabId>('character');
+  const [layoutPreferences, setLayoutPreferences] = useState<ClientLayoutPreferences>(() =>
+    loadClientLayoutPreferencesFromLocalStorage(),
+  );
   const socketRef = useRef<WebSocket | null>(null);
   const terminalRef = useRef<HTMLDivElement | null>(null);
   const commandInputRef = useRef<HTMLInputElement | null>(null);
+  const inspectorTabButtonRefs = useRef(new Map<InspectorTabId, HTMLButtonElement>());
   const terminalResizeTimeoutRef = useRef<number | null>(null);
   const pendingTerminalDimensionsRef = useRef<TerminalDimensions | null>(null);
   const lastSentTerminalDimensionsRef = useRef<TerminalDimensions | null>(null);
@@ -393,6 +410,8 @@ function App() {
   const triggersRef = useRef<TriggerDefinition[]>(triggers);
   const terminalRendererMode = useMemo(() => parseTerminalRendererMode(window.location.search), []);
   const useXtermSpike = isXtermSpikeRenderer(terminalRendererMode);
+  const canConnect = proxyReady && status !== 'connecting';
+  const connected = status === 'connected';
 
   useEffect(() => {
     document.title = uiSettings.personalization.browserTitle;
@@ -417,6 +436,10 @@ function App() {
   }, [clientSettings]);
 
   useEffect(() => {
+    saveClientLayoutPreferencesToLocalStorage(layoutPreferences);
+  }, [layoutPreferences]);
+
+  useEffect(() => {
     if (!openAutomationMenu) {
       return;
     }
@@ -427,11 +450,17 @@ function App() {
       }
 
       setOpenAutomationMenu(null);
+      if (connected) {
+        focusCommandInput(commandInputRef.current);
+      }
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setOpenAutomationMenu(null);
+        if (connected) {
+          focusCommandInput(commandInputRef.current);
+        }
       }
     }
 
@@ -441,7 +470,7 @@ function App() {
       window.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [openAutomationMenu]);
+  }, [connected, openAutomationMenu]);
 
   useEffect(() => {
     let active = true;
@@ -760,8 +789,6 @@ function App() {
     }
   }, [clientSettings.terminal.autoScroll, terminalChunks]);
 
-  const canConnect = proxyReady && status !== 'connecting';
-  const connected = status === 'connected';
   const activeMsdpVariables = useMemo(
     () => normalizeMsdpVariableMap(clientSettings.msdp),
     [clientSettings.msdp],
@@ -840,6 +867,21 @@ function App() {
     }),
     [clientSettings.sidebar.fontFamily, clientSettings.sidebar.fontSize],
   );
+  const activeInspectorTab = layoutPreferences.activeInspectorTab;
+  const activeInspectorLabel = INSPECTOR_TAB_METADATA[activeInspectorTab].label;
+  const inspectorCollapsed = layoutPreferences.inspectorCollapsed;
+  const inspectorDensity = layoutPreferences.density;
+  const layoutClassName = [
+    'layout',
+    inspectorCollapsed ? 'layout-inspector-collapsed' : 'layout-inspector-expanded',
+    `layout-density-${inspectorDensity}`,
+  ].join(' ');
+  const sidebarClassName = [
+    'sidebar',
+    'inspector-sidebar',
+    inspectorCollapsed ? 'inspector-sidebar-collapsed' : 'inspector-sidebar-expanded',
+    `inspector-density-${inspectorDensity}`,
+  ].join(' ');
 
   const mapDisplay = useMemo(
     () =>
@@ -873,8 +915,7 @@ function App() {
     [selectedMudId, uiSettings.connection.muds],
   );
   const questDisplay = useMemo(
-    () =>
-      buildQuestDisplayModel({ questInfo: mudState.questInfo }, status, activeMsdpVariables),
+    () => buildQuestDisplayModel({ questInfo: mudState.questInfo }, status, activeMsdpVariables),
     [activeMsdpVariables, mudState.questInfo, status],
   );
   const handleXtermFitDimensions = useCallback(
@@ -883,12 +924,78 @@ function App() {
     },
     [queueTerminalResize],
   );
-  const handleSidebarTabClick = useCallback((tabId: SidebarTabId) => {
-    setActiveSidebarTab(tabId);
-    requestAnimationFrame(() => {
-      focusCommandInput(commandInputRef.current);
-    });
-  }, []);
+  const updateLayoutPreferences = useCallback(
+    (updates: Partial<Omit<ClientLayoutPreferences, 'version'>>) => {
+      setLayoutPreferences((current) =>
+        parseClientLayoutPreferencesPayload({
+          ...current,
+          ...updates,
+        }),
+      );
+    },
+    [],
+  );
+  const setInspectorTabButtonRef = useCallback(
+    (tabId: InspectorTabId, element: HTMLButtonElement | null) => {
+      if (element) {
+        inspectorTabButtonRefs.current.set(tabId, element);
+        return;
+      }
+
+      inspectorTabButtonRefs.current.delete(tabId);
+    },
+    [],
+  );
+  const selectInspectorTab = useCallback(
+    (tabId: InspectorTabId, focusTarget: 'command' | 'tab') => {
+      updateLayoutPreferences({ activeInspectorTab: tabId });
+      requestAnimationFrame(() => {
+        if (focusTarget === 'tab') {
+          inspectorTabButtonRefs.current.get(tabId)?.focus({ preventScroll: true });
+          return;
+        }
+
+        focusCommandInput(commandInputRef.current);
+      });
+    },
+    [updateLayoutPreferences],
+  );
+  const handleInspectorTabClick = useCallback(
+    (tabId: InspectorTabId) => {
+      selectInspectorTab(tabId, 'command');
+    },
+    [selectInspectorTab],
+  );
+  const handleInspectorTabKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLButtonElement>, tabId: InspectorTabId) => {
+      const nextTabId = getKeyboardInspectorTabId(tabId, event.key);
+      if (!nextTabId) {
+        return;
+      }
+
+      event.preventDefault();
+      selectInspectorTab(nextTabId, 'tab');
+    },
+    [selectInspectorTab],
+  );
+  const handleInspectorCollapsedChange = useCallback(
+    (collapsed: boolean) => {
+      updateLayoutPreferences({ inspectorCollapsed: collapsed });
+      requestAnimationFrame(() => {
+        focusCommandInput(commandInputRef.current);
+      });
+    },
+    [updateLayoutPreferences],
+  );
+  const handleInspectorDensityChange = useCallback(
+    (density: InspectorDensity) => {
+      updateLayoutPreferences({ density });
+      requestAnimationFrame(() => {
+        focusCommandInput(commandInputRef.current);
+      });
+    },
+    [updateLayoutPreferences],
+  );
 
   useEffect(() => {
     if (!proxyReady) {
@@ -924,6 +1031,15 @@ function App() {
 
     sendMessage({ type: 'msdp-config', msdpVariables: activeMsdpVariables });
   }, [activeMsdpVariables, connected, sendMessage]);
+
+  useEffect(() => {
+    measureAndQueueTerminalResize();
+  }, [
+    activeInspectorTab,
+    inspectorCollapsed,
+    inspectorDensity,
+    measureAndQueueTerminalResize,
+  ]);
 
   useEffect(() => {
     if (!connected) {
@@ -1096,7 +1212,11 @@ function App() {
   }
 
   function toggleAutomationMenu(menuId: AutomationMenuId) {
-    setOpenAutomationMenu((current) => (current === menuId ? null : menuId));
+    const isClosing = openAutomationMenu === menuId;
+    setOpenAutomationMenu(isClosing ? null : menuId);
+    if (isClosing && connected) {
+      focusCommandInput(commandInputRef.current);
+    }
   }
 
   function handleAddAlias() {
@@ -1162,6 +1282,9 @@ function App() {
       triggers,
     });
     setOpenAutomationMenu(null);
+    if (connected) {
+      focusCommandInput(commandInputRef.current);
+    }
     setAutomationNotice({
       kind: 'success',
       text: `Saved settings, ${aliases.length} alias${pluralize(aliases.length)}, and ${triggers.length} trigger${pluralize(triggers.length)} to file.`,
@@ -1186,6 +1309,9 @@ function App() {
       setAliases(importedConfig.aliases);
       setTriggers(importedConfig.triggers);
       setOpenAutomationMenu(null);
+      if (connected) {
+        focusCommandInput(commandInputRef.current);
+      }
       setAutomationNotice({
         kind: 'success',
         text: `Loaded settings, ${importedConfig.aliases.length} alias${pluralize(importedConfig.aliases.length)}, and ${importedConfig.triggers.length} trigger${pluralize(importedConfig.triggers.length)} from ${file.name}.`,
@@ -1204,6 +1330,79 @@ function App() {
     }
 
     focusCommandInput(commandInputRef.current);
+  }
+
+  function renderInspectorPanelContent(tabId: InspectorTabId): ReactNode {
+    switch (tabId) {
+      case 'map':
+        return <MapPanel map={mapDisplay} minimapStyle={minimapStyle} />;
+      case 'room':
+        return <RoomPanel room={roomDisplay} />;
+      case 'character':
+        return (
+          <>
+            <div className="identity-block">
+              <strong
+                aria-label={coreDisplay.character.identity.ariaLabel}
+                dangerouslySetInnerHTML={{
+                  __html: renderMudHtml(coreDisplay.character.identity.headingText),
+                }}
+              />
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: renderMudHtml(coreDisplay.character.identity.profileText),
+                }}
+              />
+              {coreDisplay.character.identity.titleNotice ? (
+                <AvailabilityNoticeBlock
+                  notice={coreDisplay.character.identity.titleNotice}
+                  compact
+                />
+              ) : null}
+            </div>
+
+            <div className="ability-grid" aria-label="Ability scores">
+              {coreDisplay.character.abilityScores.map((score) => (
+                <div key={score.id} className="ability-cell">
+                  <span className="ability-label">{score.label}</span>
+                  <CharacterFieldValue field={score} className="ability-value" />
+                </div>
+              ))}
+            </div>
+
+            <div className="saving-throw-grid" aria-label="Saving throws">
+              {coreDisplay.character.savingThrows.map((save) => (
+                <div key={save.id} className="saving-throw-cell">
+                  <span className="saving-throw-label">{save.label}</span>
+                  <CharacterFieldValue field={save} className="saving-throw-value" />
+                </div>
+              ))}
+            </div>
+
+            <dl className="stats-grid">
+              {coreDisplay.character.stats.map((stat) =>
+                stat.notice ? (
+                  <AvailabilityStat key={stat.id} label={stat.label} notice={stat.notice} />
+                ) : (
+                  <Stat key={stat.id} label={stat.label} value={stat.valueText} />
+                ),
+              )}
+            </dl>
+          </>
+        );
+      case 'combat':
+        return <CombatInspectorPanel combat={combatDisplay} />;
+      case 'group':
+        return <GroupPanel group={groupDisplay} />;
+      case 'inventory':
+        return <InventoryPanel inventory={inventoryDisplay} />;
+      case 'affects':
+        return <AffectsPanel affects={affectsDisplay} />;
+      case 'quests':
+        return <QuestPanel quest={questDisplay} />;
+      default:
+        return assertNever(tabId);
+    }
   }
 
   return (
@@ -1756,7 +1955,11 @@ function App() {
         </div>
       ) : null}
 
-      <main className="layout">
+      <main
+        className={layoutClassName}
+        data-inspector-collapsed={inspectorCollapsed ? 'true' : 'false'}
+        data-inspector-density={inspectorDensity}
+      >
         <section className="terminal-column panel">
           {useXtermSpike ? (
             <XtermTerminalSpike
@@ -1806,110 +2009,83 @@ function App() {
           </form>
         </section>
 
-        <aside className="sidebar">
-          <section className="panel">
-            <div className="panel-header">
+        <aside className={sidebarClassName}>
+          <section className="panel tabbed-panel inspector-panel">
+            <div className="panel-header inspector-header">
               <div>
-                <h2>Map</h2>
+                <h2>Inspector</h2>
+                <p>{inspectorCollapsed ? `${activeInspectorLabel} selected` : activeInspectorLabel}</p>
+              </div>
+
+              <div className="inspector-controls" data-prevent-command-focus>
+                <button
+                  type="button"
+                  className="inspector-control"
+                  aria-label={inspectorCollapsed ? 'Expand inspector' : 'Collapse inspector'}
+                  aria-expanded={!inspectorCollapsed}
+                  onClick={() => handleInspectorCollapsedChange(!inspectorCollapsed)}
+                >
+                  {inspectorCollapsed ? 'Expand' : 'Collapse'}
+                </button>
+
+                <div className="inspector-density-controls" aria-label="Inspector density">
+                  {(['comfortable', 'compact'] as const).map((density) => (
+                    <button
+                      key={density}
+                      type="button"
+                      className={`inspector-control inspector-density-button${
+                        inspectorDensity === density ? ' inspector-density-button-active' : ''
+                      }`}
+                      aria-pressed={inspectorDensity === density}
+                      onClick={() => handleInspectorDensityChange(density)}
+                    >
+                      {INSPECTOR_DENSITY_LABELS[density]}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <MapPanel map={mapDisplay} minimapStyle={minimapStyle} />
-          </section>
+            {inspectorCollapsed ? (
+              <div className="inspector-collapsed-summary" aria-live="polite">
+                <span>{activeInspectorLabel}</span>
+              </div>
+            ) : (
+              <>
+                <div className="tab-strip inspector-tab-strip" role="tablist" aria-label="Inspector sections">
+                  {INSPECTOR_TABS.map((tab) => (
+                    <button
+                      key={tab.id}
+                      ref={(element) => setInspectorTabButtonRef(tab.id, element)}
+                      type="button"
+                      role="tab"
+                      aria-selected={activeInspectorTab === tab.id}
+                      aria-controls={`inspector-panel-${tab.id}`}
+                      id={`inspector-tab-${tab.id}`}
+                      className={`tab-button inspector-tab-button${
+                        activeInspectorTab === tab.id ? ' tab-button-active' : ''
+                      }`}
+                      tabIndex={activeInspectorTab === tab.id ? 0 : -1}
+                      onClick={() => handleInspectorTabClick(tab.id)}
+                      onKeyDown={(event) => handleInspectorTabKeyDown(event, tab.id)}
+                    >
+                      <span className="inspector-tab-label">{tab.label}</span>
+                      <span className="inspector-tab-short-label">{tab.shortLabel}</span>
+                    </button>
+                  ))}
+                </div>
 
-          <section className="panel tabbed-panel">
-            <div className="tab-strip" role="tablist" aria-label="Sidebar sections">
-              {SIDEBAR_TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeSidebarTab === tab.id}
-                  aria-controls={`sidebar-panel-${tab.id}`}
-                  id={`sidebar-tab-${tab.id}`}
-                  className={`tab-button${activeSidebarTab === tab.id ? ' tab-button-active' : ''}`}
-                  onClick={() => handleSidebarTabClick(tab.id)}
+                <div
+                  className="tab-panel inspector-tab-panel"
+                  id={`inspector-panel-${activeInspectorTab}`}
+                  role="tabpanel"
+                  aria-labelledby={`inspector-tab-${activeInspectorTab}`}
+                  style={sidebarPanelStyle}
                 >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            <div
-              className="tab-panel"
-              id={`sidebar-panel-${activeSidebarTab}`}
-              role="tabpanel"
-              aria-labelledby={`sidebar-tab-${activeSidebarTab}`}
-              style={sidebarPanelStyle}
-            >
-              {activeSidebarTab === 'character' ? (
-                <>
-                  <div className="identity-block">
-                    <strong
-                      aria-label={coreDisplay.character.identity.ariaLabel}
-                      dangerouslySetInnerHTML={{
-                        __html: renderMudHtml(coreDisplay.character.identity.headingText),
-                      }}
-                    />
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: renderMudHtml(coreDisplay.character.identity.profileText),
-                      }}
-                    />
-                    {coreDisplay.character.identity.titleNotice ? (
-                      <AvailabilityNoticeBlock
-                        notice={coreDisplay.character.identity.titleNotice}
-                        compact
-                      />
-                    ) : null}
-                  </div>
-
-                  <div className="ability-grid" aria-label="Ability scores">
-                    {coreDisplay.character.abilityScores.map((score) => (
-                      <div key={score.id} className="ability-cell">
-                        <span className="ability-label">{score.label}</span>
-                        <CharacterFieldValue field={score} className="ability-value" />
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="saving-throw-grid" aria-label="Saving throws">
-                    {coreDisplay.character.savingThrows.map((save) => (
-                      <div key={save.id} className="saving-throw-cell">
-                        <span className="saving-throw-label">{save.label}</span>
-                        <CharacterFieldValue field={save} className="saving-throw-value" />
-                      </div>
-                    ))}
-                  </div>
-
-                  <dl className="stats-grid">
-                    {coreDisplay.character.stats.map((stat) =>
-                      stat.notice ? (
-                        <AvailabilityStat key={stat.id} label={stat.label} notice={stat.notice} />
-                      ) : (
-                        <Stat key={stat.id} label={stat.label} value={stat.valueText} />
-                      ),
-                    )}
-                  </dl>
-                </>
-              ) : null}
-
-              {activeSidebarTab === 'combat' ? (
-                <CombatInspectorPanel combat={combatDisplay} />
-              ) : null}
-
-              {activeSidebarTab === 'room' ? <RoomPanel room={roomDisplay} /> : null}
-
-              {activeSidebarTab === 'quests' ? <QuestPanel quest={questDisplay} /> : null}
-
-              {activeSidebarTab === 'group' ? <GroupPanel group={groupDisplay} /> : null}
-
-              {activeSidebarTab === 'inventory' ? (
-                <InventoryPanel inventory={inventoryDisplay} />
-              ) : null}
-
-              {activeSidebarTab === 'affects' ? <AffectsPanel affects={affectsDisplay} /> : null}
-            </div>
+                  {renderInspectorPanelContent(activeInspectorTab)}
+                </div>
+              </>
+            )}
           </section>
         </aside>
       </main>
@@ -2801,6 +2977,24 @@ type MapPanelProps = {
   minimapStyle: CSSProperties;
 };
 
+const MAPPER_GRID_ROWS = [
+  ['northwest', 'north', 'northeast'],
+  ['west', 'current', 'east'],
+  ['southwest', 'south', 'southeast'],
+] as const satisfies ReadonlyArray<
+  ReadonlyArray<MapMapperBranchPlacement | 'current'>
+>;
+const MAPPER_GRID_PLACEMENTS = new Set<MapMapperBranchPlacement>([
+  'north',
+  'northeast',
+  'east',
+  'southeast',
+  'south',
+  'southwest',
+  'west',
+  'northwest',
+]);
+
 function MapPanel({ map, minimapStyle }: MapPanelProps) {
   return (
     <div className={`map-panel map-panel-${map.state}`} aria-label={map.ariaLabel}>
@@ -2835,6 +3029,8 @@ function MapFallbackView({ fallback }: { fallback: MapFallbackModel }) {
         <h3 dangerouslySetInnerHTML={{ __html: renderMudHtml(fallback.headingText) }} />
         <span>Room fallback</span>
       </div>
+
+      {fallback.mapper ? <MapMapperBoard mapper={fallback.mapper} /> : null}
 
       {fallback.identityFields.length > 0 ? (
         <dl className="map-field-grid" aria-label="Map room identity">
@@ -2912,6 +3108,124 @@ function MapExitCard({ exit }: { exit: MapFallbackExit }) {
         <p
           className="map-exit-other"
           dangerouslySetInnerHTML={{ __html: renderMudHtml(`Other: ${exit.unknownFieldsText}`) }}
+        />
+      ) : null}
+    </article>
+  );
+}
+
+function MapMapperBoard({ mapper }: { mapper: MapMapperModel }) {
+  const { placementBranches, auxiliaryBranches } = splitMapperBranches(mapper.branches);
+
+  return (
+    <section className="mapper-board" aria-label={mapper.ariaLabel}>
+      <div className="mapper-grid" aria-label="Directional room map">
+        {MAPPER_GRID_ROWS.flatMap((row) =>
+          row.map((cell) =>
+            cell === 'current' ? (
+              <MapMapperCurrentRoom key={cell} currentRoom={mapper.currentRoom} />
+            ) : (
+              <MapMapperCell
+                key={cell}
+                placement={cell}
+                branch={placementBranches.get(cell)}
+              />
+            ),
+          ),
+        )}
+      </div>
+
+      {auxiliaryBranches.length > 0 ? (
+        <div className="mapper-auxiliary-branches" role="list" aria-label="Additional exits">
+          {auxiliaryBranches.map((branch) => (
+            <MapMapperBranchView key={branch.id} branch={branch} />
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function splitMapperBranches(branches: MapMapperBranch[]) {
+  const placementBranches = new Map<MapMapperBranchPlacement, MapMapperBranch>();
+  const auxiliaryBranches: MapMapperBranch[] = [];
+
+  for (const branch of branches) {
+    const canUseGridPlacement =
+      MAPPER_GRID_PLACEMENTS.has(branch.placement) && !placementBranches.has(branch.placement);
+
+    if (canUseGridPlacement) {
+      placementBranches.set(branch.placement, branch);
+    } else {
+      auxiliaryBranches.push(branch);
+    }
+  }
+
+  return { placementBranches, auxiliaryBranches };
+}
+
+function MapMapperCell({
+  placement,
+  branch,
+}: {
+  placement: MapMapperBranchPlacement;
+  branch: MapMapperBranch | undefined;
+}) {
+  if (!branch) {
+    return <div className={`mapper-cell mapper-cell-${placement} mapper-cell-empty`} />;
+  }
+
+  return (
+    <div className={`mapper-cell mapper-cell-${placement}`}>
+      <MapMapperBranchView branch={branch} />
+    </div>
+  );
+}
+
+function MapMapperCurrentRoom({ currentRoom }: { currentRoom: MapMapperCurrentRoomNode }) {
+  return (
+    <article className="mapper-cell mapper-current-room" aria-label={currentRoom.ariaLabel}>
+      <span
+        className="mapper-current-label"
+        dangerouslySetInnerHTML={{ __html: renderMudHtml(currentRoom.labelText) }}
+      />
+      {currentRoom.detailText ? (
+        <span
+          className="mapper-current-detail"
+          dangerouslySetInnerHTML={{ __html: renderMudHtml(currentRoom.detailText) }}
+        />
+      ) : null}
+    </article>
+  );
+}
+
+function MapMapperBranchView({ branch }: { branch: MapMapperBranch }) {
+  return (
+    <article
+      className={`mapper-branch mapper-branch-${branch.placement}`}
+      role="listitem"
+      aria-label={branch.ariaLabel}
+    >
+      <span
+        className="mapper-branch-direction"
+        dangerouslySetInnerHTML={{ __html: renderMudHtml(branch.directionText) }}
+      />
+      {branch.destinationText ? (
+        <span className="mapper-branch-destination">
+          To{' '}
+          <strong dangerouslySetInnerHTML={{ __html: renderMudHtml(branch.destinationText) }} />
+        </span>
+      ) : null}
+      {branch.statusText ? (
+        <span
+          className="mapper-branch-status"
+          dangerouslySetInnerHTML={{ __html: renderMudHtml(branch.statusText) }}
+        />
+      ) : null}
+      {branch.unknownFieldsText ? (
+        <span
+          className="mapper-branch-other"
+          dangerouslySetInnerHTML={{ __html: renderMudHtml(branch.unknownFieldsText) }}
         />
       ) : null}
     </article>
@@ -3229,7 +3543,9 @@ function InventoryItem({ item }: { item: InventoryItemModel }) {
         {item.countText ? <span className="inventory-count">x{item.countText}</span> : null}
       </div>
 
-      {item.locationText ? <CollectionDetailLine label="Location" value={item.locationText} /> : null}
+      {item.locationText ? (
+        <CollectionDetailLine label="Location" value={item.locationText} />
+      ) : null}
 
       {item.detailText ? <CollectionDetailLine label="Details" value={item.detailText} /> : null}
 
@@ -3738,6 +4054,66 @@ function shouldPreservePointerFocus(target: EventTarget | null) {
   );
 }
 
+function loadClientLayoutPreferencesFromLocalStorage(): ClientLayoutPreferences {
+  if (typeof window === 'undefined') {
+    return DEFAULT_CLIENT_LAYOUT_PREFERENCES;
+  }
+
+  try {
+    return parseClientLayoutPreferencesJson(
+      window.localStorage.getItem(CLIENT_LAYOUT_PREFERENCES_STORAGE_KEY),
+    );
+  } catch (error) {
+    console.warn('Unable to load layout preferences from localStorage.', error);
+    return DEFAULT_CLIENT_LAYOUT_PREFERENCES;
+  }
+}
+
+function saveClientLayoutPreferencesToLocalStorage(preferences: ClientLayoutPreferences) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      CLIENT_LAYOUT_PREFERENCES_STORAGE_KEY,
+      serializeClientLayoutPreferences(preferences),
+    );
+  } catch (error) {
+    console.warn('Unable to save layout preferences to localStorage.', error);
+  }
+}
+
+function getKeyboardInspectorTabId(
+  currentTabId: InspectorTabId,
+  key: string,
+): InspectorTabId | undefined {
+  const currentIndex = INSPECTOR_TAB_IDS.indexOf(currentTabId);
+  if (currentIndex < 0) {
+    return DEFAULT_CLIENT_LAYOUT_PREFERENCES.activeInspectorTab;
+  }
+
+  if (key === 'Home') {
+    return INSPECTOR_TAB_IDS[0];
+  }
+
+  if (key === 'End') {
+    return INSPECTOR_TAB_IDS[INSPECTOR_TAB_IDS.length - 1];
+  }
+
+  if (key === 'ArrowRight' || key === 'ArrowDown') {
+    return INSPECTOR_TAB_IDS[(currentIndex + 1) % INSPECTOR_TAB_IDS.length];
+  }
+
+  if (key === 'ArrowLeft' || key === 'ArrowUp') {
+    return INSPECTOR_TAB_IDS[
+      (currentIndex - 1 + INSPECTOR_TAB_IDS.length) % INSPECTOR_TAB_IDS.length
+    ];
+  }
+
+  return undefined;
+}
+
 function hasExpandedSelection() {
   if (typeof window === 'undefined') {
     return false;
@@ -3751,6 +4127,10 @@ function focusCommandInput(input: HTMLInputElement | null) {
   requestAnimationFrame(() => {
     input?.focus({ preventScroll: true });
   });
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unhandled inspector tab: ${String(value)}`);
 }
 
 export default App;
