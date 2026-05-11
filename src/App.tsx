@@ -370,7 +370,9 @@ function App() {
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
   const [historyDraft, setHistoryDraft] = useState('');
-  const [initialClientConfig] = useState<ClientConfigState>(() => loadClientConfigFromLocalStorage());
+  const [initialClientConfig] = useState<ClientConfigState>(() =>
+    loadClientConfigFromLocalStorage(),
+  );
   const [aliases, setAliases] = useState<AliasDefinition[]>(initialClientConfig.aliases);
   const [triggers, setTriggers] = useState<TriggerDefinition[]>(initialClientConfig.triggers);
   const [clientSettings, setClientSettings] = useState<ClientSettings>(
@@ -1135,12 +1137,7 @@ function App() {
 
   useEffect(() => {
     measureAndQueueTerminalResize();
-  }, [
-    activeInspectorTab,
-    inspectorCollapsed,
-    inspectorDensity,
-    measureAndQueueTerminalResize,
-  ]);
+  }, [activeInspectorTab, inspectorCollapsed, inspectorDensity, measureAndQueueTerminalResize]);
 
   useEffect(() => {
     if (!connected) {
@@ -1732,7 +1729,9 @@ function App() {
                                 placeholder="k goblin"
                               />
                             </label>
-                            {previewReport ? renderAliasPreview(previewReport.commands, previewReport.notices) : null}
+                            {previewReport
+                              ? renderAliasPreview(previewReport.commands, previewReport.notices)
+                              : null}
                           </div>
                         );
                       })}
@@ -2225,10 +2224,7 @@ function App() {
             </form>
           </header>
 
-          <section
-            className={`status-row status-row-${networkStatus.kind}`}
-            aria-live="polite"
-          >
+          <section className={`status-row status-row-${networkStatus.kind}`} aria-live="polite">
             <div className={`status-pill status-${status}`}>{status}</div>
             <div className="status-copy">
               <p>
@@ -2321,7 +2317,7 @@ function App() {
                   ? 'Type a command...'
                   : !browserOnline
                     ? 'Browser offline; commands require network.'
-                  : 'Connect before sending commands.'
+                    : 'Connect before sending commands.'
               }
               readOnly={!networkStatus.canSendCommand}
             />
@@ -2358,7 +2354,9 @@ function App() {
             <div className="panel-header inspector-header">
               <div>
                 <h2>Inspector</h2>
-                <p>{inspectorCollapsed ? `${activeInspectorLabel} selected` : activeInspectorLabel}</p>
+                <p>
+                  {inspectorCollapsed ? `${activeInspectorLabel} selected` : activeInspectorLabel}
+                </p>
               </div>
 
               <div className="inspector-controls" data-prevent-command-focus>
@@ -2396,7 +2394,11 @@ function App() {
               </div>
             ) : (
               <>
-                <div className="tab-strip inspector-tab-strip" role="tablist" aria-label="Inspector sections">
+                <div
+                  className="tab-strip inspector-tab-strip"
+                  role="tablist"
+                  aria-label="Inspector sections"
+                >
                   {INSPECTOR_TABS.map((tab) => (
                     <button
                       key={tab.id}
@@ -2904,9 +2906,7 @@ const MAPPER_GRID_ROWS = [
   ['northwest', 'north', 'northeast'],
   ['west', 'current', 'east'],
   ['southwest', 'south', 'southeast'],
-] as const satisfies ReadonlyArray<
-  ReadonlyArray<MapMapperBranchPlacement | 'current'>
->;
+] as const satisfies ReadonlyArray<ReadonlyArray<MapMapperBranchPlacement | 'current'>>;
 const MAPPER_GRID_PLACEMENTS = new Set<MapMapperBranchPlacement>([
   'north',
   'northeast',
@@ -3048,11 +3048,7 @@ function MapMapperBoard({ mapper }: { mapper: MapMapperModel }) {
             cell === 'current' ? (
               <MapMapperCurrentRoom key={cell} currentRoom={mapper.currentRoom} />
             ) : (
-              <MapMapperCell
-                key={cell}
-                placement={cell}
-                branch={placementBranches.get(cell)}
-              />
+              <MapMapperCell key={cell} placement={cell} branch={placementBranches.get(cell)} />
             ),
           ),
         )}
@@ -3135,8 +3131,7 @@ function MapMapperBranchView({ branch }: { branch: MapMapperBranch }) {
       />
       {branch.destinationText ? (
         <span className="mapper-branch-destination">
-          To{' '}
-          <strong dangerouslySetInnerHTML={{ __html: renderMudHtml(branch.destinationText) }} />
+          To <strong dangerouslySetInnerHTML={{ __html: renderMudHtml(branch.destinationText) }} />
         </span>
       ) : null}
       {branch.statusText ? (
@@ -3530,7 +3525,11 @@ function ProtocolInspectorPanel() {
       </div>
 
       {PROTOCOL_GROUPED_FEATURES.map(({ group, features }) => (
-        <section className="protocol-section" key={group.id} aria-labelledby={`protocol-${group.id}`}>
+        <section
+          className="protocol-section"
+          key={group.id}
+          aria-labelledby={`protocol-${group.id}`}
+        >
           <div className="protocol-section-heading">
             <h3 id={`protocol-${group.id}`}>{group.title}</h3>
             <p>{group.summary}</p>
@@ -3577,7 +3576,11 @@ function ProtocolFeatureRow({ feature }: { feature: ProtocolFeatureRecord }) {
               {feature.evidence.map((evidence) => (
                 <li key={`${feature.id}-${evidence.kind}-${evidence.path}`}>
                   <span>{formatProtocolEvidenceKind(evidence.kind)}</span>
-                  <a href={getRepositoryEvidenceHref(evidence.path)} target="_blank" rel="noreferrer">
+                  <a
+                    href={getRepositoryEvidenceHref(evidence.path)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     {evidence.label}
                   </a>
                 </li>

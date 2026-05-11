@@ -138,4 +138,3 @@ Escalate as a privacy incident if logs, bridge recordings, TCP dumps, packet
 captures, or support artifacts contain player command text, credentials typed
 inside the MUD, private roleplay, private hostnames, or other sensitive session
 content.
-

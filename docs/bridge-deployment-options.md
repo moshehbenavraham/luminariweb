@@ -53,13 +53,13 @@ The integrated proxy owns the application boundary:
 
 ## Supported Options
 
-| Option | Use | Strengths | Limits | Recommendation |
-| ------ | --- | --------- | ------ | -------------- |
-| Integrated proxy | Normal public production | Preserves app protocol, MSDP, state panels, limits, and status messages | Must be operated as a public network service | Default |
-| Isolated integrated proxy | Higher isolation without changing product behavior | Keeps the same code path behind a process, host, container, network, or reverse-proxy boundary | Requires operator infrastructure | Preferred hardening path |
-| Terminal-only bridge | Emergency or separate raw terminal client path | Simple byte forwarding and possible separate network placement | Cannot serve the React app `/ws` contract or MSDP UI state | Separate fallback only |
-| Mapped bridge | Fixed TCP targets behind named routes | Reduces arbitrary target input and can add authorization around paths | Still blind to Luminari Web messages and game state | Separate fallback only |
-| Open bridge | Browser chooses arbitrary host and port | Operationally flexible | Creates open-proxy, SSRF, logging, and privacy risk | Reject |
+| Option                    | Use                                                | Strengths                                                                                      | Limits                                                     | Recommendation           |
+| ------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------ |
+| Integrated proxy          | Normal public production                           | Preserves app protocol, MSDP, state panels, limits, and status messages                        | Must be operated as a public network service               | Default                  |
+| Isolated integrated proxy | Higher isolation without changing product behavior | Keeps the same code path behind a process, host, container, network, or reverse-proxy boundary | Requires operator infrastructure                           | Preferred hardening path |
+| Terminal-only bridge      | Emergency or separate raw terminal client path     | Simple byte forwarding and possible separate network placement                                 | Cannot serve the React app `/ws` contract or MSDP UI state | Separate fallback only   |
+| Mapped bridge             | Fixed TCP targets behind named routes              | Reduces arbitrary target input and can add authorization around paths                          | Still blind to Luminari Web messages and game state        | Separate fallback only   |
+| Open bridge               | Browser chooses arbitrary host and port            | Operationally flexible                                                                         | Creates open-proxy, SSRF, logging, and privacy risk        | Reject                   |
 
 ## Public-Mode Checklist
 
@@ -152,20 +152,20 @@ repository as part of this session.
 
 ## Controls Matrix
 
-| Control | Integrated proxy | Isolated integrated proxy | Terminal-only bridge | Mapped bridge |
-| ------- | ---------------- | ------------------------- | -------------------- | ------------- |
-| Browser JSON `/ws` validation | Yes | Yes | No | No |
-| Telnet/MSDP negotiation for app | Yes | Yes | No | No |
-| HUD and panel state updates | Yes | Yes | No | No |
-| Curated destination allowlist | Yes | Yes | Operator supplied | Operator supplied |
-| Origin check | Yes | Yes | Operator supplied | Operator supplied |
-| Unsafe network blocking | Yes | Yes | Operator supplied | Operator supplied |
-| Banned service ports | Yes | Yes | Operator supplied | Operator supplied |
-| Command throttling | Yes | Yes | Operator supplied | Operator supplied |
-| Connection limits | Yes | Yes | Operator supplied | Operator supplied |
-| Connect and idle timeouts | Yes | Yes | Operator supplied | Operator supplied |
-| Sanitized app status details | Yes | Yes | No | No |
-| Player command redaction posture | Yes | Yes | Operator supplied | Operator supplied |
+| Control                          | Integrated proxy | Isolated integrated proxy | Terminal-only bridge | Mapped bridge     |
+| -------------------------------- | ---------------- | ------------------------- | -------------------- | ----------------- |
+| Browser JSON `/ws` validation    | Yes              | Yes                       | No                   | No                |
+| Telnet/MSDP negotiation for app  | Yes              | Yes                       | No                   | No                |
+| HUD and panel state updates      | Yes              | Yes                       | No                   | No                |
+| Curated destination allowlist    | Yes              | Yes                       | Operator supplied    | Operator supplied |
+| Origin check                     | Yes              | Yes                       | Operator supplied    | Operator supplied |
+| Unsafe network blocking          | Yes              | Yes                       | Operator supplied    | Operator supplied |
+| Banned service ports             | Yes              | Yes                       | Operator supplied    | Operator supplied |
+| Command throttling               | Yes              | Yes                       | Operator supplied    | Operator supplied |
+| Connection limits                | Yes              | Yes                       | Operator supplied    | Operator supplied |
+| Connect and idle timeouts        | Yes              | Yes                       | Operator supplied    | Operator supplied |
+| Sanitized app status details     | Yes              | Yes                       | No                   | No                |
+| Player command redaction posture | Yes              | Yes                       | Operator supplied    | Operator supplied |
 
 ## Environment Guidance
 
@@ -237,4 +237,3 @@ Operators get one documented default path and a narrow bridge fallback policy.
 Future protocol work can still evaluate source-level WebSocket support or
 separate terminal-only bridge experiences, but those are not part of this
 deployment decision.
-

@@ -98,10 +98,10 @@ Development dependencies include Vite, TypeScript, ESLint, React plugin packages
 
 ## Phase History
 
-| Phase | Sessions     | Security                                             | GDPR                         | Findings Opened | Findings Closed |
-| ----- | ------------ | ---------------------------------------------------- | ---------------------------- | --------------- | --------------- |
-| 00    | 5/5 complete | Initial code scan                                    | Local-only baseline          | 4               | 1               |
-| 01    | 6/6 complete | Proxy safety hardened and renderer coverage expanded | Local-only baseline retained | 0               | 4               |
+| Phase | Sessions     | Security                                                         | GDPR                         | Findings Opened | Findings Closed |
+| ----- | ------------ | ---------------------------------------------------------------- | ---------------------------- | --------------- | --------------- |
+| 00    | 5/5 complete | Initial code scan                                                | Local-only baseline          | 4               | 1               |
+| 01    | 6/6 complete | Proxy safety hardened and renderer coverage expanded             | Local-only baseline retained | 0               | 4               |
 | 02    | 6/6 complete | Panel expansion remained client-side; no new findings introduced | Local-only baseline retained | 0               | 0               |
 
 ## Recommendations

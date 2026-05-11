@@ -84,7 +84,10 @@ test('matches literal and wildcard aliases and substitutes captures', () => {
     captures: ['red'],
   });
   assert.equal(matchAliasPattern('look', 'k'), null);
-  assert.equal(substituteCaptures('kill %1 from %0', 'k goblin', ['goblin']), 'kill goblin from k goblin');
+  assert.equal(
+    substituteCaptures('kill %1 from %0', 'k goblin', ['goblin']),
+    'kill goblin from k goblin',
+  );
 });
 
 test('expands aliases, ignores disabled entries, and reports recursion limits', () => {
@@ -153,13 +156,9 @@ test('previews trigger actions locally and expands alias-backed actions', () => 
 
 test('caps trigger-generated command batches with a visible notice', () => {
   const action = Array.from({ length: 5 }, (_entry, index) => `say ${index}`).join(';');
-  const report = consumeTriggerText(
-    'Ari tells you hello\n',
-    '',
-    [trigger({ action })],
-    [],
-    { triggerCommandLimit: 3 },
-  );
+  const report = consumeTriggerText('Ari tells you hello\n', '', [trigger({ action })], [], {
+    triggerCommandLimit: 3,
+  });
 
   assert.deepEqual(report.commands, ['say 0', 'say 1', 'say 2']);
   assert.equal(report.notices.at(-1)?.kind, 'trigger-command-limit');

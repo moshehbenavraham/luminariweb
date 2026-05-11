@@ -128,10 +128,12 @@ export const protocolFeatureRecords = [
     groupId: 'terminal',
     status: 'partial',
     scope: 'MSDP client capability announcement',
-    summary: 'The proxy advertises 256-color capability through MSDP, but renderer coverage is ANSI-focused.',
+    summary:
+      'The proxy advertises 256-color capability through MSDP, but renderer coverage is ANSI-focused.',
     detail:
       'The session can claim the outbound capability flag and current terminal rendering path, not a complete live server color matrix.',
-    nextAction: 'Add source/live capture evidence before claiming broad 256-color protocol coverage.',
+    nextAction:
+      'Add source/live capture evidence before claiming broad 256-color protocol coverage.',
     evidence: [
       {
         kind: 'code',
@@ -152,7 +154,8 @@ export const protocolFeatureRecords = [
     groupId: 'terminal',
     status: 'supported',
     scope: 'proxy parser and MSDP capability announcement',
-    summary: 'The Telnet parser decodes text with UTF-8 and the proxy advertises `UTF_8` over MSDP.',
+    summary:
+      'The Telnet parser decodes text with UTF-8 and the proxy advertises `UTF_8` over MSDP.',
     detail:
       'Existing parser tests preserve UTF-8 decoder state across doubled IAC handling; this does not claim source text normalization beyond UTF-8 decoding.',
     nextAction: 'Keep parser tests covering split control bytes and UTF-8 text boundaries.',
@@ -200,10 +203,12 @@ export const protocolFeatureRecords = [
     groupId: 'telnet',
     status: 'supported',
     scope: 'proxy Telnet negotiation and browser resize path',
-    summary: 'The proxy negotiates NAWS and sends bounded terminal dimensions after support is known.',
+    summary:
+      'The proxy negotiates NAWS and sends bounded terminal dimensions after support is known.',
     detail:
       'Resize updates are scoped to active sessions and stop after disconnect or before NAWS negotiation.',
-    nextAction: 'Keep lifecycle and parser resize tests passing when layout changes affect dimensions.',
+    nextAction:
+      'Keep lifecycle and parser resize tests passing when layout changes affect dimensions.',
     evidence: [
       {
         kind: 'code',
@@ -253,7 +258,8 @@ export const protocolFeatureRecords = [
     summary: 'GMCP is not supported by the web client or proxy today.',
     detail:
       'The PRD records source negotiation and send/parse functions, but not a full modern JSON module API or proxy/client contract.',
-    nextAction: 'Decide GMCP direction in Phase 04 before adding server, proxy, or client behavior.',
+    nextAction:
+      'Decide GMCP direction in Phase 04 before adding server, proxy, or client behavior.',
     evidence: [
       {
         kind: 'spec',
@@ -277,7 +283,8 @@ export const protocolFeatureRecords = [
     summary: 'The proxy rejects MXP negotiation.',
     detail:
       'Rejecting MXP avoids exposing markup-like server output as trusted UI behavior before a dedicated security and parser design exists.',
-    nextAction: 'Keep rejecting MXP unless a future source/proxy/UI session designs and tests safe behavior.',
+    nextAction:
+      'Keep rejecting MXP unless a future source/proxy/UI session designs and tests safe behavior.',
     evidence: [
       {
         kind: 'code',
@@ -301,7 +308,8 @@ export const protocolFeatureRecords = [
     summary: 'MSP is source-side protocol code only; the web client has no sound contract.',
     detail:
       'The current client does not request, parse, play, persist, or permission audio protocol data.',
-    nextAction: 'Defer until product requirements define browser audio behavior, permissions, and tests.',
+    nextAction:
+      'Defer until product requirements define browser audio behavior, permissions, and tests.',
     evidence: [
       {
         kind: 'spec',
@@ -355,7 +363,8 @@ export const protocolFeatureRecords = [
     summary: 'The PRD records MSSP in Luminari-Source, but this client does not consume it.',
     detail:
       'No proxy negotiation path, UI surface, or tests currently depend on MSSP data, so web support is unvalidated.',
-    nextAction: 'Document whether the web client needs MSSP before implementing parser or UI behavior.',
+    nextAction:
+      'Document whether the web client needs MSSP before implementing parser or UI behavior.',
     evidence: [
       {
         kind: 'spec',
@@ -379,7 +388,8 @@ export const protocolFeatureRecords = [
     summary: 'The proxy rejects CHARSET negotiation and keeps UTF-8 decoding fixed.',
     detail:
       'The client does not implement CHARSET negotiation, fallback encodings, or source-side charset policy.',
-    nextAction: 'Keep rejecting CHARSET unless Phase 04 defines a tested encoding negotiation plan.',
+    nextAction:
+      'Keep rejecting CHARSET unless Phase 04 defines a tested encoding negotiation plan.',
     evidence: [
       {
         kind: 'code',
@@ -431,10 +441,12 @@ export const protocolFeatureRecords = [
     groupId: 'source',
     status: 'deferred',
     scope: 'Luminari-Source future transport decision',
-    summary: 'The current supported app transport remains the integrated proxy and `/ws` application protocol.',
+    summary:
+      'The current supported app transport remains the integrated proxy and `/ws` application protocol.',
     detail:
       'The PRD records no native WebSocket listener in Luminari-Source, and bridge docs reject blind byte bridges as `/ws` replacements.',
-    nextAction: 'Evaluate native WebSocket feasibility in Phase 04 without replacing the current proxy first.',
+    nextAction:
+      'Evaluate native WebSocket feasibility in Phase 04 without replacing the current proxy first.',
     evidence: [
       {
         kind: 'doc',

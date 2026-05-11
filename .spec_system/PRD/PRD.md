@@ -519,13 +519,13 @@ GitHub metadata was checked on 2026-05-10. Local clone state is listed in the Re
 
 ## Phases
 
-| Phase | Name                          | Sessions | Status      |
-| ----- | ----------------------------- | -------- | ----------- |
-| 0     | Align With Real Luminari Data | 5        | Complete    |
-| 1     | Harden Terminal and Proxy     | 6        | Complete    |
-| 2     | Build Luminari Game Panels    | 6        | Complete    |
-| 3     | Borrow the Best Ideas         | 6        | Complete    |
-| 4     | Source-Level Protocol Path    | 5        | Planned     |
+| Phase | Name                          | Sessions | Status   |
+| ----- | ----------------------------- | -------- | -------- |
+| 0     | Align With Real Luminari Data | 5        | Complete |
+| 1     | Harden Terminal and Proxy     | 6        | Complete |
+| 2     | Build Luminari Game Panels    | 6        | Complete |
+| 3     | Borrow the Best Ideas         | 6        | Complete |
+| 4     | Source-Level Protocol Path    | 5        | Planned  |
 
 ## Phase 0: Align With Real Luminari Data
 

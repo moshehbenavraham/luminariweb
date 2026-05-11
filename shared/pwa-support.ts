@@ -96,8 +96,7 @@ export function buildNetworkStatusMessage(input: NetworkStatusInput): NetworkSta
       proxyLabel,
       mudLabel,
       title: 'Browser network offline',
-      detail:
-        'Reconnect and command sending require a live browser network, proxy, and MUD route.',
+      detail: 'Reconnect and command sending require a live browser network, proxy, and MUD route.',
       canStartConnection: false,
       canSendCommand: false,
       canUseReconnect: false,

@@ -82,7 +82,10 @@ test('public deployment rejects missing and unexpected WebSocket origins', () =>
   const missingDecision = checkWebSocketOrigin(policy, undefined);
   assert.equal(missingDecision.allowed, false);
   assert.equal(missingDecision.allowed ? null : missingDecision.code, 'missing-origin');
-  assert.equal(missingDecision.allowed ? null : missingDecision.detail, 'WebSocket origin is not allowed.');
+  assert.equal(
+    missingDecision.allowed ? null : missingDecision.detail,
+    'WebSocket origin is not allowed.',
+  );
 
   const unexpectedDecision = checkWebSocketOrigin(policy, 'https://attacker.example.com');
   assert.equal(unexpectedDecision.allowed, false);
@@ -186,7 +189,10 @@ test('deployment policy returns sanitized DNS failure details', async () => {
 
   assert.equal(decision.allowed, false);
   assert.equal(decision.allowed ? null : decision.code, 'dns-failed');
-  assert.equal(decision.allowed ? null : decision.detail, 'This MUD destination could not be verified.');
+  assert.equal(
+    decision.allowed ? null : decision.detail,
+    'This MUD destination could not be verified.',
+  );
   assert.equal(decision.allowed ? false : decision.detail.includes('secret'), false);
   assert.equal(decision.allowed ? false : decision.detail.includes('/internal'), false);
 });

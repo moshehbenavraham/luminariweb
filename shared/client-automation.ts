@@ -62,7 +62,9 @@ export function createAutomationId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function createEmptyAlias(idFactory: AutomationIdFactory = createAutomationId): AliasDefinition {
+export function createEmptyAlias(
+  idFactory: AutomationIdFactory = createAutomationId,
+): AliasDefinition {
   return {
     id: idFactory('alias'),
     pattern: '',
@@ -311,7 +313,9 @@ export function consumeTriggerText(
       }
 
       for (const command of sequence.commands) {
-        const expansion = expandAliasCommands(command, aliases, { commandLimit: aliasCommandLimit });
+        const expansion = expandAliasCommands(command, aliases, {
+          commandLimit: aliasCommandLimit,
+        });
         report.notices.push(...expansion.notices);
         for (const expandedCommand of expansion.commands) {
           if (report.commands.length >= triggerCommandLimit) {
@@ -512,9 +516,7 @@ function normalizeTriggerEntry(
   };
   const validation = validateTrigger(trigger);
   if (!validation.valid) {
-    throw new Error(
-      `Trigger ${index + 1}: ${validation.issues[0]?.message ?? 'Invalid trigger.'}`,
-    );
+    throw new Error(`Trigger ${index + 1}: ${validation.issues[0]?.message ?? 'Invalid trigger.'}`);
   }
 
   return trigger;

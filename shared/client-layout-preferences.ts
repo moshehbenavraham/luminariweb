@@ -70,9 +70,7 @@ export function parseClientLayoutPreferencesPayload(value: unknown): ClientLayou
   };
 }
 
-export function serializeClientLayoutPreferences(
-  preferences: ClientLayoutPreferences,
-): string {
+export function serializeClientLayoutPreferences(preferences: ClientLayoutPreferences): string {
   return JSON.stringify(parseClientLayoutPreferencesPayload(preferences));
 }
 

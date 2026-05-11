@@ -62,7 +62,9 @@ test('requires evidence and next actions for each protocol status record', () =>
 
 test('groups features in catalog order without dropping records', () => {
   const grouped = getProtocolFeaturesByGroup();
-  const groupedFeatureIds = grouped.flatMap(({ features }) => features.map((feature) => feature.id));
+  const groupedFeatureIds = grouped.flatMap(({ features }) =>
+    features.map((feature) => feature.id),
+  );
   const catalogFeatureIds = protocolFeatureRecords.map((feature) => feature.id);
 
   assert.deepEqual(
@@ -73,10 +75,7 @@ test('groups features in catalog order without dropping records', () => {
     assert.ok(features.every((feature) => feature.groupId === group.id));
   }
   assert.equal(new Set(groupedFeatureIds).size, protocolFeatureRecords.length);
-  assert.deepEqual(
-    groupedFeatureIds.toSorted(),
-    catalogFeatureIds.toSorted(),
-  );
+  assert.deepEqual(groupedFeatureIds.toSorted(), catalogFeatureIds.toSorted());
 });
 
 test('keeps deferred and rejected protocol claims conservative', () => {
@@ -94,9 +93,7 @@ test('keeps deferred and rejected protocol claims conservative', () => {
 test('links deferred source work to Phase 04 follow-up tags', () => {
   const sourceWork = protocolFeatureRecords.filter(
     (feature) =>
-      feature.status === 'deferred' ||
-      feature.status === 'validation-gap' ||
-      feature.id === 'mccp',
+      feature.status === 'deferred' || feature.status === 'validation-gap' || feature.id === 'mccp',
   );
 
   for (const feature of sourceWork) {

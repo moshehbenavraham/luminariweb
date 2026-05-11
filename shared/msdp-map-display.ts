@@ -441,10 +441,7 @@ function readFallbackField(fields: MapFallbackIdentityField[], id: string) {
   return fields.find((field) => field.id === id)?.valueText;
 }
 
-function formatMapperSummary(
-  currentRoom: MapMapperCurrentRoomNode,
-  branches: MapMapperBranch[],
-) {
+function formatMapperSummary(currentRoom: MapMapperCurrentRoomNode, branches: MapMapperBranch[]) {
   const visibleBranches = branches.slice(0, MAPPER_BRANCH_SUMMARY_LIMIT).map(formatBranchSummary);
   const remainingBranches = branches.length - visibleBranches.length;
   const branchText =
@@ -460,10 +457,7 @@ function formatMapperSummary(
   return `${currentRoom.ariaLabel} ${branchText}`;
 }
 
-function formatMapperAriaLabel(
-  currentRoom: MapMapperCurrentRoomNode,
-  branches: MapMapperBranch[],
-) {
+function formatMapperAriaLabel(currentRoom: MapMapperCurrentRoomNode, branches: MapMapperBranch[]) {
   const branchSummary =
     branches.length === 0
       ? 'No directional exits available.'

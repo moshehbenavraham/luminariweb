@@ -174,7 +174,10 @@ test('migrates valid legacy cookie groups and reports malformed groups without c
     CLIENT_SETTINGS_COOKIE_NAME,
     TRIGGERS_COOKIE_NAME,
   ]);
-  assert.equal(migration.payload.settings.terminal.fontSize, currentState.settings.terminal.fontSize);
+  assert.equal(
+    migration.payload.settings.terminal.fontSize,
+    currentState.settings.terminal.fontSize,
+  );
   assert.deepEqual(migration.payload.aliases, []);
   assert.deepEqual(migration.payload.triggers, currentState.triggers);
   assert.deepEqual(migration.issues, ['Legacy aliases cookie could not be migrated.']);
