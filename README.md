@@ -43,6 +43,8 @@ Default local services:
 - [Architecture](docs/ARCHITECTURE.md)
 - [Environments](docs/environments.md)
 - [Deployment](docs/deployment.md)
+- [Bridge Deployment Options](docs/bridge-deployment-options.md)
+- [Bridge Fallback Runbook](docs/runbooks/bridge-fallback.md)
 - [API and WebSocket Contracts](docs/api/http-and-websocket.md)
 - [Tests](tests/README.md)
 - [Contributing](CONTRIBUTING.md)
@@ -51,7 +53,7 @@ Default local services:
 ## Current Capabilities
 
 - Browser terminal output rendered from Telnet text and ANSI sequences.
-- React HUD and side panels for character, combat, quest, group, and affects data when matching MSDP values arrive.
+- React HUD and side panels for character, combat, group, affects, inventory, room, map, and quest data when matching MSDP values arrive.
 - Command input with history, tab completion, numpad movement, aliases, triggers, and import/export for client configuration.
 - Dynamic terminal resize updates the proxy NAWS state when the server has negotiated support.
 - Runtime app settings endpoint at `/api/settings`.
@@ -63,7 +65,7 @@ Default local services:
 
 ## Protocol Status
 
-Phase 00 aligned the client with confirmed Luminari-Source MSDP data and made unsupported data states explicit. Phase 01 hardened the Telnet parser, reconnect lifecycle, resize handling, renderer decision, and public proxy safety. The product plan still tracks future panel, mapper, and source-protocol work in later phases.
+Phase 00 aligned the client with confirmed Luminari-Source MSDP data and made unsupported data states explicit. Phase 01 hardened the Telnet parser, reconnect lifecycle, resize handling, renderer decision, and public proxy safety. Phase 02 added the character, combat, group, affects, inventory, room, map, and quest fallback panels. The product plan still tracks future mapper and source-protocol work in later phases.
 
 ## Tech Stack
 
@@ -96,10 +98,18 @@ Primary defaults live in [shared/app-settings.ts](shared/app-settings.ts). The b
 
 Environment overrides:
 
-| Variable      | Default           | Purpose                           |
-| ------------- | ----------------- | --------------------------------- |
-| `PORT`        | `5191`            | HTTP/WebSocket server port        |
-| `VITE_WS_URL` | same-origin `/ws` | Browser WebSocket target override |
+| Variable                          | Default           | Purpose                                      |
+| --------------------------------- | ----------------- | -------------------------------------------- |
+| `PORT`                            | `5191`            | HTTP/WebSocket server port                   |
+| `VITE_WS_URL`                     | same-origin `/ws` | Browser WebSocket target override            |
+| `PROXY_PUBLIC_MODE`               | `true`            | Keep public proxy routing allowlisted        |
+| `PROXY_ALLOWED_ORIGINS`           | local dev origins | Public browser origins allowed to open `/ws` |
+| `PROXY_ALLOWED_DESTINATIONS`      | curated presets   | Server-only extra `host:port` MUD routes     |
+| `PROXY_ALLOW_CUSTOM_DESTINATIONS` | `false` in public | Explicit operator opt-in for custom routes   |
+
+The supported public deployment path is the integrated game-aware proxy. Bridge
+fallbacks are separate terminal-only transport options, not replacements for the
+React app's `/ws` protocol.
 
 ## Project Status
 

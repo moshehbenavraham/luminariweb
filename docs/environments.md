@@ -17,6 +17,7 @@
 | WebSocket URL    | Same-origin `/ws` through Vite proxy | `VITE_WS_URL` if needed                                | Same-origin `/ws` by default                    |
 | Server port      | `shared/app-settings.ts` or `PORT`   | Depends on proxy process                               | `PORT` or `shared/app-settings.ts`              |
 | Proxy routing    | Curated presets plus local origins   | Curated presets plus configured origins                | Curated presets plus explicit server allowlists |
+| Bridge role      | None for first-party app             | None for first-party app                               | Separate fallback only, not `/ws` replacement   |
 
 ## Environment Variables
 
@@ -45,3 +46,45 @@
 Public mode fails closed for browser origins and destinations. A production host should set `PROXY_ALLOWED_ORIGINS` to the deployed HTTPS origin. `PROXY_ALLOWED_DESTINATIONS` is needed only for vetted MUD routes outside `shared/app-settings.ts`.
 
 Malformed destination and origin entries are ignored. Malformed timeout values fall back to bounded defaults or are clamped to safe limits. Private/operator custom routing requires `PROXY_PUBLIC_MODE=false` or `PROXY_ALLOW_CUSTOM_DESTINATIONS=true`; even then, private, loopback, link-local, multicast, reserved, metadata-service, and banned-port targets remain blocked.
+
+## Production Proxy Modes
+
+Use this default for public production:
+
+```bash
+PROXY_PUBLIC_MODE=true
+PROXY_ALLOWED_ORIGINS=https://play.example.com
+```
+
+Add server-side destinations only after vetting the route:
+
+```bash
+PROXY_ALLOWED_DESTINATIONS=mud.example.com:4000
+```
+
+Use private mode only in trusted operator environments:
+
+```bash
+PROXY_PUBLIC_MODE=false
+```
+
+Use public custom routing only with external abuse controls:
+
+```bash
+PROXY_ALLOW_CUSTOM_DESTINATIONS=true
+```
+
+Custom routing never permits unsafe networks or banned service ports, but it
+does let browser users request arbitrary public-routable hostnames. Treat that
+as an operator decision, not the normal public posture.
+
+## Bridge Expectations
+
+No environment variable makes a blind bridge compatible with the first-party
+React app. `/ws` must terminate at the integrated Luminari Web proxy because it
+is a JSON application protocol with Telnet/MSDP state handling behind it.
+
+If an operator runs a bridge, keep it on a separate route or service for a raw
+terminal-only path. Bridge TLS, authorization, target maps, rate limits,
+timeouts, process supervision, and transcript logging controls are external to
+this repository.

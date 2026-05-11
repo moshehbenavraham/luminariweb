@@ -31,6 +31,9 @@ node --import tsx --test tests/*.test.ts
   addresses, metadata-service targets, public allowlists, explicit custom routing, WebSocket origin
   policy, DNS failure handling, unsafe DNS answers, connect timeouts, idle timeouts, stale timeout
   callbacks, manual timeout/disconnect races, and command-redaction assertions.
+- Deployment-policy coverage for public-mode default destination rejection, configured allowlist
+  acceptance, missing and unexpected origin rejection, banned ports, unsafe network blocking, custom
+  routing safety, timeout clamping, and sanitized policy details.
 - Dynamic NAWS resize coverage for default dimensions, custom initial dimensions, changed
   dimensions, no unsupported-before-negotiation writes, resize before connect, resize before NAWS
   negotiation, resize after disconnect, and resize after reconnect.
@@ -101,6 +104,7 @@ node --import tsx --test tests/client-layout-preferences.test.ts
 node --import tsx --test tests/msdp-state-mapping.test.ts
 node --import tsx --test tests/proxy-network.test.ts
 node --import tsx --test tests/proxy-policy.test.ts
+node --import tsx --test tests/proxy-deployment-policy.test.ts
 node --import tsx --test tests/proxy-lifecycle.test.ts
 node --import tsx --test tests/client-automation.test.ts
 node --import tsx --test tests/client-config-persistence.test.ts
@@ -222,6 +226,27 @@ Settings menus and verify validation messages, preview output, import/export con
 text wrap without horizontal page scrolling. In a supported secure context, verify service-worker
 registration does not crash startup and cached entries are limited to static shell files; `/api/settings`
 and `/ws` must not be cached.
+
+## Manual Public-Mode Smoke Checks
+
+These checks do not require live production credentials. Use them when changing
+deployment policy, reverse-proxy configuration, or bridge fallback docs.
+
+- Run `node --import tsx --test tests/proxy-deployment-policy.test.ts`.
+- Start a local production build with `npm run build && npm start`.
+- Confirm `curl -fsS http://localhost:${PORT:-5191}/health` returns success.
+- In a public-mode environment, confirm the deployed HTTPS origin is present in
+  `PROXY_ALLOWED_ORIGINS`.
+- Confirm a curated preset or server-only `PROXY_ALLOWED_DESTINATIONS` route can
+  attempt a connection, and an arbitrary unlisted public hostname is rejected.
+- Confirm a banned service port, private address, loopback address,
+  link-local address, reserved address, or metadata-service target is rejected.
+- Confirm an unexpected WebSocket origin is rejected before any MUD connection
+  attempt.
+- Confirm bridge recording, TCP dump, packet capture, and verbose byte logging
+  are not enabled for player traffic.
+- Confirm no support artifact includes player command text, credentials typed
+  inside the MUD, private hostnames, or terminal transcripts by default.
 
 ## Manual Renderer Notes
 

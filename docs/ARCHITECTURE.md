@@ -19,7 +19,7 @@ Telnet MUD server
 
 ### Browser Client
 
-- **Purpose**: Render terminal output, connection controls, HUD bars, side panels, aliases, triggers, settings, and import/export controls.
+- **Purpose**: Render terminal output, connection controls, HUD bars, side panels for character, combat, group, affects, inventory, room, map, and quest data, plus aliases, triggers, settings, and import/export controls.
 - **Tech**: React, TypeScript, CSS, Vite.
 - **Location**: `src/`
 
@@ -31,7 +31,7 @@ Telnet MUD server
 
 ### Shared Protocol and Settings
 
-- **Purpose**: Define app settings, MUD presets, browser/server message types, MSDP variable mappings, shared MSDP mapping helpers, and client-visible MUD state fields.
+- **Purpose**: Define app settings, MUD presets, browser/server message types, MSDP variable mappings, shared MSDP mapping helpers, and client-visible MUD state fields and display models.
 - **Tech**: TypeScript.
 - **Location**: `shared/`
 
@@ -40,12 +40,27 @@ Telnet MUD server
 1. Browser loads app settings from `GET /api/settings`.
 2. Browser opens `WebSocket /ws`.
 3. Browser sends a `connect` message with host, port, and MSDP variable mapping.
-4. Server validates basic host and port shape, opens a Telnet socket, and reports connection status.
+4. Server validates the browser message, origin policy, host, port, destination allowlist, banned ports, and network safety before opening a Telnet socket.
 5. Telnet parser forwards text as `terminal` messages.
 6. When MSDP is available, the server sends client identity and report requests for configured variables.
-7. Parsed MSDP updates are normalized by `shared/msdp-state.ts`, mapped to partial `MudState` objects, and sent as `state` messages.
+7. Parsed MSDP updates are normalized by `shared/msdp-state.ts`, mapped to partial `MudState` objects, and then converted by shared display helpers into explicit panel states for character, combat, group, affects, inventory, room, map, and quest views.
 8. Shared fixture tests load `tests/fixtures/msdp/manifest.json` and exercise the same mapping helpers without a live MUD connection.
 9. Browser sends command input as `input` messages; the proxy writes them to the Telnet socket.
+
+## Deployment Boundary
+
+Public production should place the integrated Express and `ws` proxy behind an
+operator-managed HTTPS/WSS terminator. The app still talks to same-origin
+`/api/settings`, `/health`, and `/ws`; the reverse proxy handles TLS,
+WebSocket upgrades, host firewall exposure, and platform monitoring.
+
+Standalone WebSocket-to-TCP bridges are blind byte forwarders from this
+architecture's point of view. They do not understand the browser JSON `/ws`
+contract, Telnet/MSDP state mapping, reconnect cleanup, or UI status semantics.
+If an operator needs more isolation, isolate the integrated proxy first through
+process, host, container, network, reverse-proxy, or firewall boundaries. Bridge
+fallbacks belong on separate terminal-only paths. The full decision is in
+[Bridge Deployment Options](bridge-deployment-options.md).
 
 ## Terminal Rendering
 
@@ -82,7 +97,17 @@ There is no database. First-release settings, aliases, triggers, and display pre
 
 ## Security Posture
 
-Current proxy validation checks basic host format and port range. The product plan requires stronger public-deployment controls before public hosting, including allowlisted destinations, origin checks, private-network blocking, quotas, rate limits, connect and idle timeouts, and command-log redaction.
+The proxy now defaults to public-mode guardrails before opening outbound MUD
+sockets. It checks WebSocket origins, destination allowlists, banned service
+ports, direct IP literals, DNS results, unsafe networks, metadata-service
+targets, HTTP request rates, active WebSocket counts, per-socket command rates,
+duplicate in-flight connects, connect timeouts, idle timeouts, and DNS timeout
+settings. Policy and timeout errors use stable sanitized details and do not
+intentionally include player command text.
+
+Public deployments still require controls outside this repository: HTTPS/WSS
+termination, reverse-proxy policy, host firewalling, process supervision,
+health checks, alerting, and log retention/redaction.
 
 ## Key Decisions
 

@@ -57,7 +57,8 @@
     "phase03-session01-mapper-ux-reference-implementation",
     "phase03-session02-windows-and-layout-ergonomics",
     "phase03-session03-alias-macro-and-trigger-ux",
-    "phase03-session04-mobile-and-pwa-foundation"
+    "phase03-session04-mobile-and-pwa-foundation",
+    "phase03-session05-bridge-deployment-options"
   ],
   "next_session_history": [
     {
@@ -223,6 +224,16 @@
     {
       "date": "2026-05-11",
       "session": "phase03-session04-mobile-and-pwa-foundation",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase03-session05-bridge-deployment-options",
+      "status": "planned"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase03-session05-bridge-deployment-options",
       "status": "completed"
     }
   ]

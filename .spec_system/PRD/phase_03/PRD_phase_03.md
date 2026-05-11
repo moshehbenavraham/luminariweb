@@ -4,7 +4,7 @@
 **Sessions**: 6
 **Estimated Duration**: 6-10 days
 
-**Progress**: 4/6 sessions (67%)
+**Progress**: 5/6 sessions (83%)
 
 ---
 
@@ -22,7 +22,7 @@ Phase 03 adds high-value mapper, layout, automation, mobile, deployment, and pro
 | 02      | Windows and Layout Ergonomics       | Complete    | ~12-25     | 2026-05-11 |
 | 03      | Alias, Macro, and Trigger UX        | Complete    | ~12-25     | 2026-05-11 |
 | 04      | Mobile and PWA Foundation           | Complete    | ~12-25     | 2026-05-11 |
-| 05      | Bridge Deployment Options           | Not Started | ~12-25     | -         |
+| 05      | Bridge Deployment Options           | Complete    | ~12-25     | 2026-05-11 |
 | 06      | Protocol Feature Checklist          | Not Started | ~12-25     | -         |
 
 ---
@@ -33,12 +33,12 @@ Phase 03 adds high-value mapper, layout, automation, mobile, deployment, and pro
 2. Session 02: Windows and Layout Ergonomics - complete on 2026-05-11
 3. Session 03: Alias, Macro, and Trigger UX - complete on 2026-05-11
 4. Session 04: Mobile and PWA Foundation - complete on 2026-05-11
+5. Session 05: Bridge Deployment Options - complete on 2026-05-11
 
 ---
 
 ## Upcoming Sessions
 
-- Session 05: Bridge Deployment Options
 - Session 06: Protocol Feature Checklist
 
 ---

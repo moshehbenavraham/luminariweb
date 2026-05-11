@@ -18,6 +18,40 @@ curl http://localhost:5191/health
 
 `npm start` runs `node dist/server/index.js`. The server serves the built frontend, `/api/settings`, `/health`, and `/ws`.
 
+## Production Topology
+
+The supported public topology is the integrated Express and `ws` proxy behind an
+operator-managed HTTPS/WSS terminator:
+
+```text
+Browser
+  |-- HTTPS static app, GET /api/settings, WebSocket /ws
+  v
+Reverse proxy or HTTPS terminator
+  v
+Luminari Web integrated proxy
+  |-- validated TCP socket
+  v
+Curated Luminari-compatible MUD
+```
+
+The integrated proxy is the default because `/ws` is a structured application
+protocol, not raw Telnet bytes. It validates browser messages, enforces public
+destination policy, negotiates Telnet/MSDP, maps state for the UI, and emits
+sanitized connection statuses. Standalone bridge projects can be useful as
+separate raw transport fallbacks, but they are not compatible replacements for
+the first-party React app. See [Bridge Deployment Options](bridge-deployment-options.md).
+
+## Health Probe
+
+`GET /health` returns HTTP 200 JSON with `{ "ok": true }`. Local production verification:
+
+```bash
+curl -fsS http://localhost:${PORT:-5191}/health
+```
+
+For PM2 or operator-hosted deployments, configure the load balancer, reverse proxy, or uptime monitor to check `https://<origin>/health` and alert or restart on non-200 responses. PM2 does not provide an in-repository HTTP probe, so this is a deployment-platform setting.
+
 ## Security Controls
 
 The built server applies application-level proxy guardrails before opening a Telnet socket:
@@ -45,6 +79,16 @@ PROXY_DNS_RETRY_COUNT=1
 
 `PROXY_ALLOWED_DESTINATIONS` is optional when the curated presets are the only public routes. Use comma-separated `host:port` pairs for additions. Malformed entries are ignored, and banned service ports remain blocked.
 
+Public operators should verify this checklist before exposing the service:
+
+- Serve the browser app over HTTPS and reach `/ws` over WSS from the same public origin unless `VITE_WS_URL` is intentionally configured.
+- Set `PROXY_ALLOWED_ORIGINS` to the exact deployed browser origin.
+- Keep `PROXY_PUBLIC_MODE=true` unless the deployment is a trusted private operator environment.
+- Add only vetted MUD routes to `PROXY_ALLOWED_DESTINATIONS`.
+- Confirm the reverse proxy forwards WebSocket upgrades to `/ws` and does not strip the `Origin` header.
+- Probe `/health` through the public HTTPS origin and alert on non-200 responses.
+- Keep player command text out of proxy, reverse-proxy, bridge, packet-capture, and incident logs by default.
+
 Private or operator deployments can allow browser-supplied public-routable hostnames:
 
 ```bash
@@ -58,6 +102,16 @@ PROXY_ALLOW_CUSTOM_DESTINATIONS=true
 ```
 
 Custom routing does not disable private-network, reserved-network, metadata-service, DNS, or banned-port checks. For public hosting, still configure HTTPS termination, CDN or reverse-proxy protections, WAF rules, process supervision, and host-level firewall controls outside this repository.
+
+## Bridge Fallbacks
+
+Do not point the first-party React app's `/ws` endpoint at a blind
+WebSocket-to-TCP bridge. A bridge cannot speak the app JSON message contract or
+produce MSDP-backed UI state. If a bridge is needed, operate it as a separate
+terminal-only path with fixed or mapped targets, TLS, authorization, rate
+limits, timeout policy, and recording/TCP-dump features disabled by default for
+player traffic. The decision criteria and rollback steps are in
+[Bridge Fallback Runbook](runbooks/bridge-fallback.md).
 
 ## PM2 Run
 
