@@ -128,6 +128,8 @@ The PRD source protocol facts confirm these variable groups from Luminari-Source
 
 These shapes are synthetic. They verify parser, state-mapping, and display behavior for source-confirmed room variables, but they do not prove final live server room or exit field names.
 
+Phase 03 mapper tests also use these synthetic room and exit shapes to verify the bounded current-room mapper display. That mapper coverage is limited to current room identity, deterministic directional exit branches, vertical and custom exit summaries, raw malformed fallback text, and override-only `MINIMAP` separation. It does not define persistent world-map storage, destination discovery, coordinate schemas, or source-confirmed live `MINIMAP` support.
+
 ## Group Fixture Notes
 
 `group-data.json` confirms parser and display contracts for representative `GROUP` payloads:

@@ -2,10 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { defaultMsdpVariables, normalizeMsdpVariableMap } from '../shared/mud.ts';
 import type { MsdpVariableMap } from '../shared/mud.ts';
-import {
-  buildQuestDisplayModel,
-  normalizeQuestInfoValue,
-} from '../shared/msdp-quest-display.ts';
+import { buildQuestDisplayModel, normalizeQuestInfoValue } from '../shared/msdp-quest-display.ts';
 
 const defaultMap = normalizeMsdpVariableMap(defaultMsdpVariables);
 const configuredMap: MsdpVariableMap = { ...defaultMap, questInfo: 'QUEST_INFO' };
@@ -20,8 +17,14 @@ test('reports QUEST_INFO unavailable by default', () => {
 
 test('keeps configured waiting, empty, offline, and error quest states distinct', () => {
   assert.equal(buildQuestDisplayModel({}, 'connected', configuredMap).state, 'loading');
-  assert.equal(buildQuestDisplayModel({ questInfo: [] }, 'connected', configuredMap).state, 'empty');
-  assert.equal(buildQuestDisplayModel({ questInfo: '' }, 'connected', configuredMap).state, 'empty');
+  assert.equal(
+    buildQuestDisplayModel({ questInfo: [] }, 'connected', configuredMap).state,
+    'empty',
+  );
+  assert.equal(
+    buildQuestDisplayModel({ questInfo: '' }, 'connected', configuredMap).state,
+    'empty',
+  );
   assert.equal(buildQuestDisplayModel({}, 'idle', configuredMap).state, 'offline');
   assert.equal(buildQuestDisplayModel({}, 'disconnected', configuredMap).state, 'offline');
   assert.equal(buildQuestDisplayModel({}, 'error', configuredMap).state, 'error');

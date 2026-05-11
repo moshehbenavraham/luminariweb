@@ -27,7 +27,7 @@
     "3": {
       "name": "Borrow the Best Ideas",
       "description": "Add high-value UI, automation, mobile, deployment, and protocol-inventory ideas from reference projects while preserving license and stack boundaries.",
-      "status": "in_progress",
+      "status": "complete",
       "session_count": 6
     },
     "4": {
@@ -58,7 +58,8 @@
     "phase03-session02-windows-and-layout-ergonomics",
     "phase03-session03-alias-macro-and-trigger-ux",
     "phase03-session04-mobile-and-pwa-foundation",
-    "phase03-session05-bridge-deployment-options"
+    "phase03-session05-bridge-deployment-options",
+    "phase03-session06-protocol-feature-checklist"
   ],
   "next_session_history": [
     {
@@ -234,6 +235,16 @@
     {
       "date": "2026-05-11",
       "session": "phase03-session05-bridge-deployment-options",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase03-session06-protocol-feature-checklist",
+      "status": "planned"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase03-session06-protocol-feature-checklist",
       "status": "completed"
     }
   ]

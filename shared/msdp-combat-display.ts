@@ -272,11 +272,7 @@ function createActionEntry(value: MudValue, index: number): ActionEntryModel[] {
     : [];
 }
 
-function createObjectActionEntry(
-  key: string,
-  value: MudValue,
-  index: number,
-): ActionEntryModel[] {
+function createObjectActionEntry(key: string, value: MudValue, index: number): ActionEntryModel[] {
   const valueText = formatMudValueAsText(value);
   if (!valueText) {
     return [];

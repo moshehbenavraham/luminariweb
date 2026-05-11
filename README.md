@@ -45,6 +45,7 @@ Default local services:
 - [Deployment](docs/deployment.md)
 - [Bridge Deployment Options](docs/bridge-deployment-options.md)
 - [Bridge Fallback Runbook](docs/runbooks/bridge-fallback.md)
+- [Protocol Feature Checklist](docs/protocol-feature-checklist.md)
 - [API and WebSocket Contracts](docs/api/http-and-websocket.md)
 - [Tests](tests/README.md)
 - [Contributing](CONTRIBUTING.md)
@@ -59,13 +60,14 @@ Default local services:
 - Runtime app settings endpoint at `/api/settings`.
 - WebSocket endpoint at `/ws` that bridges browser messages to a Telnet MUD connection.
 - Telnet negotiation for MSDP, TTYPE, NAWS, ECHO, and SGA, with MCCP, MXP, and CHARSET currently rejected.
+- Protocol status checklist and inspector coverage for supported, partial, rejected, deferred, and validation-gap protocol claims.
 - Public proxy guardrails for origin checks, destination allowlists, banned ports, DNS/IP safety, quotas, and timeouts.
 - Fixture-backed MSDP mapping tests and normalized shared state helpers for parser and state coverage.
 - Curated MUD presets plus manual host and port input for private or operator-approved routing.
 
 ## Protocol Status
 
-Phase 00 aligned the client with confirmed Luminari-Source MSDP data and made unsupported data states explicit. Phase 01 hardened the Telnet parser, reconnect lifecycle, resize handling, renderer decision, and public proxy safety. Phase 02 added the character, combat, group, affects, inventory, room, map, and quest fallback panels. The product plan still tracks future mapper and source-protocol work in later phases.
+Phase 00 aligned the client with confirmed Luminari-Source MSDP data and made unsupported data states explicit. Phase 01 hardened the Telnet parser, reconnect lifecycle, resize handling, renderer decision, and public proxy safety. Phase 02 added the character, combat, group, affects, inventory, room, map, and quest fallback panels. Phase 03 records protocol support boundaries in the [Protocol Feature Checklist](docs/protocol-feature-checklist.md). The product plan still tracks source-level protocol work in later phases.
 
 ## Tech Stack
 

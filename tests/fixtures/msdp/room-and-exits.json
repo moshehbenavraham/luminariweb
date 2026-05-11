@@ -284,7 +284,10 @@
         "ARRAY_OPEN",
         "ARRAY_CLOSE"
       ],
-      "expectedPairs": [["ROOM", {}], ["ROOM_EXITS", []]],
+      "expectedPairs": [
+        ["ROOM", {}],
+        ["ROOM_EXITS", []]
+      ],
       "notes": ["Empty structures are synthetic parser contracts for display-state tests."]
     },
     {
@@ -297,13 +300,7 @@
         "sanitized": true
       },
       "description": "ROOM_EXITS object-like rows preserve destination, status, and unknown fields for bounded summaries.",
-      "coverage": [
-        "room-exits",
-        "table",
-        "object-like",
-        "unknown-fields",
-        "numeric-normalization"
-      ],
+      "coverage": ["room-exits", "table", "object-like", "unknown-fields", "numeric-normalization"],
       "sourceFacts": [
         "PRD Source Protocol Facts confirms ROOM_EXITS.",
         "Session 05 requires unknown exit fields to be surfaced conservatively."

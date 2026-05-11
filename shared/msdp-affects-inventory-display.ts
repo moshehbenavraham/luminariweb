@@ -108,14 +108,7 @@ const AFFECT_MODIFIER_KEYS = [
   'penalty',
   'PENALTY',
 ] as const;
-const AFFECT_STATUS_KEYS = [
-  'status',
-  'STATUS',
-  'state',
-  'STATE',
-  'source',
-  'SOURCE',
-] as const;
+const AFFECT_STATUS_KEYS = ['status', 'STATUS', 'state', 'STATE', 'source', 'SOURCE'] as const;
 const INVENTORY_NAME_KEYS = [
   'name',
   'NAME',
@@ -307,9 +300,7 @@ export function normalizeInventoryGroups(value: MudValue): InventoryGroupModel[]
 
   if (isMudRecord(value)) {
     if (looksLikeInventoryItemRecord(value)) {
-      return createInventoryGroup('inventory', 'Inventory', [
-        createInventoryRecordItem(value, 0),
-      ]);
+      return createInventoryGroup('inventory', 'Inventory', [createInventoryRecordItem(value, 0)]);
     }
 
     const groups: InventoryGroupModel[] = [];
@@ -399,12 +390,10 @@ function getUnavailableCollectionNotice(
   value: MudValue | undefined,
   status: ConnectionStatus,
   msdpVariables: MsdpVariableMap,
-):
-  | {
-      state: Exclude<CollectionDisplayState, 'present' | 'raw' | 'empty'>;
-      notice: DisplayAvailabilityNotice;
-    }
-  | null {
+): {
+  state: Exclude<CollectionDisplayState, 'present' | 'raw' | 'empty'>;
+  notice: DisplayAvailabilityNotice;
+} | null {
   const labelLower = label.toLowerCase();
 
   if (status === 'idle' || status === 'disconnected') {
@@ -462,11 +451,7 @@ function createAffectEntry(value: MudValue, index: number): AffectRowModel[] {
   return createRawAffectEntry(value, index);
 }
 
-function createObjectAffectEntry(
-  key: string,
-  value: MudValue,
-  index: number,
-): AffectRowModel[] {
+function createObjectAffectEntry(key: string, value: MudValue, index: number): AffectRowModel[] {
   const label = formatMudLabel(key) || `Affect ${index + 1}`;
 
   if (value === null) {
@@ -480,11 +465,7 @@ function createObjectAffectEntry(
   return createRawAffectEntry(value, index, label);
 }
 
-function createAffectRow(
-  record: MudRecord,
-  index: number,
-  fallbackName?: string,
-): AffectRowModel {
+function createAffectRow(record: MudRecord, index: number, fallbackName?: string): AffectRowModel {
   const name = normalizeTextValue(readAnyKey(record, AFFECT_NAME_KEYS));
   const nameText = name ?? fallbackName ?? `Unknown affect ${index + 1}`;
   const duration = formatDurationText(readAnyKey(record, AFFECT_DURATION_KEYS));
@@ -613,11 +594,7 @@ function createInventoryRecordItem(
   };
 }
 
-function createInventoryCountItem(
-  label: string,
-  count: number,
-  index: number,
-): InventoryItemModel {
+function createInventoryCountItem(label: string, count: number, index: number): InventoryItemModel {
   const countText = formatDisplayNumber(count) ?? String(count);
 
   return {

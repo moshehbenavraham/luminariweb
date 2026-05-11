@@ -1,10 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { defaultMsdpVariables, normalizeMsdpVariableMap } from '../shared/mud.ts';
-import {
-  buildRoomDisplayModel,
-  normalizeRoomExits,
-} from '../shared/msdp-room-display.ts';
+import { buildRoomDisplayModel, normalizeRoomExits } from '../shared/msdp-room-display.ts';
 import type { MsdpVariableMap } from '../shared/mud.ts';
 
 const defaultMap = normalizeMsdpVariableMap(defaultMsdpVariables);
@@ -35,7 +32,10 @@ test('builds present room identity with zero vnum and structured details', () =>
   );
 
   assert.equal(model.state, 'present');
-  assert.equal(model.identityFields.find((field) => field.id === 'roomName')?.valueText, 'Hall of Fixtures');
+  assert.equal(
+    model.identityFields.find((field) => field.id === 'roomName')?.valueText,
+    'Hall of Fixtures',
+  );
   assert.equal(model.identityFields.find((field) => field.id === 'roomVnum')?.valueText, '0');
   assert.deepEqual(
     model.details.map((detail) => [detail.label, detail.valueText]),
@@ -96,8 +96,14 @@ test('uses structured ROOM fields as conservative identity fallback', () => {
   );
 
   assert.equal(model.state, 'present');
-  assert.equal(model.identityFields.find((field) => field.id === 'roomName')?.valueText, 'Structured Room');
-  assert.equal(model.identityFields.find((field) => field.id === 'areaName')?.valueText, 'Structured Area');
+  assert.equal(
+    model.identityFields.find((field) => field.id === 'roomName')?.valueText,
+    'Structured Room',
+  );
+  assert.equal(
+    model.identityFields.find((field) => field.id === 'areaName')?.valueText,
+    'Structured Area',
+  );
   assert.equal(model.identityFields.find((field) => field.id === 'roomVnum')?.valueText, '1,001');
   assert.deepEqual(
     model.details.map((detail) => detail.label),

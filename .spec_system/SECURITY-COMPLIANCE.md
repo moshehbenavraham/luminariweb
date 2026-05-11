@@ -1,7 +1,7 @@
 # Security & Compliance
 
 > Cumulative security posture and GDPR compliance record. Updated between phases via carryforward.
-> **Line budget**: 1000 max | **Last updated**: Phase 01 (2026-05-11)
+> **Line budget**: 1000 max | **Last updated**: Phase 02 (2026-05-11)
 
 ---
 
@@ -9,13 +9,13 @@
 
 ### Overall: AT RISK
 
-| Metric | Value |
-|--------|-------|
-| Open Findings | 1 |
-| Critical/High | 0 |
-| Medium/Low | 1 |
-| Phases Audited | 2 |
-| Last Clean Phase | -- |
+| Metric           | Value |
+| ---------------- | ----- |
+| Open Findings    | 1     |
+| Critical/High    | 0     |
+| Medium/Low       | 1     |
+| Phases Audited   | 3     |
+| Last Clean Phase | --    |
 
 ---
 
@@ -39,12 +39,12 @@ Active security or GDPR issues requiring attention. Ordered by severity.
 
 Recently closed issues are retained here for phase history and regression awareness.
 
-| Finding | Severity | Resolution | Closed |
-|---------|----------|------------|--------|
-| P00-SEC-001 Public proxy can target arbitrary hosts and ports | High | Phase 01 added destination allowlists, origin checks, DNS/IP classification, banned service ports, and connect/idle timeouts before socket creation. | P01 |
-| P00-SEC-003 Command/input rate limiting implemented locally | Medium | HTTP requests are rate limited per IP, browser command input is throttled per WebSocket session, and concurrent WebSocket connections are capped per IP. | P00 |
-| P00-SEC-004 HTML rendering depends on escaping invariants | Low | Phase 01 preserved escaped HTML rendering in shared helpers and added renderer coverage before any xterm opt-in path was exposed. | P01 |
-| P00-SEC-005 No automated security regression tests | Low | Phase 01 added parser, lifecycle, resize, policy, and renderer tests, plus passing lint/build/test coverage. | P01 |
+| Finding                                                       | Severity | Resolution                                                                                                                                               | Closed |
+| ------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| P00-SEC-001 Public proxy can target arbitrary hosts and ports | High     | Phase 01 added destination allowlists, origin checks, DNS/IP classification, banned service ports, and connect/idle timeouts before socket creation.     | P01    |
+| P00-SEC-003 Command/input rate limiting implemented locally   | Medium   | HTTP requests are rate limited per IP, browser command input is throttled per WebSocket session, and concurrent WebSocket connections are capped per IP. | P00    |
+| P00-SEC-004 HTML rendering depends on escaping invariants     | Low      | Phase 01 preserved escaped HTML rendering in shared helpers and added renderer coverage before any xterm opt-in path was exposed.                        | P01    |
+| P00-SEC-005 No automated security regression tests            | Low      | Phase 01 added parser, lifecycle, resize, policy, and renderer tests, plus passing lint/build/test coverage.                                             | P01    |
 
 ---
 
@@ -71,14 +71,14 @@ Potentially sensitive operational data:
 
 ### Compliance Checklist
 
-| Requirement | Status | Notes |
-|-------------|--------|-------|
-| Data collection has documented purpose | Partial | Browser-local settings support gameplay preferences; no server-side account data exists. |
-| Consent obtained before data storage | Partial | Settings are saved through app controls, but there is no explicit storage notice. |
-| Data minimization verified | Partial | No secrets are required; cookies should be replaced for local settings. |
-| Deletion/erasure path exists | Partial | Users can clear browser storage/cookies; no in-app clear-all control is documented. |
-| No PII in application logs | Pass | Current code logs startup and settings-load errors, not command text. |
-| Third-party transfers documented | Partial | Commands and connection data are sent to selected MUD hosts; production policy is now documented and enforced. |
+| Requirement                            | Status  | Notes                                                                                                          |
+| -------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------- |
+| Data collection has documented purpose | Partial | Browser-local settings support gameplay preferences; no server-side account data exists.                       |
+| Consent obtained before data storage   | Partial | Settings are saved through app controls, but there is no explicit storage notice.                              |
+| Data minimization verified             | Partial | No secrets are required; cookies should be replaced for local settings.                                        |
+| Deletion/erasure path exists           | Partial | Users can clear browser storage/cookies; no in-app clear-all control is documented.                            |
+| No PII in application logs             | Pass    | Current code logs startup and settings-load errors, not command text.                                          |
+| Third-party transfers documented       | Partial | Commands and connection data are sent to selected MUD hosts; production policy is now documented and enforced. |
 
 ## Dependency Security
 
@@ -98,10 +98,11 @@ Development dependencies include Vite, TypeScript, ESLint, React plugin packages
 
 ## Phase History
 
-| Phase | Sessions | Security | GDPR | Findings Opened | Findings Closed |
-|-------|----------|----------|------|-----------------|-----------------|
-| 00 | 5/5 complete | Initial code scan | Local-only baseline | 4 | 1 |
-| 01 | 6/6 complete | Proxy safety hardened and renderer coverage expanded | Local-only baseline retained | 0 | 4 |
+| Phase | Sessions     | Security                                             | GDPR                         | Findings Opened | Findings Closed |
+| ----- | ------------ | ---------------------------------------------------- | ---------------------------- | --------------- | --------------- |
+| 00    | 5/5 complete | Initial code scan                                    | Local-only baseline          | 4               | 1               |
+| 01    | 6/6 complete | Proxy safety hardened and renderer coverage expanded | Local-only baseline retained | 0               | 4               |
+| 02    | 6/6 complete | Panel expansion remained client-side; no new findings introduced | Local-only baseline retained | 0               | 0               |
 
 ## Recommendations
 

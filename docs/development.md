@@ -32,9 +32,10 @@ Ports are configured in `shared/app-settings.ts`.
 1. Install dependencies with `npm install`.
 2. Start both services with `npm run dev`.
 3. Edit React code in `src/`, proxy code in `server/`, or shared contracts in `shared/`.
-4. Run `npm run lint`.
-5. Run `npm run build`.
-6. Run `npm test` for the fixture-backed MSDP state tests.
+4. Check [Protocol Feature Checklist](protocol-feature-checklist.md) before changing protocol support claims.
+5. Run `npm run lint`.
+6. Run `npm run build`.
+7. Run `npm test` for the fixture-backed MSDP state tests.
 
 ## Testing
 
@@ -44,9 +45,25 @@ Run the focused test suite with:
 npm test
 ```
 
-The test script uses Node's built-in `node:test` runner with the existing `tsx` loader. Current coverage focuses on MSDP variable-map normalization, configured-variable filtering, pure MSDP state mapping, and fixture-driven state-mapping checks.
+The test script uses Node's built-in `node:test` runner with the existing `tsx` loader. Current coverage focuses on MSDP variable-map normalization, configured-variable filtering, pure MSDP state mapping, fixture-driven state-mapping checks, and shared display helpers for character, combat, group, affects, inventory, room, map, and quest panels.
 
-Phase 00 added the fixture and state-mapping test foundations. Telnet parser hardening, reconnect lifecycle coverage, and browser-level UI verification remain separate work.
+Phase 00 added the fixture and state-mapping test foundations. Phase 01 added Telnet parser, reconnect lifecycle, resize, and proxy safety coverage. Phase 02 added the shared display helpers and panel-state tests for the current HUD and sidebar surfaces. Browser-level UI verification remains separate work.
+
+Run the focused protocol status tests after changing protocol claims:
+
+```bash
+node --import tsx --test tests/protocol-feature-status.test.ts
+```
+
+Treat protocol claims conservatively:
+
+- Source facts prove source capability, not automatic web client support.
+- Synthetic fixtures prove parser and client contracts, not live server schema.
+- `TITLE`, saves, live `DAMAGE_BONUS`, `MINIMAP`, and `QUEST_INFO` remain
+  unavailable, override-only, or future-source work until source support is
+  implemented and tested.
+- MCCP and GMCP stay unsupported until Phase 04 documents and tests real server
+  and proxy behavior.
 
 ## Generated Output
 

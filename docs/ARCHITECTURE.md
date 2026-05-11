@@ -34,6 +34,7 @@ Telnet MUD server
 - **Purpose**: Define app settings, MUD presets, browser/server message types, MSDP variable mappings, shared MSDP mapping helpers, and client-visible MUD state fields and display models.
 - **Tech**: TypeScript.
 - **Location**: `shared/`
+- **Protocol status**: [`shared/protocol-feature-status.ts`](../shared/protocol-feature-status.ts) is the typed catalog for supported, partial, rejected, deferred, and validation-gap protocol claims.
 
 ## Runtime Data Flow
 
@@ -77,6 +78,28 @@ An xterm.js renderer spike is available only through `?terminalRenderer=xterm-sp
 | `GET /*`            | Serves built frontend assets outside development                |
 
 WebSocket details are documented in [api/http-and-websocket.md](api/http-and-websocket.md).
+
+## Protocol Support Boundary
+
+The current supported protocol path is browser JSON over `/ws`, an integrated
+proxy Telnet socket, and MSDP-backed state mapping. Maintainers should use the
+[Protocol Feature Checklist](protocol-feature-checklist.md) before changing or
+claiming protocol support.
+
+Current high-level boundaries:
+
+- Client and proxy support ANSI terminal rendering, UTF-8 decoding, TTYPE,
+  NAWS, and MSDP for the documented app workflow.
+- The proxy rejects MCCP, MXP, and CHARSET today.
+- GMCP, MSP, MSSP consumption, native source WebSocket, and missing MSDP
+  variables remain source-level or validation-gap work.
+- `TITLE`, saves, live `DAMAGE_BONUS`, `MINIMAP`, and `QUEST_INFO` must stay
+  explicit unavailable, override-only, or future-source states until
+  Luminari-Source emits and tests them.
+
+The UI can expose these boundaries as static protocol status. It must not infer
+live negotiation state unless the browser already receives reliable state for
+that feature.
 
 ## Tech Stack Rationale
 

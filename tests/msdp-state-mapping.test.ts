@@ -236,7 +236,11 @@ test('preserves room fixture variants and ignores disabled room mappings', async
   const stringExits = readFixturePairValue(corpus.fixtures, 'room.exits.string', 'ROOM_EXITS');
   const arrayExits = readFixturePairValue(corpus.fixtures, 'room.exits.array', 'ROOM_EXITS');
   const tableExits = readFixturePairValue(corpus.fixtures, 'room.exits.table', 'ROOM_EXITS');
-  const objectExits = readFixturePairValue(corpus.fixtures, 'room.exits.object.unknown', 'ROOM_EXITS');
+  const objectExits = readFixturePairValue(
+    corpus.fixtures,
+    'room.exits.object.unknown',
+    'ROOM_EXITS',
+  );
   const emptyRoom = readFixturePairValue(corpus.fixtures, 'room.empty.values', 'ROOM');
   const emptyExits = readFixturePairValue(corpus.fixtures, 'room.empty.values', 'ROOM_EXITS');
   const roomUnknown = readFixturePairValue(corpus.fixtures, 'room.room.partial.unknown', 'ROOM');

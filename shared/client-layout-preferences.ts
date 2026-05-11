@@ -10,6 +10,7 @@ export const INSPECTOR_TAB_IDS = [
   'inventory',
   'affects',
   'quests',
+  'protocol',
 ] as const;
 
 export const INSPECTOR_DENSITIES = ['comfortable', 'compact'] as const;

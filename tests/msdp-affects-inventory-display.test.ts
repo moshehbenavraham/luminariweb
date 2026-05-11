@@ -66,13 +66,19 @@ test('keeps empty, loading, disabled, offline, error, and raw affects states dis
   const emptyAffects = await readCollectionFixtureValue('collections.empty.values', 'AFFECTS');
   const disabledMap: MsdpVariableMap = { ...defaultMap, affects: '' };
 
-  assert.equal(buildAffectsDisplayModel({ affects: emptyAffects }, 'connected', defaultMap).state, 'empty');
+  assert.equal(
+    buildAffectsDisplayModel({ affects: emptyAffects }, 'connected', defaultMap).state,
+    'empty',
+  );
   assert.equal(buildAffectsDisplayModel({}, 'connected', defaultMap).state, 'loading');
   assert.equal(buildAffectsDisplayModel({}, 'connected', disabledMap).state, 'disabled');
   assert.equal(buildAffectsDisplayModel({}, 'idle', defaultMap).state, 'offline');
   assert.equal(buildAffectsDisplayModel({}, 'disconnected', defaultMap).state, 'offline');
   assert.equal(buildAffectsDisplayModel({}, 'error', defaultMap).state, 'error');
-  assert.equal(buildAffectsDisplayModel({ affects: 'raw affects text' }, 'connected', defaultMap).state, 'raw');
+  assert.equal(
+    buildAffectsDisplayModel({ affects: 'raw affects text' }, 'connected', defaultMap).state,
+    'raw',
+  );
 });
 
 test('normalizes object-like affects conservatively', async () => {

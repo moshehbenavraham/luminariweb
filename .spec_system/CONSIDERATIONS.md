@@ -1,7 +1,7 @@
 # Considerations
 
 > Institutional memory for AI assistants. Updated between phases via carryforward.
-> **Line budget**: 600 max | **Last updated**: Phase 01 (2026-05-11)
+> **Line budget**: 600 max | **Last updated**: Phase 02 (2026-05-11)
 
 ---
 
@@ -11,22 +11,23 @@ Items requiring attention in upcoming phases. Review before each session.
 
 ### Technical Debt
 
-- [P01] `server/index.ts` is thinner after parser and lifecycle extraction, but it still owns proxy routes, policy wiring, and session bootstrap. Keep further extraction behind tests so routing stays easy to reason about.
-- [P01] `src/App.tsx` still concentrates renderer selection, resize observation, and command-shell wiring. Avoid broad UI refactors until the renderer boundary and resize path remain covered.
+- [P02] `src/App.tsx` still owns the panel wiring for HUD, combat, group, inventory, room, map, and quest surfaces. Keep future extraction behind tests so the UI layer does not become a second parser.
+- [P02] The shared display helpers are now the main growth surface. Split them only when there is a clear contract boundary, or the project will trade one monolith for several coupled ones.
 
 ### External Dependencies
 
-- [P01] The terminal renderer now has an opt-in xterm spike, but the production path still depends on `ansi-to-html` escaping staying intact. Keep the escape invariant and tests in place before any renderer swap.
-- [P01] Proxy destination policy depends on external MUD host behavior and DNS answers. Keep allowlists and DNS/IP classification fail-closed as destinations expand.
+- [P01] The terminal renderer path still relies on escape-safe rendering for MUD text and browser HTML output. Keep that invariant intact before any renderer swap or richer formatting work.
+- [P01] Public proxy destination policy still depends on external host behavior and DNS/IP classification. Keep allowlists and fail-closed checks intact as destination coverage expands.
 
 ### Performance / Security
 
-- [P01] Browser settings, aliases, and triggers still persist in cookies. Move them to localStorage or IndexedDB before adding sensitive preferences or larger payloads.
-- [P01] Public proxy exposure now has allowlists, origin checks, and timeouts; preserve sanitized rejection text and quota defaults as routes expand.
+- [P02] Browser settings, aliases, and triggers still persist in cookies under the open cookie finding. Move them to localStorage or IndexedDB before storing anything larger or more sensitive.
+- [P02] Map, quest, room, and combat fallback text must stay bounded and explicit. Do not let malformed payloads or oversized raw summaries dominate the sidebar on narrow widths.
 
 ### Architecture
 
-- [P01] Parser, lifecycle, NAWS resize, and deployment policy now live in separate helpers. Keep later changes aligned to those seams instead of recombining them in `server/index.ts`.
+- [P02] Source-confirmed MSDP fields and override-only fields now sit side by side. Keep future additions explicit about which states come from the server and which still depend on local overrides.
+- [P02] Synthetic fixtures are contract checks, not proof of live schema. Any new panel work should keep representative fixture updates paired with source verification.
 
 ---
 
@@ -36,22 +37,22 @@ Proven patterns and anti-patterns. Reference during implementation.
 
 ### What Worked
 
-- [P01] Pure helper extraction (`server/telnet-parser.ts`, `server/mud-session.ts`, `server/proxy-policy.ts`) made protocol, lifecycle, and deployment rules testable without booting the full server.
-- [P01] Deterministic harnesses and fixture-based tests gave stable coverage for Telnet edge cases, MSDP shapes, reconnect cleanup, resize routing, and public proxy rejection paths.
-- [P01] Negotiation-gated NAWS writes and stale-socket guards prevented reconnect races from leaking old terminal state.
-- [P01] Keeping the xterm migration opt-in preserved the stable escaped HTML renderer while still proving the long-term terminal path.
-- [P01] Sanitized browser-facing rejection messages made proxy policy failures actionable without exposing internal network details.
+- [P02] Pure display helpers (`shared/msdp-*`) kept protocol interpretation testable and let `src/App.tsx` stay focused on wiring.
+- [P02] Explicit unavailable, empty, offline, and error states made the panel UI honest without collapsing into generic "missing data" copy.
+- [P02] Reusing the room/exits normalization for map fallback prevented a second parser from drifting.
+- [P02] Constraining quest parsing to valid JSON containers avoided treating free-form command output as structured protocol data.
+- [P02] Manual responsive checks at desktop, 390px, and 360px caught overflow risks early for the new sidebar surfaces.
 
 ### What to Avoid
 
-- [P01] Do not broaden parser or lifecycle rewrites without byte-level or socket-level fixtures for the edge cases already covered in phase 01.
-- [P01] Do not treat cookie-based client state as a long-term store for settings that may grow or become sensitive.
-- [P01] Do not replace the terminal renderer or command input path without rechecking escaping, focus handling, and resize behavior together.
+- [P02] Do not infer live `MINIMAP` or `QUEST_INFO` support from UI demand alone; keep them override-only until source-level support exists.
+- [P02] Do not broaden parser rewrites without fixtures that pin edge cases and fallback behavior.
+- [P02] Do not treat cookies as a long-term store for settings that may grow or become sensitive.
 
 ### Tool/Library Notes
 
-- [P01] `node --import tsx --test`, `npm run lint`, and `npm run build` were sufficient to validate the phase 01 protocol, lifecycle, and deployment changes.
-- [P01] `@xterm/xterm` v6 requires its option types to stay aligned with the package API; older `cols`/`rows` style assumptions break the spike helpers.
+- [P01] `node --import tsx --test`, `npm run lint`, and `npm run build` were enough to validate the protocol and panel sessions.
+- [P02] Shared helper tests are most useful when they assert both the display state and the bounded raw fallback text.
 
 ---
 
@@ -61,13 +62,9 @@ Recently closed items (buffer - rotates out after 2 phases).
 
 | Phase | Item | Resolution |
 |-------|------|------------|
-| P00 | Default MSDP map alignment | Default requests and server mapping were aligned to confirmed Luminari-Source variables, with unsupported values left as explicit overrides. |
-| P00 | Uncommitted test foundation | A committed `npm test` path and fixture-driven MSDP tests now exist across the parser, lifecycle, resize, renderer, and deployment coverage added in phase 01. |
-| P00 | Source-aware unavailable-data UX | The UI now distinguishes unavailable, empty, waiting, offline, and present states without treating `0` as missing. |
-| P00 | MSDP fixture corpus | Versioned fixture sets and a manifest now support repeatable parser/state coverage. |
-| P00 | Shared state mapping extraction | Pure MSDP mapping helpers were extracted into `shared/msdp-state.ts` and imported by the proxy. |
-| P00 | Public proxy arbitrary hosts and ports | Phase 01 added destination allowlists, origin checks, DNS/IP classification, banned ports, and connect/idle timeouts before socket creation. |
-| P00 | HTML rendering depends on escaping invariants | Phase 01 preserved escaped HTML rendering in shared helpers and added renderer coverage before any xterm opt-in path was exposed. |
-| P00 | No automated security regression tests | Phase 01 added parser, lifecycle, resize, policy, and renderer tests that cover the main protocol and deployment boundaries. |
+| P02 | `src/App.tsx` panel concentration | Phase 02 extracted HUD, combat, group, inventory, room, map, and quest interpretation into shared helpers, leaving App as wiring and rendering glue. |
+| P01 | Availability states only covered the earlier renderer slice | Phase 02 extended explicit unavailable handling across the new panel surface and kept fallback states visible instead of inferred. |
+| P01 | Room and map fallback logic needed a shared contract | Phase 02 reused room normalization for map summary generation and kept `MINIMAP` override-only. |
+| P00 | Source-confirmed data should stay distinct from override-only fields | Phase 02 reinforced the boundary across map and quest panels, with `MINIMAP` and `QUEST_INFO` still explicit override paths. |
 
 _Auto-generated by carryforward. Manual edits allowed but may be overwritten._

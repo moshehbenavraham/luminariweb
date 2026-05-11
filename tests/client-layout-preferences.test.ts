@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   DEFAULT_CLIENT_LAYOUT_PREFERENCES,
+  INSPECTOR_TAB_IDS,
   parseClientLayoutPreferencesJson,
   parseClientLayoutPreferencesPayload,
   serializeClientLayoutPreferences,
@@ -28,6 +29,24 @@ test('accepts valid saved layout preferences', () => {
     activeInspectorTab: 'inventory',
     inspectorCollapsed: true,
     density: 'compact',
+  });
+});
+
+test('accepts the Protocol inspector tab as a stored layout preference', () => {
+  assert.ok(INSPECTOR_TAB_IDS.includes('protocol'));
+
+  const parsed = parseClientLayoutPreferencesPayload({
+    version: 1,
+    activeInspectorTab: 'protocol',
+    inspectorCollapsed: false,
+    density: 'comfortable',
+  });
+
+  assert.deepEqual(parsed, {
+    version: 1,
+    activeInspectorTab: 'protocol',
+    inspectorCollapsed: false,
+    density: 'comfortable',
   });
 });
 
@@ -87,14 +106,14 @@ test('rejects future layout preference versions', () => {
 test('serializes storage-safe normalized layout preferences', () => {
   const serialized = serializeClientLayoutPreferences({
     version: 1,
-    activeInspectorTab: 'affects',
+    activeInspectorTab: 'protocol',
     inspectorCollapsed: true,
     density: 'compact',
   });
 
   assert.deepEqual(parseClientLayoutPreferencesJson(serialized), {
     version: 1,
-    activeInspectorTab: 'affects',
+    activeInspectorTab: 'protocol',
     inspectorCollapsed: true,
     density: 'compact',
   });

@@ -524,7 +524,7 @@ GitHub metadata was checked on 2026-05-10. Local clone state is listed in the Re
 | 0     | Align With Real Luminari Data | 5        | Complete    |
 | 1     | Harden Terminal and Proxy     | 6        | Complete    |
 | 2     | Build Luminari Game Panels    | 6        | Complete    |
-| 3     | Borrow the Best Ideas         | 6        | Not Started |
+| 3     | Borrow the Best Ideas         | 6        | Complete    |
 | 4     | Source-Level Protocol Path    | 5        | Planned     |
 
 ## Phase 0: Align With Real Luminari Data
@@ -962,6 +962,8 @@ Acceptance:
 - Maintainers can see what protocol features are safe to build on.
 - Deferred protocol work has reasons and prerequisites.
 - The checklist prevents accidental MCCP or GMCP overcommitment.
+
+Status: complete. Phase 03 session 06 closed the protocol feature checklist and the phase artifacts were archived after validation.
 
 ## Phase 4: Source-Level Protocol Path
 

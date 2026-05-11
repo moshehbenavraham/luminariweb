@@ -111,25 +111,34 @@
 
 ## Local Dev Tools
 
-| Category       | Tool           | Config                                |
-| -------------- | -------------- | ------------------------------------- |
-| Formatter      | Prettier       | `.prettierrc.json`, `npm run format`  |
-| Linter         | ESLint         | `eslint.config.js`, `npm run lint`    |
-| Type Safety    | TypeScript     | `tsconfig.json`, `npm run build`      |
-| Frontend Build | Vite           | `vite.config.ts`, `npm run build`     |
-| Server Runtime | tsx/Node       | `npm run dev:server`, `npm run start` |
-| Testing        | not configured | Add during fixture/parser work        |
-| Database       | not configured | No DB signals detected                |
+| Category       | Tool             | Config                                               |
+| -------------- | ---------------- | ---------------------------------------------------- |
+| Formatter      | Prettier         | `.prettierrc.json`, `npm run format`                 |
+| Linter         | ESLint           | `eslint.config.js`, `npm run lint`                   |
+| Type Safety    | TypeScript       | `tsconfig.json`, `npm run build`                     |
+| Frontend Build | Vite             | `vite.config.ts`, `npm run build`                    |
+| Server Runtime | tsx/Node         | `npm run dev:server`, `npm run start`                |
+| Testing        | Node test runner | `node --import tsx --test tests/*.test.ts`, `tests/` |
+| Database       | not configured   | No DB signals detected                               |
 
 ## CI/CD
 
-| Bundle       | Status         | Workflow                         |
-| ------------ | -------------- | -------------------------------- |
-| Code Quality | configured     | `.github/workflows/quality.yml`  |
-| Build & Test | configured     | `.github/workflows/test.yml`     |
-| Security     | configured     | `.github/workflows/security.yml` |
-| Integration  | not configured | -                                |
-| Operations   | configured     | `.github/workflows/deploy.yml`   |
+| Bundle       | Status     | Workflow                            |
+| ------------ | ---------- | ----------------------------------- |
+| Code Quality | configured | `.github/workflows/quality.yml`     |
+| Build & Test | configured | `.github/workflows/test.yml`        |
+| Security     | configured | `.github/workflows/security.yml`    |
+| Integration  | configured | `.github/workflows/integration.yml` |
+| Operations   | configured | `.github/workflows/deploy.yml`      |
+
+## Infrastructure
+
+| Component | Status         | Details                                                                                                                                 |
+| --------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Health    | configured     | Express `GET /health` returns 200 JSON with `{ "ok": true }`; local and production probes target `/health`.                             |
+| Local Dev | configured     | `npm run build && npm start` serves the production build on port 5191.                                                                  |
+| Probe     | manual         | Operator-hosted PM2/load-balancer or uptime checks should probe `https://<origin>/health`; PM2 has no in-repo HTTP probe configuration. |
+| Backup    | not configured | No server-side database or backup target exists in this repository.                                                                     |
 
 ## Git and Review
 

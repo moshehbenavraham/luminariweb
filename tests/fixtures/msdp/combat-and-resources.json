@@ -209,16 +209,7 @@
         "PRD Source Protocol Facts confirms OPPONENT_NAME and TANK_NAME.",
         "Session 02 requires empty combat state to stay quiet and non-alarming."
       ],
-      "payloadTokens": [
-        "VAR",
-        "OPPONENT_NAME",
-        "VAL",
-        "",
-        "VAR",
-        "TANK_NAME",
-        "VAL",
-        ""
-      ],
+      "payloadTokens": ["VAR", "OPPONENT_NAME", "VAL", "", "VAR", "TANK_NAME", "VAL", ""],
       "expectedPairs": [
         ["OPPONENT_NAME", ""],
         ["TANK_NAME", ""]

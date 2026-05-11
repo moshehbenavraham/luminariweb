@@ -63,6 +63,8 @@ node --import tsx --test tests/*.test.ts
 - Layout preference helper coverage for default inspector state, valid saved payloads, corrupt JSON,
   unknown tab ids, invalid density values, missing fields, future versions, and storage-safe
   serialization.
+- Protocol feature status coverage for required feature inventory, evidence presence, status counts,
+  deterministic grouping, deferred Phase 04 tags, and conservative MCCP/GMCP claims.
 - Automation helper coverage for alias and trigger validation, wildcard captures, command sequence
   splitting, disabled entries, previews, alias recursion reports, and trigger command caps.
 - Client config persistence coverage for versioned localStorage payloads, corrupt and future-version
@@ -101,6 +103,7 @@ node --import tsx --test tests/msdp-room-display.test.ts
 node --import tsx --test tests/msdp-map-display.test.ts
 node --import tsx --test tests/msdp-quest-display.test.ts
 node --import tsx --test tests/client-layout-preferences.test.ts
+node --import tsx --test tests/protocol-feature-status.test.ts
 node --import tsx --test tests/msdp-state-mapping.test.ts
 node --import tsx --test tests/proxy-network.test.ts
 node --import tsx --test tests/proxy-policy.test.ts
@@ -209,13 +212,18 @@ normally after selecting the Quests tab.
 confirms live population and fixture-backed schemas.
 
 For inspector layout checks, use desktop, 390px, and 360px viewports. Verify the Map, Room,
-Character, Combat, Group, Inventory, Affects, and Quests tabs are reachable from one inspector,
-the active tab, collapsed state, and density restore after refresh, corrupt `lwc.layout`
+Character, Combat, Group, Inventory, Affects, Quests, and Protocol tabs are reachable from one
+inspector, the active tab, collapsed state, and density restore after refresh, corrupt `lwc.layout`
 `localStorage` falls back to the Map tab without breaking startup, and the command input remains
 visible before and after tab switches, collapse/expand, density changes, settings menu close, and
 terminal clicks. At 390px and 360px, verify there is no horizontal page scrolling, short tab labels
 fit inside the inspector, long panel fallback text wraps or scrolls inside the panel, and the command
 form remains reachable without being covered by the inspector.
+
+For Protocol tab checks, verify status counts, status badges, evidence links, Phase 04 follow-up
+labels, and long support-boundary notes wrap inside the panel at desktop, 390px, and 360px widths.
+Confirm MCCP, GMCP, MXP, MSP, MSSP, CHARSET, `MINIMAP`, `QUEST_INFO`, `TITLE`, saves, and live
+`DAMAGE_BONUS` are not presented as complete live support.
 
 For mobile/PWA checks, use desktop, 390px, and 360px viewports. Verify the header and mobile status
 strip distinguish browser network, proxy readiness, and MUD connection state. Toggle browser

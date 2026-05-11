@@ -123,6 +123,18 @@ import type {
   TerminalDimensions,
 } from '../shared/mud.ts';
 import {
+  PROTOCOL_FEATURE_STATUS_LABELS,
+  PROTOCOL_FEATURE_STATUSES,
+  PROTOCOL_FOLLOW_UP_LABELS,
+  getProtocolFeaturesByGroup,
+  getProtocolStatusCounts,
+} from '../shared/protocol-feature-status.ts';
+import type {
+  ProtocolEvidenceKind,
+  ProtocolFeatureRecord,
+  ProtocolFeatureStatus,
+} from '../shared/protocol-feature-status.ts';
+import {
   convertLuminariColorCodes,
   createMudHtmlStreamConverter,
   renderMudHtml,
@@ -332,6 +344,7 @@ const INSPECTOR_TAB_METADATA: Record<InspectorTabId, InspectorTab> = {
   inventory: { id: 'inventory', label: 'Inventory', shortLabel: 'Inv' },
   affects: { id: 'affects', label: 'Affects', shortLabel: 'Affects' },
   quests: { id: 'quests', label: 'Quests', shortLabel: 'Quests' },
+  protocol: { id: 'protocol', label: 'Protocol', shortLabel: 'Proto' },
 };
 const INSPECTOR_TABS: InspectorTab[] = INSPECTOR_TAB_IDS.map(
   (tabId) => INSPECTOR_TAB_METADATA[tabId],
@@ -340,6 +353,9 @@ const INSPECTOR_DENSITY_LABELS: Record<InspectorDensity, string> = {
   comfortable: 'Comfort',
   compact: 'Compact',
 };
+const PROTOCOL_GROUPED_FEATURES = getProtocolFeaturesByGroup();
+const PROTOCOL_STATUS_COUNTS = getProtocolStatusCounts();
+const REPOSITORY_BLOB_BASE_URL = 'https://github.com/moshehbenavraham/luminariweb/blob/main/';
 
 function App() {
   const [uiSettings, setUiSettings] = useState<AppSettings>(appSettings);
@@ -1568,6 +1584,8 @@ function App() {
         return <AffectsPanel affects={affectsDisplay} />;
       case 'quests':
         return <QuestPanel quest={questDisplay} />;
+      case 'protocol':
+        return <ProtocolInspectorPanel />;
       default:
         return assertNever(tabId);
     }
@@ -3494,6 +3512,96 @@ function QuestInfoPanel({ value }: QuestInfoPanelProps) {
   );
 }
 
+function ProtocolInspectorPanel() {
+  return (
+    <div className="protocol-panel" aria-label="Protocol support status">
+      <div className="protocol-summary">
+        <span>Documented support boundary</span>
+        <p>Static checklist status, not live negotiation telemetry.</p>
+      </div>
+
+      <div className="protocol-count-grid" aria-label="Protocol status counts">
+        {PROTOCOL_FEATURE_STATUSES.map((status) => (
+          <div key={status} className="protocol-count">
+            <strong>{PROTOCOL_STATUS_COUNTS[status]}</strong>
+            <span>{PROTOCOL_FEATURE_STATUS_LABELS[status]}</span>
+          </div>
+        ))}
+      </div>
+
+      {PROTOCOL_GROUPED_FEATURES.map(({ group, features }) => (
+        <section className="protocol-section" key={group.id} aria-labelledby={`protocol-${group.id}`}>
+          <div className="protocol-section-heading">
+            <h3 id={`protocol-${group.id}`}>{group.title}</h3>
+            <p>{group.summary}</p>
+          </div>
+
+          <div className="protocol-feature-list">
+            {features.map((feature) => (
+              <ProtocolFeatureRow key={feature.id} feature={feature} />
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function ProtocolFeatureRow({ feature }: { feature: ProtocolFeatureRecord }) {
+  const statusClassName = getProtocolStatusClassName(feature.status);
+
+  return (
+    <article className={`protocol-feature protocol-feature-${statusClassName}`}>
+      <div className="protocol-feature-header">
+        <div>
+          <h4>{feature.name}</h4>
+          <p>{feature.scope}</p>
+        </div>
+        <span className={`protocol-status-badge protocol-status-badge-${statusClassName}`}>
+          {PROTOCOL_FEATURE_STATUS_LABELS[feature.status]}
+        </span>
+      </div>
+
+      <p className="protocol-feature-summary">{feature.summary}</p>
+      <p className="protocol-feature-detail">{feature.detail}</p>
+
+      <dl className="protocol-feature-meta">
+        <div>
+          <dt>Next</dt>
+          <dd>{feature.nextAction}</dd>
+        </div>
+        <div>
+          <dt>Evidence</dt>
+          <dd>
+            <ul className="protocol-evidence-list">
+              {feature.evidence.map((evidence) => (
+                <li key={`${feature.id}-${evidence.kind}-${evidence.path}`}>
+                  <span>{formatProtocolEvidenceKind(evidence.kind)}</span>
+                  <a href={getRepositoryEvidenceHref(evidence.path)} target="_blank" rel="noreferrer">
+                    {evidence.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </dd>
+        </div>
+        {feature.followUpTags.length > 0 ? (
+          <div>
+            <dt>Phase 04</dt>
+            <dd>
+              <ul className="protocol-follow-up-list">
+                {feature.followUpTags.map((tag) => (
+                  <li key={`${feature.id}-${tag}`}>{PROTOCOL_FOLLOW_UP_LABELS[tag]}</li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        ) : null}
+      </dl>
+    </article>
+  );
+}
+
 function formatMudValueAsText(value: MudValue): string {
   if (value === null || value === undefined) {
     return '';
@@ -4017,6 +4125,47 @@ function getKeyboardInspectorTabId(
   }
 
   return undefined;
+}
+
+function getProtocolStatusClassName(status: ProtocolFeatureStatus): string {
+  switch (status) {
+    case 'supported':
+      return 'supported';
+    case 'partial':
+      return 'partial';
+    case 'rejected':
+      return 'rejected';
+    case 'deferred':
+      return 'deferred';
+    case 'validation-gap':
+      return 'validation-gap';
+    default:
+      return assertNever(status);
+  }
+}
+
+function formatProtocolEvidenceKind(kind: ProtocolEvidenceKind): string {
+  switch (kind) {
+    case 'source':
+      return 'Source';
+    case 'code':
+      return 'Code';
+    case 'test':
+      return 'Test';
+    case 'doc':
+      return 'Doc';
+    case 'spec':
+      return 'Spec';
+    case 'gap':
+      return 'Gap';
+    default:
+      return assertNever(kind);
+  }
+}
+
+function getRepositoryEvidenceHref(path: string) {
+  const normalizedPath = path.replace(/^\.\//, '');
+  return `${REPOSITORY_BLOB_BASE_URL}${normalizedPath}`;
 }
 
 function hasExpandedSelection() {

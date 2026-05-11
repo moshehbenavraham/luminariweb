@@ -1,8 +1,5 @@
 import type { ConnectionStatus, MsdpVariableMap, MudState, MudValue } from './mud.ts';
-import {
-  formatAvailabilityAriaLabel,
-  isMsdpVariableConfigured,
-} from './msdp-display.ts';
+import { formatAvailabilityAriaLabel, isMsdpVariableConfigured } from './msdp-display.ts';
 import type { DisplayAvailabilityNotice } from './msdp-display.ts';
 
 export type QuestDisplayState =
@@ -122,8 +119,7 @@ function buildUnavailableQuestModel(
 
 function looksLikeJsonContainer(value: string) {
   return (
-    (value.startsWith('{') && value.endsWith('}')) ||
-    (value.startsWith('[') && value.endsWith(']'))
+    (value.startsWith('{') && value.endsWith('}')) || (value.startsWith('[') && value.endsWith(']'))
   );
 }
 

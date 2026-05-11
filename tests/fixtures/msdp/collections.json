@@ -208,13 +208,7 @@
         "sanitized": true
       },
       "description": "AFFECTS can include names, durations, modifiers, status text, and unknown fields.",
-      "coverage": [
-        "affects",
-        "array",
-        "table",
-        "numeric-normalization",
-        "unknown-fields"
-      ],
+      "coverage": ["affects", "array", "table", "numeric-normalization", "unknown-fields"],
       "sourceFacts": [
         "PRD Source Protocol Facts confirms AFFECTS.",
         "Session 04 renders representative effect records without claiming final source field names."
@@ -487,9 +481,7 @@
           ]
         ]
       ],
-      "notes": [
-        "Item names and fields are synthetic display contracts for parser and UI tests."
-      ]
+      "notes": ["Item names and fields are synthetic display contracts for parser and UI tests."]
     },
     {
       "id": "collections.inventory.object.unknown",

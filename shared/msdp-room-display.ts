@@ -72,14 +72,7 @@ type ExitSortEntry = RoomExitModel & {
   sourceIndex: number;
 };
 
-const ROOM_NAME_KEYS = [
-  'name',
-  'NAME',
-  'room_name',
-  'ROOM_NAME',
-  'roomName',
-  'ROOMNAME',
-] as const;
+const ROOM_NAME_KEYS = ['name', 'NAME', 'room_name', 'ROOM_NAME', 'roomName', 'ROOMNAME'] as const;
 const AREA_NAME_KEYS = ['area', 'AREA', 'area_name', 'AREA_NAME', 'areaName', 'AREANAME'] as const;
 const ROOM_VNUM_KEYS = ['vnum', 'VNUM', 'room_vnum', 'ROOM_VNUM', 'roomVnum', 'ROOMVNUM'] as const;
 const WORLD_TIME_KEYS = [
@@ -219,7 +212,9 @@ export function buildRoomDisplayModel(
   const identityFields = buildRoomIdentityFields(mudState, status, msdpVariables, roomRecord);
   const details = roomRecord ? buildRoomDetails(roomRecord) : [];
   const rawRoomText =
-    mudState.room !== undefined && details.length === 0 ? buildRawRoomText(mudState.room) : undefined;
+    mudState.room !== undefined && details.length === 0
+      ? buildRawRoomText(mudState.room)
+      : undefined;
   const exits = mudState.roomExits === undefined ? [] : normalizeRoomExits(mudState.roomExits);
   const exitsAvailability = buildRoomExitsAvailability(
     mudState.roomExits,
@@ -241,7 +236,8 @@ export function buildRoomDisplayModel(
       exits: [],
       availability: createRoomNotice('loading', {
         title: 'Waiting for room',
-        detail: 'Room MSDP variables are requested, but no room payload has arrived in this session.',
+        detail:
+          'Room MSDP variables are requested, but no room payload has arrived in this session.',
       }),
       exitsAvailability,
       ariaLabel: 'Waiting for room context.',
@@ -256,7 +252,8 @@ export function buildRoomDisplayModel(
       exits: [],
       availability: createRoomNotice('empty', {
         title: 'Room context empty',
-        detail: 'The server reported room context values, but no displayable room details were present.',
+        detail:
+          'The server reported room context values, but no displayable room details were present.',
       }),
       exitsAvailability,
       ariaLabel: 'Room context empty.',
@@ -349,7 +346,7 @@ function buildRoomIdentityField(
   const availability = getRoomFieldAvailability(descriptor, value, status, msdpVariables);
   const valueText =
     availability.kind === 'present'
-      ? normalizeFieldValueText(descriptor.id, value) ?? ROOM_FIELD_PLACEHOLDER
+      ? (normalizeFieldValueText(descriptor.id, value) ?? ROOM_FIELD_PLACEHOLDER)
       : availability.kind === 'empty'
         ? 'Empty'
         : availability.kind === 'unavailable'
@@ -442,7 +439,9 @@ function readStructuredIdentityValue(id: RoomIdentityFieldId, record: MudRecord 
 function normalizeFieldValueText(id: RoomIdentityFieldId, value: MudValue | undefined) {
   if (id === 'roomVnum') {
     const normalized = normalizeDisplayNumber(value);
-    return normalized === undefined ? undefined : (formatDisplayNumber(normalized) ?? String(normalized));
+    return normalized === undefined
+      ? undefined
+      : (formatDisplayNumber(normalized) ?? String(normalized));
   }
 
   return normalizeTextValue(value);
@@ -647,53 +646,68 @@ function createExitRowFromRecord(
   fallbackDirection?: string,
 ): ExitSortEntry {
   const direction = normalizeTextValue(readAnyKey(record, EXIT_DIRECTION_KEYS));
-  const directionText = direction ? formatMudLabel(direction) : (fallbackDirection ?? `Exit ${index + 1}`);
+  const directionText = direction
+    ? formatMudLabel(direction)
+    : (fallbackDirection ?? `Exit ${index + 1}`);
   const isDirectionMissing = direction === undefined && fallbackDirection === undefined;
   const destinationText = normalizeTextValue(readAnyKey(record, EXIT_DESTINATION_KEYS));
   const statusText = normalizeTextValue(readAnyKey(record, EXIT_STATUS_KEYS));
   const unknownFieldsText = formatUnknownFields(record, RECOGNIZED_EXIT_KEYS);
 
-  return withExitSort({
-    id: `exit-${normalizeIdPart(directionText)}-${index}`,
-    kind: 'exit',
-    directionText,
-    isDirectionMissing,
-    destinationText,
-    statusText,
-    unknownFieldsText,
-    ariaLabel: formatExitAriaLabel(
+  return withExitSort(
+    {
+      id: `exit-${normalizeIdPart(directionText)}-${index}`,
+      kind: 'exit',
       directionText,
       isDirectionMissing,
       destinationText,
       statusText,
       unknownFieldsText,
-    ),
-  }, directionText, index);
+      ariaLabel: formatExitAriaLabel(
+        directionText,
+        isDirectionMissing,
+        destinationText,
+        statusText,
+        unknownFieldsText,
+      ),
+    },
+    directionText,
+    index,
+  );
 }
 
 function createDirectionExitRow(direction: string, index: number): ExitSortEntry {
   const directionText = formatMudLabel(direction) || `Exit ${index + 1}`;
-  return withExitSort({
-    id: `exit-${normalizeIdPart(direction)}-${index}`,
-    kind: 'exit',
+  return withExitSort(
+    {
+      id: `exit-${normalizeIdPart(direction)}-${index}`,
+      kind: 'exit',
+      directionText,
+      isDirectionMissing: false,
+      ariaLabel: `${directionText} exit reported.`,
+    },
     directionText,
-    isDirectionMissing: false,
-    ariaLabel: `${directionText} exit reported.`,
-  }, directionText, index);
+    index,
+  );
 }
 
 function createRawExitEntry(value: MudValue, index: number): ExitSortEntry {
-  const rawText = truncateText(formatMudValueAsText(value), RAW_TEXT_LIMIT) || 'Unprintable exit value';
+  const rawText =
+    truncateText(formatMudValueAsText(value), RAW_TEXT_LIMIT) || 'Unprintable exit value';
   const directionText = `Raw exit ${index + 1}`;
 
-  return withExitSort({
-    id: `exit-raw-${index}`,
-    kind: 'raw',
+  return withExitSort(
+    {
+      id: `exit-raw-${index}`,
+      kind: 'raw',
+      directionText,
+      isDirectionMissing: true,
+      rawText,
+      ariaLabel: `${directionText}. ${rawText}.`,
+    },
     directionText,
-    isDirectionMissing: true,
-    rawText,
-    ariaLabel: `${directionText}. ${rawText}.`,
-  }, directionText, index);
+    index,
+  );
 }
 
 function withExitSort(row: RoomExitModel, sortLabel: string, sourceIndex: number): ExitSortEntry {
@@ -764,9 +778,13 @@ function formatRoomAvailabilityDetail(
 ) {
   const presentFields = fields.filter((field) => field.availability.kind === 'present').length;
   const parts = [
-    presentFields > 0 ? `${presentFields} identity ${presentFields === 1 ? 'field' : 'fields'}` : null,
+    presentFields > 0
+      ? `${presentFields} identity ${presentFields === 1 ? 'field' : 'fields'}`
+      : null,
     exits.length > 0 ? `${exits.length} ${exits.length === 1 ? 'exit' : 'exits'}` : null,
-    details.length > 0 ? `${details.length} structured ${details.length === 1 ? 'detail' : 'details'}` : null,
+    details.length > 0
+      ? `${details.length} structured ${details.length === 1 ? 'detail' : 'details'}`
+      : null,
     rawRoomText ? 'raw room fallback' : null,
   ].filter((part): part is string => Boolean(part));
 
@@ -787,8 +805,12 @@ function formatRoomAriaLabel(
   const exitSummary =
     exits.length > 0 ? `${exits.length} ${exits.length === 1 ? 'exit' : 'exits'} reported` : null;
   const rawSummary = rawRoomText ? 'raw room fallback available' : null;
-  const parts = [state === 'raw' ? 'Raw room context' : 'Room context', ...presentValues, exitSummary, rawSummary]
-    .filter((part): part is string => Boolean(part));
+  const parts = [
+    state === 'raw' ? 'Raw room context' : 'Room context',
+    ...presentValues,
+    exitSummary,
+    rawSummary,
+  ].filter((part): part is string => Boolean(part));
 
   return `${parts.join('. ')}.`;
 }

@@ -40,7 +40,11 @@ test('builds a deterministic room and exits fallback when MINIMAP is absent', ()
     ],
   );
   assert.deepEqual(
-    model.fallback?.exits.map((exit) => [exit.directionText, exit.destinationText, exit.statusText]),
+    model.fallback?.exits.map((exit) => [
+      exit.directionText,
+      exit.destinationText,
+      exit.statusText,
+    ]),
     [
       ['North', '1,002', undefined],
       ['South', '1,003', undefined],
@@ -48,6 +52,28 @@ test('builds a deterministic room and exits fallback when MINIMAP is absent', ()
     ],
   );
   assert.match(model.fallback?.summaryText ?? '', /Exits: North \(1,002\), South \(1,003\)/);
+  assert.equal(model.fallback?.mapper?.currentRoom.labelText, 'Hall of Fixtures');
+  assert.equal(model.fallback?.mapper?.currentRoom.detailText, 'Area: Test Keep | Room #1,001');
+  assert.deepEqual(model.fallback?.mapper?.sourceFields, [
+    'roomName',
+    'areaName',
+    'roomVnum',
+    'roomExits',
+  ]);
+  assert.deepEqual(
+    model.fallback?.mapper?.branches.map((branch) => [
+      branch.directionText,
+      branch.placement,
+      branch.destinationText,
+      branch.statusText,
+    ]),
+    [
+      ['North', 'north', '1,002', undefined],
+      ['South', 'south', '1,003', undefined],
+      ['Portal', 'other', 'Astral Gate', 'uncertain'],
+    ],
+  );
+  assert.match(model.fallback?.mapper?.ariaLabel ?? '', /3 directional exits available/);
 });
 
 test('uses live MINIMAP only when a configured override provides text', () => {
@@ -69,9 +95,11 @@ test('uses live MINIMAP only when a configured override provides text', () => {
 
   assert.notEqual(unconfigured.state, 'liveOverride');
   assert.equal(unconfigured.state, 'loading');
+  assert.equal(unconfigured.fallback, undefined);
   assert.equal(configured.state, 'liveOverride');
   assert.equal(configured.source, 'minimapOverride');
   assert.equal(configured.minimapText, 'server minimap\n  north');
+  assert.equal(configured.fallback, undefined);
 });
 
 test('keeps disabled, loading, empty, offline, and error map states distinct', () => {
@@ -96,7 +124,10 @@ test('keeps disabled, loading, empty, offline, and error map states distinct', (
     buildMapDisplayModel({ minimap: '   ' }, 'connected', minimapOnlyMap).state,
     'empty',
   );
-  assert.equal(buildMapDisplayModel({ room: {}, roomExits: [] }, 'connected', defaultMap).state, 'empty');
+  assert.equal(
+    buildMapDisplayModel({ room: {}, roomExits: [] }, 'connected', defaultMap).state,
+    'empty',
+  );
   assert.equal(buildMapDisplayModel({}, 'idle', defaultMap).state, 'offline');
   assert.equal(buildMapDisplayModel({}, 'disconnected', defaultMap).state, 'offline');
   assert.equal(buildMapDisplayModel({}, 'error', defaultMap).state, 'error');
@@ -118,4 +149,49 @@ test('preserves raw room and malformed exit fallback text without treating it as
   assert.equal(model.fallback?.exits.length, 1);
   assert.equal(model.fallback?.exits[0].kind, 'raw');
   assert.equal(model.fallback?.exits[0].rawText, 'north=??; east={vnum');
+  assert.deepEqual(model.fallback?.mapper?.sourceFields, ['room']);
+  assert.equal(model.fallback?.mapper?.currentRoom.labelText, 'Current room');
+  assert.equal(model.fallback?.mapper?.branches.length, 0);
+});
+
+test('builds mapper branches for partial identity and preserves unknown exit fields', () => {
+  const model = buildMapDisplayModel(
+    {
+      areaName: 'Border Hills',
+      roomExits: [
+        'east',
+        'up',
+        'out',
+        {
+          direction: 'southwest',
+          destination: 'Ravine Trail',
+          marker: 'Hidden crack',
+        },
+        'north=??; east={vnum',
+      ],
+    },
+    'connected',
+    defaultMap,
+  );
+
+  assert.equal(model.state, 'fallback');
+  assert.equal(model.fallback?.mapper?.currentRoom.labelText, 'Current room');
+  assert.equal(model.fallback?.mapper?.currentRoom.detailText, 'Area: Border Hills');
+  assert.deepEqual(model.fallback?.mapper?.sourceFields, ['areaName', 'roomExits']);
+  assert.deepEqual(
+    model.fallback?.mapper?.branches.map((branch) => [
+      branch.directionText,
+      branch.placement,
+      branch.destinationText,
+      branch.unknownFieldsText,
+    ]),
+    [
+      ['East', 'east', undefined, undefined],
+      ['Southwest', 'southwest', 'Ravine Trail', 'Marker: Hidden crack'],
+      ['Up', 'up', undefined, undefined],
+      ['Out', 'out', undefined, undefined],
+    ],
+  );
+  assert.equal(model.fallback?.exits.at(-1)?.kind, 'raw');
+  assert.equal(model.fallback?.exits.at(-1)?.rawText, 'north=??; east={vnum');
 });

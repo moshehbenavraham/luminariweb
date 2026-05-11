@@ -1194,6 +1194,246 @@
   margin: 0;
 }
 
+.protocol-panel {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0 0.75rem 0.9rem;
+}
+
+.protocol-summary {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: rgba(15, 23, 42, 0.46);
+  overflow-wrap: anywhere;
+}
+
+.protocol-summary span {
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.protocol-summary p,
+.protocol-section-heading p,
+.protocol-feature-header p,
+.protocol-feature-summary,
+.protocol-feature-detail {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.42;
+}
+
+.protocol-count-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.protocol-count {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  padding: 0.5rem 0.55rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 0.5rem;
+  background: rgba(2, 6, 23, 0.24);
+}
+
+.protocol-count strong {
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.protocol-count span {
+  color: var(--muted);
+  font-size: 0.67rem;
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.protocol-section {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.protocol-section-heading {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.protocol-section-heading h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.protocol-feature-list {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.protocol-feature {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: rgba(15, 23, 42, 0.36);
+  overflow-wrap: anywhere;
+}
+
+.protocol-feature-supported {
+  border-color: rgba(45, 212, 191, 0.3);
+}
+
+.protocol-feature-partial,
+.protocol-feature-validation-gap {
+  border-color: rgba(250, 204, 21, 0.28);
+}
+
+.protocol-feature-rejected {
+  border-color: rgba(248, 113, 113, 0.28);
+}
+
+.protocol-feature-deferred {
+  border-color: rgba(96, 165, 250, 0.28);
+}
+
+.protocol-feature-header {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.protocol-feature-header > div {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.protocol-feature-header h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.86rem;
+}
+
+.protocol-status-badge {
+  flex: 0 1 auto;
+  max-width: 9rem;
+  border-radius: 999px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.63rem;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.protocol-status-badge-supported {
+  background: var(--status-ok-bg);
+  color: var(--status-ok-text);
+}
+
+.protocol-status-badge-partial,
+.protocol-status-badge-validation-gap {
+  background: var(--status-warn-bg);
+  color: var(--status-warn-text);
+}
+
+.protocol-status-badge-rejected {
+  background: var(--status-error-bg);
+  color: var(--status-error-text);
+}
+
+.protocol-status-badge-deferred {
+  background: rgba(59, 130, 246, 0.18);
+  color: #bfdbfe;
+}
+
+.protocol-feature-meta {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.protocol-feature-meta > div {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.protocol-feature-meta dt {
+  color: var(--muted);
+  font-size: 0.64rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.protocol-feature-meta dd {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.42;
+}
+
+.protocol-evidence-list,
+.protocol-follow-up-list {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.protocol-evidence-list li,
+.protocol-follow-up-list li {
+  min-width: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.protocol-evidence-list li {
+  display: grid;
+  grid-template-columns: minmax(2.5rem, max-content) minmax(0, 1fr);
+  gap: 0.35rem;
+  align-items: baseline;
+}
+
+.protocol-evidence-list span {
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.protocol-evidence-list a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16rem;
+  overflow-wrap: anywhere;
+}
+
+.protocol-evidence-list a:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 0.2rem;
+}
+
 .availability-title {
   color: var(--text);
   font-weight: 700;
@@ -2503,6 +2743,7 @@
   .combat-panel,
   .room-panel,
   .quest-panel,
+  .protocol-panel,
   .ability-grid,
   .saving-throw-grid,
   .stats-grid,
@@ -2676,6 +2917,7 @@
   .map-exit,
   .map-state-output,
   .quest-panel,
+  .protocol-panel,
   .room-panel,
   .room-field-grid,
   .room-detail-grid,
@@ -2709,7 +2951,8 @@
 
   .combat-panel,
   .room-panel,
-  .quest-panel {
+  .quest-panel,
+  .protocol-panel {
     gap: 0.65rem;
   }
 
@@ -2744,6 +2987,7 @@
   .group-panel,
   .room-panel,
   .quest-panel,
+  .protocol-panel,
   .collection-panel {
     padding-left: 0.55rem;
     padding-right: 0.55rem;
@@ -2812,7 +3056,14 @@
   .collection-row-name,
   .collection-detail-line strong,
   .collection-raw-text,
-  .collection-unknown-fields {
+  .collection-unknown-fields,
+  .protocol-feature-header h4,
+  .protocol-feature-header p,
+  .protocol-feature-summary,
+  .protocol-feature-detail,
+  .protocol-feature-meta dd,
+  .protocol-evidence-list a,
+  .protocol-follow-up-list li {
     white-space: normal;
     overflow-wrap: anywhere;
   }
@@ -2868,6 +3119,10 @@
     padding-top: 0.5rem;
   }
 
+  .protocol-count-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .command-form {
     position: relative;
     z-index: 1;
@@ -2910,6 +3165,20 @@
     padding-left: 0.16rem;
     padding-right: 0.16rem;
     font-size: 0.58rem;
+  }
+
+  .protocol-feature-header,
+  .protocol-evidence-list li {
+    grid-template-columns: 1fr;
+  }
+
+  .protocol-feature-header {
+    display: grid;
+  }
+
+  .protocol-status-badge {
+    justify-self: start;
+    max-width: 100%;
   }
 
   .terminal-output,

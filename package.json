@@ -1,7 +1,7 @@
 {
   "name": "luminariweb",
   "private": true,
-  "version": "0.1.24",
+  "version": "0.1.25",
   "description": "First-party React and Node web MUD client for LuminariMUD-compatible games with an MSDP-driven HUD and WebSocket-to-Telnet proxy.",
   "author": {
     "name": "M. Ben Avraham",

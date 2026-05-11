@@ -259,11 +259,7 @@ export function clampPercentage(current: unknown, max: unknown): number {
   const normalizedCurrent = normalizeDisplayNumber(current);
   const normalizedMax = normalizeDisplayNumber(max);
 
-  if (
-    normalizedCurrent === undefined ||
-    normalizedMax === undefined ||
-    normalizedMax <= 0
-  ) {
+  if (normalizedCurrent === undefined || normalizedMax === undefined || normalizedMax <= 0) {
     return 0;
   }
 
@@ -300,7 +296,9 @@ function buildResourceBar(
   const maxLabel = hasUsableMax && maxText ? ` of ${maxText}` : '. Maximum not reported';
   const availability = createAvailabilityNotice('present', {
     title: `${label} reported`,
-    detail: hasUsableMax ? `${label} has current and maximum values.` : `${label} has no usable maximum value.`,
+    detail: hasUsableMax
+      ? `${label} has current and maximum values.`
+      : `${label} has no usable maximum value.`,
   });
 
   return {
@@ -395,7 +393,9 @@ function formatExperienceAriaLabel(
   }
 
   if (progress !== undefined && experienceMax !== undefined && experienceMax > 0) {
-    parts.push(`${formatDisplayNumber(progress)} of ${formatDisplayNumber(experienceMax)} progress`);
+    parts.push(
+      `${formatDisplayNumber(progress)} of ${formatDisplayNumber(experienceMax)} progress`,
+    );
   }
 
   if (experienceTnl !== undefined) {
@@ -416,7 +416,12 @@ function buildMissingHudBar(
   return {
     id,
     label,
-    valueText: availability.kind === 'offline' ? 'Offline' : availability.kind === 'error' ? 'Unavailable' : 'Waiting',
+    valueText:
+      availability.kind === 'offline'
+        ? 'Offline'
+        : availability.kind === 'error'
+          ? 'Unavailable'
+          : 'Waiting',
     percentage: 0,
     accentClass,
     availability,
@@ -490,8 +495,9 @@ function buildSourceNumberField(
 ): CharacterFieldModel {
   const normalized = normalizeDisplayNumber(value);
   if (normalized !== undefined) {
-    const valueText =
-      options.signed ? formatSignedDisplayNumber(normalized) : formatDisplayNumber(normalized);
+    const valueText = options.signed
+      ? formatSignedDisplayNumber(normalized)
+      : formatDisplayNumber(normalized);
     return {
       id,
       label,
@@ -514,8 +520,9 @@ function buildOptionalNumberField(
 ): CharacterFieldModel {
   const normalized = normalizeDisplayNumber(value);
   if (normalized !== undefined) {
-    const valueText =
-      options.signed ? formatSignedDisplayNumber(normalized) : formatDisplayNumber(normalized);
+    const valueText = options.signed
+      ? formatSignedDisplayNumber(normalized)
+      : formatDisplayNumber(normalized);
     return {
       id,
       label,

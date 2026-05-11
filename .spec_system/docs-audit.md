@@ -6,11 +6,11 @@
 **Project**: Luminari Web
 **Audit Mode**: Phase-Focused
 
-Phase 01 was just completed, so this pass focused on documentation drift introduced by the completed sessions:
+Phase 02 was just completed, so this pass focused on documentation drift introduced by the completed sessions:
 
-- Updated the root README to reflect completed Phase 00 and Phase 01 work.
-- Clarified incident-response guidance for unsupported MSDP variables.
-- Verified the existing architecture, deployment, and environment docs already cover resize handling, xterm spike context, and proxy safety controls.
+- Updated the root README to reflect completed Phase 00, Phase 01, and Phase 02 work.
+- Updated the architecture, onboarding, development, API, and incident-response docs to include room, map, and quest panel behavior plus explicit fallback states.
+- Kept the legal file as `LICENSE.md`, which is already the canonical license text in this repo.
 
 ## Previous Audit
 
@@ -51,6 +51,10 @@ Full audit mode was used because no implementation sessions are completed yet an
 ## Files Updated
 
 - `README.md`
+- `docs/ARCHITECTURE.md`
+- `docs/onboarding.md`
+- `docs/development.md`
+- `docs/api/http-and-websocket.md`
 - `docs/runbooks/incident-response.md`
 - `.spec_system/docs-audit.md`
 
@@ -69,7 +73,7 @@ Full audit mode was used because no implementation sessions are completed yet an
 ## Remaining Documentation Gaps
 
 - No CI/CD workflow is committed yet, so deployment docs describe local and PM2 verification only.
-- No committed test script exists yet; docs list `npm run lint` and `npm run build` as current verification commands.
+- Browser-level visual regression automation is not committed yet; docs still treat manual UI smoke as a separate verification step.
 - Production URL, hosting provider, and rollback automation are not defined in the repo.
 - The root legal file is `LICENSE.md`; no duplicate bare `LICENSE` file was created.
 - `docs/mud-webclients.md` is deleted in the worktree and was left untouched.
@@ -83,8 +87,8 @@ Full audit mode was used because no implementation sessions are completed yet an
 
 ## Spec System Sync
 
-Phase 00 is complete and Phase 01 is complete. The docs now distinguish completed parser, lifecycle, resize, renderer, and proxy-safety work from later phase goals in the PRD.
+Phase 00, Phase 01, and Phase 02 are complete. The docs now distinguish completed parser, lifecycle, resize, renderer, proxy-safety, and panel work from later phase goals in the PRD.
 
 ## Next Action
 
-Manual testing and LLM audit are recommended after this documentation pass. Since Phase 01 has already been built and the next phase has not started, the workflow-consistent next step is to review the PRD and then begin the next planning cycle if another phase remains.
+Manual testing and LLM audit are recommended after this documentation pass. Since Phase 02 has been built and the next phase has not started, the workflow-consistent next step is to review the PRD and then begin the next planning cycle if another phase remains.

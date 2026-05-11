@@ -125,8 +125,11 @@ test('builds character fields from confirmed values and preserves zero and negat
 });
 
 test('keeps unsupported title, saves, and damage bonus explicit by default', () => {
-  const character = buildCoreDisplayModel({ characterName: 'Fixture Hero' }, 'connected', defaultMap)
-    .character;
+  const character = buildCoreDisplayModel(
+    { characterName: 'Fixture Hero' },
+    'connected',
+    defaultMap,
+  ).character;
 
   assert.equal(character.identity.titleNotice?.kind, 'unavailable');
   assert.equal(character.identity.titleNotice?.title, 'Title unavailable');
@@ -219,10 +222,22 @@ test('keeps partial and empty combat participant states explicit', () => {
 });
 
 test('uses quiet inactive, offline, and error combat availability states', () => {
-  assert.equal(buildCombatDisplayModel({}, 'connected', defaultMap).opponent.availability.kind, 'empty');
-  assert.equal(buildCombatDisplayModel({}, 'connected', defaultMap).tank.availability.kind, 'empty');
-  assert.equal(buildCombatDisplayModel({}, 'disconnected', defaultMap).opponent.valueText, 'Offline');
-  assert.equal(buildCombatDisplayModel({}, 'disconnected', defaultMap).actions.availability.kind, 'offline');
+  assert.equal(
+    buildCombatDisplayModel({}, 'connected', defaultMap).opponent.availability.kind,
+    'empty',
+  );
+  assert.equal(
+    buildCombatDisplayModel({}, 'connected', defaultMap).tank.availability.kind,
+    'empty',
+  );
+  assert.equal(
+    buildCombatDisplayModel({}, 'disconnected', defaultMap).opponent.valueText,
+    'Offline',
+  );
+  assert.equal(
+    buildCombatDisplayModel({}, 'disconnected', defaultMap).actions.availability.kind,
+    'offline',
+  );
   assert.equal(buildCombatDisplayModel({}, 'error', defaultMap).tank.valueText, 'Unavailable');
   assert.equal(buildCombatDisplayModel({}, 'error', defaultMap).actions.availability.kind, 'error');
 });

@@ -27,6 +27,13 @@ serve this endpoint for the first-party React app because it forwards bytes
 without validating the app message schema, negotiating MSDP for the app,
 mapping state, or producing the documented status details.
 
+Protocol feature support is tracked in the
+[Protocol Feature Checklist](../protocol-feature-checklist.md). That checklist
+documents which Telnet, terminal, MSDP, and deferred source protocols are
+supported, partial, rejected, deferred, or still blocked by validation gaps. It
+does not change the `/ws` contract: browser messages remain structured JSON and
+server messages remain typed application messages, not raw Telnet bytes.
+
 In public proxy mode, the server checks the `Origin` header before creating a proxy session. Local development origins are allowed by default. Production origins must be configured with `PROXY_ALLOWED_ORIGINS`. Missing or unexpected public-mode origins are closed before a MUD socket can be opened.
 
 ### Browser to Server

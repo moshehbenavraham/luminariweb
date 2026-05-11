@@ -1,10 +1,10 @@
 # PRD Phase 03: Borrow the Best Ideas
 
-**Status**: In Progress
+**Status**: Complete
 **Sessions**: 6
 **Estimated Duration**: 6-10 days
 
-**Progress**: 5/6 sessions (83%)
+**Progress**: 6/6 sessions (100%)
 
 ---
 
@@ -23,7 +23,7 @@ Phase 03 adds high-value mapper, layout, automation, mobile, deployment, and pro
 | 03      | Alias, Macro, and Trigger UX        | Complete    | ~12-25     | 2026-05-11 |
 | 04      | Mobile and PWA Foundation           | Complete    | ~12-25     | 2026-05-11 |
 | 05      | Bridge Deployment Options           | Complete    | ~12-25     | 2026-05-11 |
-| 06      | Protocol Feature Checklist          | Not Started | ~12-25     | -         |
+| 06      | Protocol Feature Checklist          | Complete    | ~12-25     | 2026-05-11 |
 
 ---
 
@@ -39,7 +39,7 @@ Phase 03 adds high-value mapper, layout, automation, mobile, deployment, and pro
 
 ## Upcoming Sessions
 
-- Session 06: Protocol Feature Checklist
+- None. Phase 03 is complete and ready for phase transition.
 
 ---
 
@@ -98,12 +98,12 @@ Keep the single React/Node TypeScript project structure. Prefer shared display a
 
 Phase complete when:
 
-- [ ] All 6 sessions completed.
-- [ ] Mapper and panel-layout improvements remain useful with confirmed room and exit data only.
-- [ ] Automation UX has validation, preview or feedback, disable controls, and loop protection.
-- [ ] Local persistence no longer expands the open cookie-storage risk.
-- [ ] Mobile command, terminal, HUD, and panel workflows pass 390px and 360px smoke checks.
-- [ ] Deployment and protocol-support documents clearly define supported, rejected, partial, and deferred behavior.
+- [x] All 6 sessions completed.
+- [x] Mapper and panel-layout improvements remain useful with confirmed room and exit data only.
+- [x] Automation UX has validation, preview or feedback, disable controls, and loop protection.
+- [x] Local persistence no longer expands the open cookie-storage risk.
+- [x] Mobile command, terminal, HUD, and panel workflows pass 390px and 360px smoke checks.
+- [x] Deployment and protocol-support documents clearly define supported, rejected, partial, and deferred behavior.
 
 ---
 
@@ -116,3 +116,7 @@ Phase complete when:
 ### Enables
 
 - Phase 04: Source-Level Protocol Path.
+
+## Completion Notes
+
+Status: complete. Phase 03 session 06 closed and the phase artifacts were archived after validation.
