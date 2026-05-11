@@ -138,6 +138,7 @@
 | Health    | configured     | Express `GET /health` returns 200 JSON with `{ "ok": true }`; local and production probes target `/health`.                             |
 | Local Dev | configured     | `npm run build && npm start` serves the production build on port 5191.                                                                  |
 | Probe     | manual         | Operator-hosted PM2/load-balancer or uptime checks should probe `https://<origin>/health`; PM2 has no in-repo HTTP probe configuration. |
+| Security  | partial        | The server applies per-IP HTTP rate limiting, per-socket command throttling, per-IP WebSocket caps, and origin checks; edge WAF rules remain operator-managed. |
 | Backup    | not configured | No server-side database or backup target exists in this repository.                                                                     |
 
 ## Git and Review

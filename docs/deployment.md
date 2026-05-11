@@ -65,6 +65,13 @@ The built server applies application-level proxy guardrails before opening a Tel
 - Connect and idle timeouts close the active MUD socket with sanitized status details.
 - Player command text is not intentionally logged or included in policy, socket, or timeout errors.
 
+Public deployments should still place a WAF or equivalent reverse-proxy rule set in front of the app:
+
+- Allow only the deployed browser origin to reach `/api/settings`, `/health`, and `/ws`.
+- Block obvious scan and bot traffic before it reaches the Node process.
+- Rate limit abusive requests at the edge even though the app already enforces per-IP request limits.
+- Keep the WAF policy aligned with the same public origin that is used in `PROXY_ALLOWED_ORIGINS`.
+
 Recommended public-mode environment:
 
 ```bash

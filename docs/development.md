@@ -47,7 +47,7 @@ npm test
 
 The test script uses Node's built-in `node:test` runner with the existing `tsx` loader. Current coverage focuses on MSDP variable-map normalization, configured-variable filtering, pure MSDP state mapping, fixture-driven state-mapping checks, and shared display helpers for character, combat, group, affects, inventory, room, map, and quest panels.
 
-Phase 00 added the fixture and state-mapping test foundations. Phase 01 added Telnet parser, reconnect lifecycle, resize, and proxy safety coverage. Phase 02 added the shared display helpers and panel-state tests for the current HUD and sidebar surfaces. Browser-level UI verification remains separate work.
+Phase 00 added the fixture and state-mapping test foundations. Phase 01 added Telnet parser, reconnect lifecycle, resize, and proxy safety coverage. Phase 02 added the shared display helpers and panel-state tests for the current HUD and sidebar surfaces. Phase 03 added the protocol feature status catalog, maintainer checklist, and source-level handoff notes. Browser-level UI verification remains separate work.
 
 Run the focused protocol status tests after changing protocol claims:
 
@@ -64,6 +64,8 @@ Treat protocol claims conservatively:
   implemented and tested.
 - MCCP and GMCP stay unsupported until Phase 04 documents and tests real server
   and proxy behavior.
+- Native source WebSocket remains deferred until Phase 04 validates a source-
+  level transport path without replacing the integrated proxy first.
 
 ## Generated Output
 

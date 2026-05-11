@@ -60,7 +60,9 @@
     "phase03-session03-alias-macro-and-trigger-ux",
     "phase03-session04-mobile-and-pwa-foundation",
     "phase03-session05-bridge-deployment-options",
-    "phase03-session06-protocol-feature-checklist"
+    "phase03-session06-protocol-feature-checklist",
+    "phase04-session01-luminari-source-protocol-todo-audit",
+    "phase04-session02-protocol-parser-test-harness"
   ],
   "next_session_history": [
     {
@@ -256,6 +258,16 @@
     {
       "date": "2026-05-11",
       "session": "phase04-session01-luminari-source-protocol-todo-audit",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase04-session02-protocol-parser-test-harness",
+      "status": "planned"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase04-session02-protocol-parser-test-harness",
       "status": "completed"
     }
   ]

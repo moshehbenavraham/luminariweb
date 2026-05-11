@@ -1,37 +1,27 @@
 # Security & Compliance
 
 > Cumulative security posture and GDPR compliance record. Updated between phases via carryforward.
-> **Line budget**: 1000 max | **Last updated**: Phase 02 (2026-05-11)
+> **Line budget**: 1000 max | **Last updated**: Phase 03 (2026-05-11)
 
 ---
 
 ## Current Security Posture
 
-### Overall: AT RISK
+### Overall: CLEAN
 
-| Metric           | Value |
-| ---------------- | ----- |
-| Open Findings    | 1     |
-| Critical/High    | 0     |
-| Medium/Low       | 1     |
-| Phases Audited   | 3     |
-| Last Clean Phase | --    |
+| Metric | Value |
+|--------|-------|
+| Open Findings | 0 |
+| Critical/High | 0 |
+| Medium/Low | 0 |
+| Phases Audited | 4 |
+| Last Clean Phase | P03 |
 
 ---
 
 ## Open Findings
 
-Active security or GDPR issues requiring attention. Ordered by severity.
-
-### Medium / Low
-
-- **[P00-SEC-002] Browser settings are stored in cookies**
-  - Severity: Medium
-  - File: `src/App.tsx`
-  - Description: Aliases, triggers, and client settings are stored in chunked cookies with `SameSite=Lax` and `path=/`, so they are sent on HTTP and WebSocket requests.
-  - Remediation: Move browser settings to localStorage or IndexedDB and keep any secrets out of client persistence.
-  - Status: Open
-  - Opened: P00 (2026-05-10)
+None.
 
 ---
 
@@ -39,12 +29,13 @@ Active security or GDPR issues requiring attention. Ordered by severity.
 
 Recently closed issues are retained here for phase history and regression awareness.
 
-| Finding                                                       | Severity | Resolution                                                                                                                                               | Closed |
-| ------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| P00-SEC-001 Public proxy can target arbitrary hosts and ports | High     | Phase 01 added destination allowlists, origin checks, DNS/IP classification, banned service ports, and connect/idle timeouts before socket creation.     | P01    |
-| P00-SEC-003 Command/input rate limiting implemented locally   | Medium   | HTTP requests are rate limited per IP, browser command input is throttled per WebSocket session, and concurrent WebSocket connections are capped per IP. | P00    |
-| P00-SEC-004 HTML rendering depends on escaping invariants     | Low      | Phase 01 preserved escaped HTML rendering in shared helpers and added renderer coverage before any xterm opt-in path was exposed.                        | P01    |
-| P00-SEC-005 No automated security regression tests            | Low      | Phase 01 added parser, lifecycle, resize, policy, and renderer tests, plus passing lint/build/test coverage.                                             | P01    |
+| Finding | Severity | Resolution | Closed |
+|---------|----------|------------|--------|
+| P00-SEC-002 Browser settings are stored in cookies | Medium | Phase 03 moved browser settings, aliases, and triggers to versioned `localStorage`, and legacy cookie groups are cleared only after a valid local payload is written. | P03 |
+| P00-SEC-001 Public proxy can target arbitrary hosts and ports | High | Phase 01 added destination allowlists, origin checks, DNS/IP classification, banned service ports, and connect/idle timeouts before socket creation. | P01 |
+| P00-SEC-003 Command/input rate limiting implemented locally | Medium | HTTP requests are rate limited per IP, browser command input is throttled per WebSocket session, and concurrent WebSocket connections are capped per IP. | P00 |
+| P00-SEC-004 HTML rendering depends on escaping invariants | Low | Phase 01 preserved escaped HTML rendering in shared helpers and added renderer coverage before any xterm opt-in path was exposed. | P01 |
+| P00-SEC-005 No automated security regression tests | Low | Phase 01 added parser, lifecycle, resize, policy, and renderer tests, plus passing lint/build/test coverage. | P01 |
 
 ---
 
@@ -59,10 +50,12 @@ No account system, database, analytics, payment flow, or server-side profile sto
 Browser-local data currently includes:
 
 - Client display settings
+- Layout preferences
 - MSDP variable mappings
 - Aliases
 - Triggers
-- Imported/exported local configuration files
+- Protocol inspector tab state
+- Imported and exported local configuration files
 
 Potentially sensitive operational data:
 
@@ -71,14 +64,14 @@ Potentially sensitive operational data:
 
 ### Compliance Checklist
 
-| Requirement                            | Status  | Notes                                                                                                          |
-| -------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------- |
-| Data collection has documented purpose | Partial | Browser-local settings support gameplay preferences; no server-side account data exists.                       |
-| Consent obtained before data storage   | Partial | Settings are saved through app controls, but there is no explicit storage notice.                              |
-| Data minimization verified             | Partial | No secrets are required; cookies should be replaced for local settings.                                        |
-| Deletion/erasure path exists           | Partial | Users can clear browser storage/cookies; no in-app clear-all control is documented.                            |
-| No PII in application logs             | Pass    | Current code logs startup and settings-load errors, not command text.                                          |
-| Third-party transfers documented       | Partial | Commands and connection data are sent to selected MUD hosts; production policy is now documented and enforced. |
+| Requirement | Status | Notes |
+|------------|--------|-------|
+| Data collection has documented purpose | Partial | Browser-local settings support gameplay preferences; no server-side account data exists. |
+| Consent obtained before data storage | Partial | Settings are saved through app controls, but there is no explicit storage notice. |
+| Data minimization verified | Pass | No secrets are required, and client settings now stay in browser-local storage instead of cookies. |
+| Deletion/erasure path exists | Partial | Users can clear browser storage through normal browser controls; no in-app clear-all control is documented. |
+| No PII in application logs | Pass | Current code logs startup and settings-load errors, not command text. |
+| Third-party transfers documented | Partial | Commands and connection data are sent to selected MUD hosts; production policy is documented and enforced. |
 
 ## Dependency Security
 
@@ -98,18 +91,19 @@ Development dependencies include Vite, TypeScript, ESLint, React plugin packages
 
 ## Phase History
 
-| Phase | Sessions     | Security                                                         | GDPR                         | Findings Opened | Findings Closed |
-| ----- | ------------ | ---------------------------------------------------------------- | ---------------------------- | --------------- | --------------- |
-| 00    | 5/5 complete | Initial code scan                                                | Local-only baseline          | 4               | 1               |
-| 01    | 6/6 complete | Proxy safety hardened and renderer coverage expanded             | Local-only baseline retained | 0               | 4               |
-| 02    | 6/6 complete | Panel expansion remained client-side; no new findings introduced | Local-only baseline retained | 0               | 0               |
+| Phase | Sessions | Security | GDPR | Findings Opened | Findings Closed |
+|-------|----------|----------|------|-----------------|-----------------|
+| 00 | 5/5 complete | Initial code scan | Local-only baseline | 4 | 1 |
+| 01 | 6/6 complete | Proxy safety hardened and renderer coverage expanded | Local-only baseline retained | 0 | 4 |
+| 02 | 6/6 complete | Panel expansion remained client-side; no new findings introduced | Local-only baseline retained | 0 | 0 |
+| 03 | 6/6 complete | Browser-local settings moved off cookies; protocol inventory and deployment posture documented | Local-only baseline retained | 0 | 1 |
 
 ## Recommendations
 
-1. Prioritize moving browser settings, aliases, and triggers out of cookies before storing larger or sensitive values.
-2. Keep the public proxy allowlist, origin, DNS/IP, and timeout checks in place before any broader exposure.
-3. Retain HTML escaping tests and the default escaped renderer path if the terminal renderer changes again.
+1. Keep browser settings, aliases, triggers, and layout preferences in browser-local storage only; do not reintroduce cookies or store secrets.
+2. Keep the public proxy allowlist, origin, DNS/IP, and timeout checks fail-closed.
+3. Treat the protocol inventory as evidence-backed documentation, not runtime proof of support.
 4. Keep command logging disabled by default.
-5. Document any production MUD host policy in `docs/deployment.md` and `.spec_system/PRD/PRD.md`.
+5. Keep service-worker caching limited to the static shell and never cache live protocol traffic.
 
 _Auto-generated by carryforward. Updated between phases._

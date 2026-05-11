@@ -51,6 +51,29 @@ tests, or documented runtime contracts.
 | MSSP                    | Validation gap | Source support is recorded, but the web client does not consume MSSP data.                           | [PRD source facts](../.spec_system/PRD/PRD.md), [`tests/README.md`](../tests/README.md)                         | Decide whether the web client needs MSSP before parser/UI work.     |
 | Native source WebSocket | Deferred       | Integrated proxy and `/ws` application messages remain the supported app transport.                  | [`docs/bridge-deployment-options.md`](bridge-deployment-options.md), [Phase 04 PRD](../.spec_system/PRD/PRD.md) | Evaluate feasibility in Phase 04 without replacing the proxy first. |
 
+## Source Parser Harness
+
+Phase 04 Session 02 added a source-side CuTest harness at
+`/home/aiwithapex/projects/Luminari-Source/unittests/CuTest/test_protocol_parser.c`
+with maintainer instructions in
+`/home/aiwithapex/projects/Luminari-Source/docs/testing/PROTOCOL_PARSER_HARNESS.md`.
+Run it with:
+
+```sh
+cd /home/aiwithapex/projects/Luminari-Source/unittests/CuTest
+make protocol-parser
+```
+
+This is validation coverage for future source changes, not a new protocol
+support claim. The harness currently covers doubled `IAC`, current split `IAC`
+gap behavior, incomplete subnegotiation, malformed MSDP and GMCP, TTYPE, valid
+NAWS, unsupported option rejection, oversized MSDP list rejection, overlong MXP
+tag passthrough, bounded copyover strings, and bounded MSSP output.
+
+Known source gaps remain: split `IAC` and incomplete subnegotiation payloads are
+not retained across `ProtocolInput()` calls, and short NAWS payloads still need
+source parser bounds hardening before they can be asserted as safe behavior.
+
 ## Phase 04 Inputs
 
 Phase 04 should use the

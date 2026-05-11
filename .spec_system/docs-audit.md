@@ -6,10 +6,11 @@
 **Project**: Luminari Web
 **Audit Mode**: Phase-Focused
 
-Phase 02 was just completed, so this pass focused on documentation drift introduced by the completed sessions:
+Phase 03 was just completed, so this pass focused on documentation drift introduced by the completed sessions:
 
-- Updated the root README to reflect completed Phase 00, Phase 01, and Phase 02 work.
-- Updated the architecture, onboarding, development, API, and incident-response docs to include room, map, and quest panel behavior plus explicit fallback states.
+- Verified the root README already reflects completed Phase 00, Phase 01, Phase 02, and Phase 03 work.
+- Refreshed the development guide to call out the Phase 03 protocol-status catalog and the Phase 04 source-level handoff boundary.
+- Fixed the protocol feature checklist evidence link for the Phase 03 session 06 audit reference.
 - Kept the legal file as `LICENSE.md`, which is already the canonical license text in this repo.
 
 ## Previous Audit
@@ -43,6 +44,7 @@ Full audit mode was used because no implementation sessions are completed yet an
 - `docs/api/http-and-websocket.md`
 - `docs/adr/0000-template.md`
 - `docs/runbooks/incident-response.md`
+- `docs/protocol-feature-checklist.md`
 - `src/README_src.md`
 - `server/README_server.md`
 - `shared/README_shared.md`
@@ -50,12 +52,8 @@ Full audit mode was used because no implementation sessions are completed yet an
 
 ## Files Updated
 
-- `README.md`
-- `docs/ARCHITECTURE.md`
-- `docs/onboarding.md`
 - `docs/development.md`
-- `docs/api/http-and-websocket.md`
-- `docs/runbooks/incident-response.md`
+- `docs/protocol-feature-checklist.md`
 - `.spec_system/docs-audit.md`
 
 ## Files Verified
@@ -87,8 +85,8 @@ Full audit mode was used because no implementation sessions are completed yet an
 
 ## Spec System Sync
 
-Phase 00, Phase 01, and Phase 02 are complete. The docs now distinguish completed parser, lifecycle, resize, renderer, proxy-safety, and panel work from later phase goals in the PRD.
+Phase 00, Phase 01, Phase 02, and Phase 03 are complete. The docs now distinguish completed parser, lifecycle, resize, renderer, proxy-safety, panel, deployment, and protocol-feature work from later phase goals in the PRD.
 
 ## Next Action
 
-Manual testing and LLM audit are recommended after this documentation pass. Since Phase 02 has been built and the next phase has not started, the workflow-consistent next step is to review the PRD and then begin the next planning cycle if another phase remains.
+Manual testing and LLM audit are recommended after this documentation pass. Since Phase 03 has been built and Phase 04 has not started, the workflow-consistent next step is to review the PRD and then begin the next planning cycle if another phase remains.

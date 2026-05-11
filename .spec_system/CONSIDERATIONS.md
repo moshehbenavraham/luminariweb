@@ -1,7 +1,7 @@
 # Considerations
 
 > Institutional memory for AI assistants. Updated between phases via carryforward.
-> **Line budget**: 600 max | **Last updated**: Phase 02 (2026-05-11)
+> **Line budget**: 600 max | **Last updated**: Phase 03 (2026-05-11)
 
 ---
 
@@ -11,23 +11,25 @@ Items requiring attention in upcoming phases. Review before each session.
 
 ### Technical Debt
 
-- [P02] `src/App.tsx` still owns the panel wiring for HUD, combat, group, inventory, room, map, and quest surfaces. Keep future extraction behind tests so the UI layer does not become a second parser.
-- [P02] The shared display helpers are now the main growth surface. Split them only when there is a clear contract boundary, or the project will trade one monolith for several coupled ones.
+- [P03] **Shared helper surface**: `shared/msdp-*`, `shared/client-*`, and `shared/protocol-feature-status.ts` now carry most product logic. Keep future extraction behind tests so `src/App.tsx` stays orchestration only.
+- [P03] **Layout and panel drift**: Terminal, inspector tabs, and responsive panel rules must stay aligned. Re-run desktop, 390px, and 360px checks when adding new surfaces.
 
 ### External Dependencies
 
-- [P01] The terminal renderer path still relies on escape-safe rendering for MUD text and browser HTML output. Keep that invariant intact before any renderer swap or richer formatting work.
-- [P01] Public proxy destination policy still depends on external host behavior and DNS/IP classification. Keep allowlists and fail-closed checks intact as destination coverage expands.
+- [P01] **Proxy destination policy**: Public `/ws` routing still depends on external host behavior and DNS/IP classification. Keep allowlists, origin checks, and fail-closed defaults intact.
+- [P01] **Renderer escaping invariant**: The terminal renderer still depends on escaping guarantees for browser HTML output. Preserve that invariant before any formatter or renderer swap.
 
 ### Performance / Security
 
-- [P02] Browser settings, aliases, and triggers still persist in cookies under the open cookie finding. Move them to localStorage or IndexedDB before storing anything larger or more sensitive.
-- [P02] Map, quest, room, and combat fallback text must stay bounded and explicit. Do not let malformed payloads or oversized raw summaries dominate the sidebar on narrow widths.
+- [P03] **Browser-local config boundary**: Layout preferences, aliases, triggers, and other client settings should remain secret-free localStorage data. Do not reintroduce cookies or store commands, hosts, transcripts, or tokens.
+- [P03] **PWA cache scope**: Service-worker caching must stay limited to the static shell. Never cache `/api/`, `/ws`, settings payloads, or live protocol traffic.
+- [P02] **Bounded fallback text**: Map, quest, room, combat, and protocol fallback text must stay explicit and short on narrow widths.
 
 ### Architecture
 
-- [P02] Source-confirmed MSDP fields and override-only fields now sit side by side. Keep future additions explicit about which states come from the server and which still depend on local overrides.
-- [P02] Synthetic fixtures are contract checks, not proof of live schema. Any new panel work should keep representative fixture updates paired with source verification.
+- [P03] **Source vs override boundaries**: Keep source-confirmed protocol data, local UI preferences, and override-only fields explicitly separated in code and docs.
+- [P03] **Evidence-backed protocol inventory**: The protocol checklist is a maintainer aid, not proof of live support. Keep claims conservative and backed by tests or source data.
+- [P02] **Synthetic fixtures are contracts**: Fixture updates should continue to mirror source verification so new panels do not drift into invented schema.
 
 ---
 
@@ -37,22 +39,28 @@ Proven patterns and anti-patterns. Reference during implementation.
 
 ### What Worked
 
-- [P02] Pure display helpers (`shared/msdp-*`) kept protocol interpretation testable and let `src/App.tsx` stay focused on wiring.
-- [P02] Explicit unavailable, empty, offline, and error states made the panel UI honest without collapsing into generic "missing data" copy.
-- [P02] Reusing the room/exits normalization for map fallback prevented a second parser from drifting.
-- [P02] Constraining quest parsing to valid JSON containers avoided treating free-form command output as structured protocol data.
-- [P02] Manual responsive checks at desktop, 390px, and 360px caught overflow risks early for the new sidebar surfaces.
+- [P03] **Pure helper contracts**: Moving layout, automation, PWA, map, and protocol rules into shared helpers kept behavior deterministic and easy to test.
+- [P03] **Typed storage validation**: Parsing browser storage through versioned contracts with defaults made corrupt or future payloads safe to ignore.
+- [P03] **Full-parse-before-commit imports**: Validating the entire automation payload before state replacement prevented partial configuration corruption.
+- [P03] **Terminal-first responsive refinement**: Narrow-width fixes worked best when they refined the existing layout instead of branching into a separate mobile shell.
+- [P03] **Evidence-backed protocol docs**: A shared catalog kept UI labels, docs, and tests aligned without overstating support.
+- [P03] **One policy source for ops**: Putting bridge and deployment guidance in a primary doc plus short runbooks reduced drift.
+- [P02] **Explicit unavailable states**: Clear empty, offline, error, and fallback copy stayed more honest than generic missing-data messages.
+- [P02] **Shared room/map normalization**: Reusing exit normalization avoided a second parser and kept fallback behavior aligned.
 
 ### What to Avoid
 
-- [P02] Do not infer live `MINIMAP` or `QUEST_INFO` support from UI demand alone; keep them override-only until source-level support exists.
-- [P02] Do not broaden parser rewrites without fixtures that pin edge cases and fallback behavior.
-- [P02] Do not treat cookies as a long-term store for settings that may grow or become sensitive.
+- [P03] **Cookies for client config**: Do not put browser settings, aliases, triggers, or other growing UI state back into cookies.
+- [P03] **Overclaiming protocol support**: Unsupported or deferred features should stay marked as such until source-level support exists.
+- [P03] **Bridge-by-default public routing**: Keep the integrated proxy as the default public path unless the policy is intentionally reworked.
+- [P02] **Broad parser rewrites without fixtures**: Do not expand parser scope without edge-case coverage and fallback expectations.
+- [P02] **Narrow-width overflow regressions**: Mobile and compact layouts need explicit smoke checks before landing denser UI.
 
 ### Tool/Library Notes
 
-- [P01] `node --import tsx --test`, `npm run lint`, and `npm run build` were enough to validate the protocol and panel sessions.
-- [P02] Shared helper tests are most useful when they assert both the display state and the bounded raw fallback text.
+- [P03] **`node --import tsx --test`**: Still the fastest path for focused TypeScript test runs in this repo.
+- [P03] **`npm run lint` / `npm run build`**: These were sufficient quality gates alongside targeted browser smoke checks.
+- [P03] **Browser smoke at 390px and 360px**: Those widths consistently surfaced overflow and focus issues early.
 
 ---
 
@@ -60,11 +68,12 @@ Proven patterns and anti-patterns. Reference during implementation.
 
 Recently closed items (buffer - rotates out after 2 phases).
 
-| Phase | Item                                                                 | Resolution                                                                                                                                           |
-| ----- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P02   | `src/App.tsx` panel concentration                                    | Phase 02 extracted HUD, combat, group, inventory, room, map, and quest interpretation into shared helpers, leaving App as wiring and rendering glue. |
-| P01   | Availability states only covered the earlier renderer slice          | Phase 02 extended explicit unavailable handling across the new panel surface and kept fallback states visible instead of inferred.                   |
-| P01   | Room and map fallback logic needed a shared contract                 | Phase 02 reused room normalization for map summary generation and kept `MINIMAP` override-only.                                                      |
-| P00   | Source-confirmed data should stay distinct from override-only fields | Phase 02 reinforced the boundary across map and quest panels, with `MINIMAP` and `QUEST_INFO` still explicit override paths.                         |
+| Phase | Item | Resolution |
+| ----- | ---- | ---------- |
+| P03 | Browser settings stored in cookies | Moved browser settings, aliases, and triggers to versioned `localStorage` and clear legacy cookie groups only after a valid local payload is written. |
+| P02 | `src/App.tsx` panel concentration | Phase 02 extracted HUD, combat, group, inventory, room, map, and quest interpretation into shared helpers, leaving App as wiring and rendering glue. |
+| P01 | Availability states only covered the earlier renderer slice | Phase 02 extended explicit unavailable handling across the new panel surface and kept fallback states visible instead of inferred. |
+| P01 | Room and map fallback logic needed a shared contract | Phase 02 reused room normalization for map summary generation and kept `MINIMAP` override-only. |
+| P00 | Source-confirmed data should stay distinct from override-only fields | Phase 02 reinforced the boundary across map and quest panels, with `MINIMAP` and `QUEST_INFO` still explicit override paths. |
 
 _Auto-generated by carryforward. Manual edits allowed but may be overwritten._

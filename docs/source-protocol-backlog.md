@@ -19,9 +19,34 @@ Rejected items should not be implemented on the current product path.
 | `/home/aiwithapex/projects/Luminari-Source/src/comm.c` | Live MSDP emission paths for character, room, combat, group, affects, actions, and inventory data. |
 | `/home/aiwithapex/projects/Luminari-Source/docs/systems/PROTOCOL_SYSTEMS.md` | Maintainer-facing source protocol claims and architecture notes. |
 | `/home/aiwithapex/projects/Luminari-Source/docs/systems/MSDP_VARIABLES.md` | Source MSDP variable catalog and documented update expectations. |
+| `/home/aiwithapex/projects/Luminari-Source/unittests/CuTest/test_protocol_parser.c` | Session 02 source protocol harness for synthetic Telnet, MSDP, GMCP, TTYPE, NAWS, unsupported option, and bounded response-path validation. |
+| `/home/aiwithapex/projects/Luminari-Source/docs/testing/PROTOCOL_PARSER_HARNESS.md` | Runnable source harness command, privacy rules, case matrix, and known parser gaps. |
 | [Protocol Feature Checklist](protocol-feature-checklist.md) | Current Luminari Web support, rejected, deferred, and validation-gap boundaries. |
 | [Bridge Deployment Options](bridge-deployment-options.md) | Supported public transport boundary for the integrated `/ws` proxy. |
 | [Tests README](../tests/README.md) | Existing fixture and protocol test coverage in Luminari Web. |
+
+## Session 02 Coverage Update
+
+Phase 04 Session 02 added a focused source-side CuTest target:
+
+```sh
+cd /home/aiwithapex/projects/Luminari-Source/unittests/CuTest
+make protocol-parser
+```
+
+The harness is validation coverage only. It does not change Luminari Web support
+claims for MCCP, GMCP modules, MXP browser UI, live `MINIMAP`, `QUEST_INFO`,
+`TITLE`, saves, or `DAMAGE_BONUS`.
+
+| Area | Session 02 Result | Follow-Up Boundary |
+| ---- | ----------------- | ------------------ |
+| Split `IAC` | Harness documents the current source gap: split `IAC` is not retained across `ProtocolInput()` calls. | Harden parser state before claiming this boundary is fixed. |
+| Doubled `IAC` | Harness verifies `IAC IAC` becomes one literal 255 byte in command output. | Keep coverage when parser hardening changes nearby logic. |
+| Incomplete subnegotiation | Harness verifies no command output and visible `bIACMode` state, but payload bytes are not retained across calls. | Add persistent subnegotiation length tracking in a hardening session. |
+| Malformed MSDP and GMCP | Harness verifies malformed payloads do not produce valid state or output. | Expand with fuzz/sanitizer coverage during source hardening. |
+| TTYPE and NAWS | Harness verifies TTYPE client ID handling and valid NAWS dimensions. | Add short-NAWS guard coverage when source parser bounds checks are added. |
+| Unsupported options | Harness verifies unknown `WILL` and `DO` options produce deterministic rejections. | Preserve no-support behavior for rejected web features. |
+| Oversized responses | Harness covers oversized MSDP list rejection, overlong MXP tag passthrough, bounded copyover strings, and bounded MSSP output. | Full string/allocation hardening remains A2/A3 follow-up work. |
 
 ## Ranking Rules
 
