@@ -59,7 +59,14 @@ The integrated proxy owns the application boundary:
 | Isolated integrated proxy | Higher isolation without changing product behavior | Keeps the same code path behind a process, host, container, network, or reverse-proxy boundary | Requires operator infrastructure                           | Preferred hardening path |
 | Terminal-only bridge      | Emergency or separate raw terminal client path     | Simple byte forwarding and possible separate network placement                                 | Cannot serve the React app `/ws` contract or MSDP UI state | Separate fallback only   |
 | Mapped bridge             | Fixed TCP targets behind named routes              | Reduces arbitrary target input and can add authorization around paths                          | Still blind to Luminari Web messages and game state        | Separate fallback only   |
+| Native source WebSocket   | Future source-owned transport decision             | Could reduce one deployment hop if it proves parity                                            | No current listener; must define browser contract, source lifecycle, security, operations, and rollback first | Deferred by ADR 0003     |
 | Open bridge               | Browser chooses arbitrary host and port            | Operationally flexible                                                                         | Creates open-proxy, SSRF, logging, and privacy risk        | Reject                   |
+
+Native source WebSocket is different from a bridge fallback. A bridge forwards
+bytes between a browser-facing WebSocket and a TCP target. A source-native
+listener would live inside Luminari-Source and would need descriptor lifecycle,
+frame parsing, copyover, logging, quotas, WSS/TLS, and client-contract design.
+ADR 0003 defers that path until those gates are planned and tested.
 
 ## Public-Mode Checklist
 

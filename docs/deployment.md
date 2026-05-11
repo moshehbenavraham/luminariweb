@@ -42,6 +42,12 @@ sanitized connection statuses. Standalone bridge projects can be useful as
 separate raw transport fallbacks, but they are not compatible replacements for
 the first-party React app. See [Bridge Deployment Options](bridge-deployment-options.md).
 
+Native Luminari-Source WebSocket support is deferred by
+[ADR 0003](adr/0003-native-websocket-transport-direction.md). Do not expose or
+document a source-native listener as the first-party browser transport until a
+future source transport spec, browser contract spec, security review,
+operations runbook, compatibility tests, and rollback drill all pass.
+
 ## Health Probe
 
 `GET /health` returns HTTP 200 JSON with `{ "ok": true }`. Local production verification:
@@ -119,6 +125,11 @@ terminal-only path with fixed or mapped targets, TLS, authorization, rate
 limits, timeout policy, and recording/TCP-dump features disabled by default for
 player traffic. The decision criteria and rollback steps are in
 [Bridge Fallback Runbook](runbooks/bridge-fallback.md).
+
+If a future native source WebSocket experiment is deployed, keep the integrated
+proxy route available as rollback. Roll back by disabling the experimental
+listener or route and returning browser clients to the known-good `/ws` proxy
+until the source-native path has its own approved production runbook.
 
 ## PM2 Run
 

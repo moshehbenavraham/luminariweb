@@ -72,8 +72,11 @@ Treat protocol claims conservatively:
   spec.
 - GMCP stays deferred until source modules, schemas, proxy parsing, client
   mappings, MSDP coexistence, fixtures, and rollback are planned.
-- Native source WebSocket remains deferred until Phase 04 validates a source-
-  level transport path without replacing the integrated proxy first.
+- Native source WebSocket is deferred by ADR 0003. Do not claim support until
+  future source transport, browser contract, security, operations,
+  compatibility-test, and rollback gates pass.
+- The integrated proxy remains the supported `/ws` path for the first-party
+  React app.
 
 ## Generated Output
 

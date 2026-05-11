@@ -33,7 +33,7 @@
     "4": {
       "name": "Source-Level Protocol Path",
       "description": "Define and implement only the source-level protocol changes justified after the web client, proxy, and protocol inventory are stable.",
-      "status": "in_progress",
+      "status": "complete",
       "session_count": 5
     }
   },
@@ -64,7 +64,8 @@
     "phase04-session01-luminari-source-protocol-todo-audit",
     "phase04-session02-protocol-parser-test-harness",
     "phase04-session03-missing-msdp-variables",
-    "phase04-session04-mccp-and-gmcp-decision"
+    "phase04-session04-mccp-and-gmcp-decision",
+    "phase04-session05-native-websocket-feasibility"
   ],
   "next_session_history": [
     {
@@ -280,6 +281,16 @@
     {
       "date": "2026-05-11",
       "session": "phase04-session04-mccp-and-gmcp-decision",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase04-session05-native-websocket-feasibility",
+      "status": "planned"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase04-session05-native-websocket-feasibility",
       "status": "completed"
     }
   ]

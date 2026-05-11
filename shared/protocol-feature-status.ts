@@ -440,23 +440,28 @@ export const protocolFeatureRecords = [
     name: 'Native source WebSocket',
     groupId: 'source',
     status: 'deferred',
-    scope: 'Luminari-Source future transport decision',
+    scope: 'Luminari-Source future transport work',
     summary:
-      'The current supported app transport remains the integrated proxy and `/ws` application protocol.',
+      'Native source WebSocket support is deferred; the integrated proxy remains the current app transport.',
     detail:
-      'The PRD records no native WebSocket listener in Luminari-Source, and bridge docs reject blind byte bridges as `/ws` replacements.',
+      'ADR 0003 records no audited native listener in Luminari-Source and requires future source, browser contract, security, operations, compatibility-test, and rollback gates before support can be claimed.',
     nextAction:
-      'Evaluate native WebSocket feasibility in Phase 04 without replacing the current proxy first.',
+      'Plan native transport only through dedicated future specs while preserving the current `/ws` proxy contract.',
     evidence: [
       {
         kind: 'doc',
-        label: 'Bridge deployment decision',
+        label: 'ADR defers native source WebSocket behind explicit gates',
+        path: 'docs/adr/0003-native-websocket-transport-direction.md',
+      },
+      {
+        kind: 'doc',
+        label: 'Bridge deployment decision keeps `/ws` on the integrated proxy',
         path: 'docs/bridge-deployment-options.md',
       },
       {
-        kind: 'spec',
-        label: 'Phase 04 native WebSocket feasibility session',
-        path: '.spec_system/PRD/PRD.md',
+        kind: 'doc',
+        label: 'Source protocol backlog O3 decision',
+        path: 'docs/source-protocol-backlog.md',
       },
     ],
     followUpTags: ['p4-native-websocket-feasibility'],

@@ -525,7 +525,7 @@ GitHub metadata was checked on 2026-05-10. Local clone state is listed in the Re
 | 1     | Harden Terminal and Proxy     | 6        | Complete    |
 | 2     | Build Luminari Game Panels    | 6        | Complete    |
 | 3     | Borrow the Best Ideas         | 6        | Complete    |
-| 4     | Source-Level Protocol Path    | 5        | In Progress |
+| 4     | Source-Level Protocol Path    | 5        | Complete    |
 
 ## Phase 0: Align With Real Luminari Data
 
@@ -969,6 +969,8 @@ Status: complete. Phase 03 session 06 closed the protocol feature checklist and 
 
 Objective: define and implement only the source-level protocol changes that are justified after the webclient and proxy are stable.
 
+Status: complete. Phase 04 session 05 closed native WebSocket feasibility, the current proxy remained the supported production path, and the phase artifacts were archived after validation.
+
 ### P4-S1: Luminari-Source Protocol TODO Audit
 
 Clear objective: convert source protocol TODOs into a ranked implementation backlog.
@@ -1072,18 +1074,18 @@ Each phase should satisfy these gates before it is considered complete:
 
 ## Success Criteria
 
-- [ ] The default MSDP map matches confirmed Luminari-Source variables.
-- [ ] Unsupported or missing data renders with deliberate fallback states.
-- [ ] Parser tests cover core Telnet and MSDP edge cases.
-- [ ] Reconnect behavior passes repeated-cycle testing.
-- [ ] HUD, character, combat, group, affects, inventory, room, and map panels render useful Luminari data.
-- [ ] Mobile users can connect, read, type, and inspect core state at 390px width.
-- [ ] Narrow mobile smoke testing passes at 360px width for core connect, terminal, and command input workflows.
-- [ ] Proxy safety controls are in place before public deployment.
-- [ ] Public proxy mode rejects non-allowlisted host/port targets.
-- [ ] Quest panel uses unavailable-state behavior until structured server-emitted quest data exists.
-- [ ] Protocol support status is documented and test-linked.
-- [ ] Source-level changes are deferred until the proxy client is stable and test coverage exists.
+- [x] The default MSDP map matches confirmed Luminari-Source variables.
+- [x] Unsupported or missing data renders with deliberate fallback states.
+- [x] Parser tests cover core Telnet and MSDP edge cases.
+- [x] Reconnect behavior passes repeated-cycle testing.
+- [x] HUD, character, combat, group, affects, inventory, room, and map panels render useful Luminari data.
+- [x] Mobile users can connect, read, type, and inspect core state at 390px width.
+- [x] Narrow mobile smoke testing passes at 360px width for core connect, terminal, and command input workflows.
+- [x] Proxy safety controls are in place before public deployment.
+- [x] Public proxy mode rejects non-allowlisted host/port targets.
+- [x] Quest panel uses unavailable-state behavior until structured server-emitted quest data exists.
+- [x] Protocol support status is documented and test-linked.
+- [x] Source-level changes are deferred until the proxy client is stable and test coverage exists.
 
 ## Risks and Mitigations
 

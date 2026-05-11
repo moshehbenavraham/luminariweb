@@ -40,6 +40,12 @@ supported, partial, rejected, deferred, or still blocked by validation gaps. It
 does not change the `/ws` contract: browser messages remain structured JSON and
 server messages remain typed application messages, not raw Telnet bytes.
 
+ADR 0003 keeps native Luminari-Source WebSocket support deferred. A future
+source-native listener would be a separate transport decision until it proves a
+typed browser contract, source descriptor lifecycle, parser behavior, security
+controls, operations runbook, compatibility tests, and rollback. It is not a
+replacement for this `/ws` contract today.
+
 In public proxy mode, the server checks the `Origin` header before creating a proxy session. Local development origins are allowed by default. Production origins must be configured with `PROXY_ALLOWED_ORIGINS`. Missing or unexpected public-mode origins are closed before a MUD socket can be opened.
 
 ### Browser to Server

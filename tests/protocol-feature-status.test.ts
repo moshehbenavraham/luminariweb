@@ -104,6 +104,17 @@ test('keeps deferred and rejected protocol claims conservative', () => {
   assert.equal(byId.get('mxp')?.status, 'rejected');
   assert.equal(byId.get('charset')?.status, 'rejected');
   assert.equal(byId.get('override-only-msdp-fields')?.status, 'validation-gap');
+  assert.notEqual(byId.get('native-websocket')?.status, 'supported');
+  assert.equal(byId.get('native-websocket')?.status, 'deferred');
+  assert.ok(
+    byId
+      .get('native-websocket')
+      ?.evidence.some(
+        (evidence) => evidence.path === 'docs/adr/0003-native-websocket-transport-direction.md',
+      ),
+  );
+  assert.ok(!byId.get('native-websocket')?.summary.includes('supported'));
+  assert.ok(byId.get('native-websocket')?.nextAction.includes('dedicated future specs'));
 });
 
 test('links deferred source work to Phase 04 follow-up tags', () => {

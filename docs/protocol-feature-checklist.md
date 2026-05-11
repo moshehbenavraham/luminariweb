@@ -50,7 +50,7 @@ tests, or documented runtime contracts.
 | GMCP                    | Deferred       | Source helpers exist, but the web client and proxy have no GMCP module contract, parser, schemas, mappings, or tests. | [ADR 0002](adr/0002-mccp-and-gmcp-protocol-direction.md), [`tests/README.md`](../tests/README.md)                         | Defer until source module ownership, schema validation, MSDP coexistence, proxy parsing, client mapping, fixtures, and rollback are planned. |
 | MSP                     | Deferred       | Source negotiation code exists; browser audio behavior is not specified or implemented.              | [PRD source facts](../.spec_system/PRD/PRD.md), [`tests/README.md`](../tests/README.md)                         | Defer until product requirements define audio behavior and tests.   |
 | MSSP                    | Validation gap | Source support is recorded, but the web client does not consume MSSP data.                           | [PRD source facts](../.spec_system/PRD/PRD.md), [`tests/README.md`](../tests/README.md)                         | Decide whether the web client needs MSSP before parser/UI work.     |
-| Native source WebSocket | Deferred       | Integrated proxy and `/ws` application messages remain the supported app transport.                  | [`docs/bridge-deployment-options.md`](bridge-deployment-options.md), [Phase 04 PRD](../.spec_system/PRD/PRD.md) | Evaluate feasibility in Phase 04 without replacing the proxy first. |
+| Native source WebSocket | Deferred       | ADR 0003 defers native source WebSocket support; integrated proxy and `/ws` application messages remain the supported app transport. | [ADR 0003](adr/0003-native-websocket-transport-direction.md), [`docs/bridge-deployment-options.md`](bridge-deployment-options.md), [Source Protocol Backlog](source-protocol-backlog.md) | Plan native transport only through dedicated future source, browser contract, security, operations, compatibility-test, and rollback specs. |
 
 ## Source Parser Harness
 
@@ -86,7 +86,10 @@ to split source work into:
 - `p4-parser-harness` - Add source-level protocol parser fixtures before changing behavior.
 - `p4-missing-msdp-variables` - Decide and implement only selected source-owned MSDP variables.
 - `p4-mccp-gmcp-decision` - Completed by [ADR 0002](adr/0002-mccp-and-gmcp-protocol-direction.md): MCCP remains rejected today and GMCP remains deferred.
-- `p4-native-websocket-feasibility` - Evaluate native WebSocket transport without displacing the current proxy first.
+- `p4-native-websocket-feasibility` - Completed by
+  [ADR 0003](adr/0003-native-websocket-transport-direction.md):
+  native source WebSocket remains deferred behind future source, browser
+  contract, security, operations, compatibility-test, and rollback gates.
 
 ## Claim Boundaries
 
@@ -95,6 +98,8 @@ to split source work into:
 - Do not claim live `DAMAGE_BONUS` or `QUEST_INFO` support from synthetic fixtures alone.
 - Do not claim full support for selected `TITLE`, saves, or `MINIMAP` without source emission, web mapping fixtures, and older-server fallback coverage.
 - Do not treat a blind WebSocket-to-TCP bridge as an implementation of the `/ws` application protocol.
+- Do not claim native source WebSocket support until ADR 0003 follow-up gates
+  pass.
 - Do not parse free-form quest command output as structured quest data.
 
 ## Manual UI Checks

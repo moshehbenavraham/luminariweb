@@ -63,6 +63,12 @@ process, host, container, network, reverse-proxy, or firewall boundaries. Bridge
 fallbacks belong on separate terminal-only paths. The full decision is in
 [Bridge Deployment Options](bridge-deployment-options.md).
 
+Native Luminari-Source WebSocket support is deferred by
+[ADR 0003](adr/0003-native-websocket-transport-direction.md). A future native
+listener would need its own source descriptor lifecycle, browser contract,
+security controls, operations posture, compatibility tests, and rollback before
+it can replace or bypass the integrated proxy.
+
 ## Terminal Rendering
 
 The production terminal renderer remains the escaped `ansi-to-html` HTML path. Terminal and panel rich text use shared helpers under `src/terminal/render-mud-html.ts` so XML escaping and Luminari color conversion stay centralized and testable.
