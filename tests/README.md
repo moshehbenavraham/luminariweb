@@ -60,6 +60,11 @@ node --import tsx --test tests/*.test.ts
 - Layout preference helper coverage for default inspector state, valid saved payloads, corrupt JSON,
   unknown tab ids, invalid density values, missing fields, future versions, and storage-safe
   serialization.
+- Automation helper coverage for alias and trigger validation, wildcard captures, command sequence
+  splitting, disabled entries, previews, alias recursion reports, and trigger command caps.
+- Client config persistence coverage for versioned localStorage payloads, corrupt and future-version
+  fallbacks, full import normalization, partial alias/trigger imports, legacy cookie migration
+  inputs, and malformed import preservation.
 
 These tests import shared pure helpers directly from `shared/mud.ts`, `shared/msdp-state.ts`,
 `server/telnet-parser.ts`, and side-effect-free lifecycle modules such as
@@ -97,7 +102,48 @@ node --import tsx --test tests/msdp-state-mapping.test.ts
 node --import tsx --test tests/proxy-network.test.ts
 node --import tsx --test tests/proxy-policy.test.ts
 node --import tsx --test tests/proxy-lifecycle.test.ts
+node --import tsx --test tests/client-automation.test.ts
+node --import tsx --test tests/client-config-persistence.test.ts
+node --import tsx --test tests/pwa-support.test.ts
 ```
+
+## Mobile and PWA Helper Tests
+
+Run the focused PWA helper tests with:
+
+```sh
+node --import tsx --test tests/pwa-support.test.ts
+```
+
+These tests cover browser online/offline labels, proxy and MUD status decisions, reconnect
+eligibility, service-worker support fallbacks, registration error messages, same-origin static
+asset cache eligibility, and exclusions for `/api/settings`, `/ws`, non-GET, WebSocket upgrade,
+cross-origin, and non-static requests.
+
+## Manual Automation Notes
+
+When doing manual automation checks, start the local app, open the client in a desktop browser, and
+use the Aliases, Triggers, and Settings menus without needing live MUD access for preview/import
+checks.
+
+- Create a valid alias such as `k * -> kill %1`, preview `k goblin`, send it while connected, and
+  verify command history records only the typed command.
+- Create invalid aliases and triggers with empty fields or unmatched captures such as `%2`; verify
+  inline errors appear and saving a config is refused until fixed.
+- Create a valid trigger such as `* tells you * -> tell %1 I heard %2`, preview a sample line, and
+  verify no WebSocket command is sent by preview controls.
+- Disable an alias or trigger and verify previews or real dispatch ignore disabled entries.
+- Delete an alias or trigger and verify the confirmation row supports both confirm and cancel.
+- Import malformed full configs and malformed partial alias/trigger files; verify existing settings,
+  aliases, and triggers remain unchanged.
+- Export a config and verify it contains only settings, aliases, triggers, type, and version fields;
+  it must not include passwords, host secrets, command history, or terminal transcript text.
+- Simulate legacy `lwc.settings`, `lwc.aliases`, and `lwc.triggers` cookies, reload, verify
+  `localStorage.lwc.config` is populated, and verify only successfully migrated cookie groups are
+  cleared.
+- At desktop, 390px, and 360px widths, verify validation errors, preview output, loop notices,
+  confirmation rows, and Settings import/export controls wrap without horizontal page scrolling or
+  covering the command input.
 
 ## Manual Resize Notes
 
@@ -166,6 +212,16 @@ visible before and after tab switches, collapse/expand, density changes, setting
 terminal clicks. At 390px and 360px, verify there is no horizontal page scrolling, short tab labels
 fit inside the inspector, long panel fallback text wraps or scrolls inside the panel, and the command
 form remains reachable without being covered by the inspector.
+
+For mobile/PWA checks, use desktop, 390px, and 360px viewports. Verify the header and mobile status
+strip distinguish browser network, proxy readiness, and MUD connection state. Toggle browser
+offline/online and verify reconnect and Send do not imply offline play. Connect, disconnect, and
+reconnect without duplicate in-flight connection attempts. Send a normal command while connected,
+then use the touch previous and next history controls. Open Aliases, Triggers, MSDP Vars, and
+Settings menus and verify validation messages, preview output, import/export controls, and long
+text wrap without horizontal page scrolling. In a supported secure context, verify service-worker
+registration does not crash startup and cached entries are limited to static shell files; `/api/settings`
+and `/ws` must not be cached.
 
 ## Manual Renderer Notes
 

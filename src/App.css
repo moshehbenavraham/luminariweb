@@ -4,12 +4,22 @@
   gap: 0.7rem;
   width: 100%;
   max-width: 100vw;
-  padding: 1.2rem;
+  padding: max(1.2rem, env(safe-area-inset-top)) max(1.2rem, env(safe-area-inset-right))
+    max(1.2rem, env(safe-area-inset-bottom)) max(1.2rem, env(safe-area-inset-left));
   box-sizing: border-box;
   height: 100dvh;
   min-height: 100dvh;
+  scroll-padding-bottom: calc(env(safe-area-inset-bottom) + 4rem);
   overflow: hidden;
   overflow-x: hidden;
+}
+
+.app-shell,
+.layout,
+.terminal-column,
+.sidebar,
+.panel {
+  min-width: 0;
 }
 
 .app-header {
@@ -126,11 +136,53 @@
 .status-row {
   display: flex;
   gap: 0.75rem;
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .status-row p {
   margin: 0;
+}
+
+.status-copy {
+  display: grid;
+  flex: 1 1 18rem;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.status-copy p {
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.status-copy strong {
+  color: var(--text);
+}
+
+.browser-network-pill {
+  flex: 0 1 auto;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.32rem 0.65rem;
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.browser-network-online {
+  border-color: rgba(45, 212, 191, 0.3);
+  background: rgba(20, 184, 166, 0.12);
+  color: #99f6e4;
+}
+
+.browser-network-offline {
+  border-color: rgba(248, 113, 113, 0.32);
+  background: rgba(127, 29, 29, 0.24);
+  color: var(--status-error-text);
 }
 
 .status-pill {
@@ -192,6 +244,59 @@
   overflow: hidden;
 }
 
+.mobile-status-strip {
+  display: none;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 0.45rem;
+  align-items: stretch;
+  margin: 0.75rem 0.75rem 0;
+  padding: 0.65rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 0.75rem;
+  background: rgba(2, 6, 23, 0.34);
+}
+
+.mobile-status-item {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.mobile-status-item span {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.mobile-status-item strong {
+  min-width: 0;
+  color: var(--text);
+  font-size: 0.74rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.mobile-status-detail {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.mobile-reconnect-button {
+  min-height: 2.35rem;
+  max-height: none;
+  border-radius: 0.55rem;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
 .panel-header {
   display: flex;
   justify-content: space-between;
@@ -239,6 +344,30 @@
 
 .command-form input {
   min-width: 0;
+}
+
+.command-actions {
+  display: flex;
+  align-items: stretch;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.command-actions button {
+  max-height: none;
+}
+
+.command-history-actions {
+  display: none;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.command-history-button {
+  min-width: 3.4rem;
+  border-radius: 0.55rem;
+  padding-left: 0.55rem;
+  padding-right: 0.55rem;
 }
 
 .command-form input,
@@ -406,6 +535,7 @@
   border-radius: 0.9rem;
   background: rgba(15, 23, 42, 0.98);
   box-shadow: var(--shadow);
+  overflow-wrap: anywhere;
 }
 
 .window-menu-status {
@@ -427,7 +557,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  min-width: 0;
   padding: 0.85rem;
+  overflow-wrap: anywhere;
 }
 
 .automation-menu-help,
@@ -483,16 +615,22 @@
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
+  min-width: 0;
   padding: 0.7rem;
   border: 1px solid var(--border);
   border-radius: 0.8rem;
   background: rgba(15, 23, 42, 0.45);
 }
 
+.automation-item-invalid {
+  border-color: rgba(248, 113, 113, 0.46);
+}
+
 .settings-group {
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+  min-width: 0;
   padding: 0.7rem;
   border: 1px solid var(--border);
   border-radius: 0.8rem;
@@ -537,6 +675,80 @@
 .automation-fields textarea {
   resize: vertical;
   min-height: 4.9rem;
+}
+
+.automation-field-errors {
+  display: grid;
+  gap: 0.2rem;
+  color: var(--status-error-text);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.automation-field-errors p {
+  margin: 0;
+}
+
+.automation-preview-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.automation-preview-result {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+  padding-left: 0.65rem;
+  border-left: 3px solid rgba(45, 212, 191, 0.52);
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.automation-preview-result > span {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.automation-preview-result ol,
+.automation-preview-result ul,
+.automation-preview-result p {
+  margin: 0;
+}
+
+.automation-preview-result ol,
+.automation-preview-result ul {
+  display: grid;
+  gap: 0.22rem;
+  padding-left: 1.1rem;
+}
+
+.automation-preview-result li {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.automation-preview-notices {
+  color: var(--status-error-text);
+}
+
+.automation-confirm-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.automation-confirm-row span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .settings-fields {
@@ -594,7 +806,8 @@
 }
 
 .window-menu-dropdown .automation-actions button,
-.window-menu-dropdown .automation-delete {
+.window-menu-dropdown .automation-delete,
+.window-menu-dropdown .automation-confirm-row button {
   min-height: 1.95rem;
   padding-top: 0.35rem;
   padding-bottom: 0.35rem;
@@ -631,6 +844,7 @@
   line-height: 1.15;
   overflow: hidden;
   text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .tab-button-active {
@@ -2071,7 +2285,8 @@
     height: auto;
     overflow: visible;
     gap: 0.6rem;
-    padding: 0.95rem;
+    padding: max(0.95rem, env(safe-area-inset-top)) max(0.95rem, env(safe-area-inset-right))
+      max(0.95rem, env(safe-area-inset-bottom)) max(0.95rem, env(safe-area-inset-left));
   }
 
   .topbar,
@@ -2110,7 +2325,8 @@
 
 @media (max-width: 800px) {
   .app-shell {
-    padding: 0.75rem;
+    padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right))
+      max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
     gap: 0.5rem;
   }
 
@@ -2132,6 +2348,7 @@
 
   .window-menu-status {
     padding: 0;
+    overflow-wrap: anywhere;
   }
 
   .topbar {
@@ -2157,19 +2374,65 @@
     grid-template-columns: 1fr;
   }
 
+  .status-row {
+    gap: 0.5rem;
+  }
+
+  .status-pill,
+  .browser-network-pill {
+    min-height: 2rem;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .mobile-status-strip {
+    display: grid;
+  }
+
+  .terminal-output {
+    flex: 0 0 auto;
+    height: clamp(16rem, 45dvh, 28rem);
+    min-height: clamp(16rem, 45dvh, 28rem);
+    max-height: min(52dvh, calc(100dvh - 13rem));
+  }
+
+  .command-form {
+    padding-bottom: calc(0.65rem + env(safe-area-inset-bottom));
+  }
+
+  .window-menu-link,
+  .inspector-control,
+  .command-history-button,
+  .mobile-reconnect-button {
+    min-height: 2.5rem;
+  }
+
+  .command-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(5rem, auto);
+  }
+
+  .command-history-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .connection-form input,
   .connection-form select,
   .connection-form button,
   .command-form input,
   .command-form button,
   .automation-fields input,
+  .automation-preview-control input,
   .settings-fields input,
   .settings-fields select,
   .msdp-vars-grid input,
   .automation-fields textarea,
   .automation-actions button,
-  .automation-delete {
+  .automation-delete,
+  .automation-confirm-row button {
     min-height: 2.1rem;
+    max-height: none;
     padding-top: 0.45rem;
     padding-bottom: 0.45rem;
   }
@@ -2212,11 +2475,16 @@
     flex-direction: column;
     align-items: stretch;
   }
+
+  .automation-confirm-row {
+    align-items: stretch;
+  }
 }
 
 @media (max-width: 430px) {
   .app-shell {
-    padding: 0.55rem;
+    padding: max(0.55rem, env(safe-area-inset-top)) max(0.55rem, env(safe-area-inset-right))
+      max(0.55rem, env(safe-area-inset-bottom)) max(0.55rem, env(safe-area-inset-left));
   }
 
   .panel-header {
@@ -2226,6 +2494,8 @@
   .terminal-output {
     margin: 0.65rem;
     padding: 0.75rem;
+    height: clamp(14rem, 42dvh, 24rem);
+    min-height: clamp(14rem, 42dvh, 24rem);
   }
 
   .command-form,
@@ -2364,12 +2634,15 @@
 
 @media (max-width: 370px) {
   .app-shell {
-    padding: 0.45rem;
+    padding: max(0.45rem, env(safe-area-inset-top)) max(0.45rem, env(safe-area-inset-right))
+      max(0.45rem, env(safe-area-inset-bottom)) max(0.45rem, env(safe-area-inset-left));
   }
 
   .terminal-output {
     margin: 0.55rem;
     padding: 0.65rem;
+    height: clamp(13rem, 40dvh, 22rem);
+    min-height: clamp(13rem, 40dvh, 22rem);
   }
 
   .app-shell,
@@ -2382,6 +2655,12 @@
   .inspector-tab-strip,
   .inspector-controls,
   .inspector-density-controls,
+  .automation-list,
+  .automation-item,
+  .automation-fields,
+  .automation-preview-control,
+  .automation-preview-result,
+  .automation-confirm-row,
   .map-panel,
   .map-fallback,
   .mapper-board,
@@ -2553,6 +2832,18 @@
     gap: 0.5rem;
   }
 
+  .mobile-status-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-left: 0.55rem;
+    margin-right: 0.55rem;
+    padding: 0.55rem;
+  }
+
+  .mobile-reconnect-button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
   .inspector-tab-strip {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.25rem;
@@ -2580,13 +2871,22 @@
   .command-form {
     position: relative;
     z-index: 1;
+    gap: 0.5rem;
+  }
+
+  .command-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .command-history-actions {
+    min-height: 2.4rem;
   }
 }
 
 @media (max-width: 360px) {
   .app-shell {
-    padding-left: 0.35rem;
-    padding-right: 0.35rem;
+    padding-left: max(0.35rem, env(safe-area-inset-left));
+    padding-right: max(0.35rem, env(safe-area-inset-right));
   }
 
   .inspector-header {
@@ -2615,6 +2915,11 @@
   .terminal-output,
   .command-form,
   .bars {
+    margin-left: 0.45rem;
+    margin-right: 0.45rem;
+  }
+
+  .mobile-status-strip {
     margin-left: 0.45rem;
     margin-right: 0.45rem;
   }

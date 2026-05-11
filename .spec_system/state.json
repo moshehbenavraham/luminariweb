@@ -55,7 +55,9 @@
     "phase02-session05-room-context-panel",
     "phase02-session06-map-and-quest-fallback-strategy",
     "phase03-session01-mapper-ux-reference-implementation",
-    "phase03-session02-windows-and-layout-ergonomics"
+    "phase03-session02-windows-and-layout-ergonomics",
+    "phase03-session03-alias-macro-and-trigger-ux",
+    "phase03-session04-mobile-and-pwa-foundation"
   ],
   "next_session_history": [
     {
@@ -206,6 +208,21 @@
     {
       "date": "2026-05-11",
       "session": "phase03-session02-windows-and-layout-ergonomics",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase03-session03-alias-macro-and-trigger-ux",
+      "status": "planned"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase03-session03-alias-macro-and-trigger-ux",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase03-session04-mobile-and-pwa-foundation",
       "status": "completed"
     }
   ]

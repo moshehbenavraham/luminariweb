@@ -23,6 +23,40 @@ import type {
   InspectorTabId,
 } from '../shared/client-layout-preferences.ts';
 import {
+  consumeTriggerText,
+  createEmptyAlias,
+  createEmptyTrigger,
+  expandAliasCommands,
+  previewAliasExpansion,
+  previewTriggerConsumption,
+  validateAlias,
+  validateTrigger,
+} from '../shared/client-automation.ts';
+import type {
+  AliasDefinition,
+  AutomationField,
+  AutomationLimitNotice,
+  AutomationValidationIssue,
+  TriggerDefinition,
+} from '../shared/client-automation.ts';
+import {
+  CLIENT_CONFIG_STORAGE_KEY,
+  DEFAULT_CLIENT_CONFIG_STATE,
+  DEFAULT_CLIENT_SETTINGS,
+  buildClientConfigPayload,
+  isSidebarFontFamily,
+  parseClientConfigImport,
+  parseLegacyClientConfigFromCookieHeader,
+  parseStoredClientConfigJson,
+  serializeClientConfigPayload,
+} from '../shared/client-config-persistence.ts';
+import type {
+  ClientConfigState,
+  ClientSettings,
+  SidebarFontFamily,
+} from '../shared/client-config-persistence.ts';
+import { buildNetworkStatusMessage } from '../shared/pwa-support.ts';
+import {
   buildAffectsDisplayModel,
   buildInventoryDisplayModel,
 } from '../shared/msdp-affects-inventory-display.ts';
@@ -83,7 +117,6 @@ import type {
   ClientMessage,
   ConnectionStatus,
   MsdpVariableKey,
-  MsdpVariableMap,
   MudState,
   MudValue,
   ServerMessage,
@@ -112,13 +145,6 @@ const INITIAL_TERMINAL_TEXT = 'Connect to a LuminariMUD-compatible server to beg
 const CONNECTED_TERMINAL_TEXT = 'Connected. Waiting for room text and MSDP updates...';
 const TERMINAL_CELL_MEASUREMENT_SAMPLE = 'MMMMMMMMMM';
 const TERMINAL_RESIZE_DEBOUNCE_MS = 75;
-const AUTOMATION_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
-const AUTOMATION_COOKIE_CHUNK_SIZE = 3000;
-const AUTOMATION_RECURSION_LIMIT = 10;
-const CLIENT_CONFIG_EXPORT_VERSION = 1;
-const ALIASES_COOKIE_NAME = 'lwc.aliases';
-const TRIGGERS_COOKIE_NAME = 'lwc.triggers';
-const CLIENT_SETTINGS_COOKIE_NAME = 'lwc.settings';
 const ANSI_ESCAPE_PATTERN = new RegExp(String.raw`\u001b\[[0-?]*[ -/]*[@-~]`, 'g');
 const MOVEMENT_COMMANDS = new Set([
   'n',
@@ -166,40 +192,6 @@ type InspectorTab = {
   shortLabel: string;
 };
 
-type AliasDefinition = {
-  id: string;
-  pattern: string;
-  expansion: string;
-  enabled: boolean;
-};
-
-type TriggerDefinition = {
-  id: string;
-  pattern: string;
-  action: string;
-  enabled: boolean;
-};
-
-type SidebarFontFamily = 'sans' | 'mono' | 'serif';
-
-type ClientSettings = {
-  terminal: {
-    fontSize: number;
-    lineHeight: number;
-    autoScroll: boolean;
-    wrapLines: boolean;
-  };
-  minimap: {
-    fontSize: number;
-    paneHeight: number;
-  };
-  sidebar: {
-    fontFamily: SidebarFontFamily;
-    fontSize: number;
-  };
-  msdp: MsdpVariableMap;
-};
-
 type AutomationNotice = {
   kind: 'success' | 'error';
   text: string;
@@ -207,25 +199,12 @@ type AutomationNotice = {
 
 type AutomationMenuId = 'aliases' | 'triggers' | 'msdpVars' | 'settings';
 
-type AvailabilityNotice = DisplayAvailabilityNotice;
-
-const DEFAULT_CLIENT_SETTINGS: ClientSettings = {
-  terminal: {
-    fontSize: 14,
-    lineHeight: 1.55,
-    autoScroll: true,
-    wrapLines: true,
-  },
-  minimap: {
-    fontSize: 14,
-    paneHeight: 16,
-  },
-  sidebar: {
-    fontFamily: 'mono',
-    fontSize: 13,
-  },
-  msdp: normalizeMsdpVariableMap(defaultMsdpVariables),
+type PendingAutomationDelete = {
+  kind: 'alias' | 'trigger';
+  id: string;
 };
+
+type AvailabilityNotice = DisplayAvailabilityNotice;
 
 const OUTPUT_FONT_SIZE_OPTIONS = [12, 13, 14, 15, 16, 18, 20, 22, 24];
 const OUTPUT_LINE_HEIGHT_OPTIONS = [
@@ -375,17 +354,25 @@ function App() {
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
   const [historyDraft, setHistoryDraft] = useState('');
-  const [aliases, setAliases] = useState<AliasDefinition[]>(() => loadAliasesFromCookies());
-  const [triggers, setTriggers] = useState<TriggerDefinition[]>(() => loadTriggersFromCookies());
-  const [clientSettings, setClientSettings] = useState<ClientSettings>(() =>
-    loadClientSettingsFromCookies(),
+  const [initialClientConfig] = useState<ClientConfigState>(() => loadClientConfigFromLocalStorage());
+  const [aliases, setAliases] = useState<AliasDefinition[]>(initialClientConfig.aliases);
+  const [triggers, setTriggers] = useState<TriggerDefinition[]>(initialClientConfig.triggers);
+  const [clientSettings, setClientSettings] = useState<ClientSettings>(
+    initialClientConfig.settings,
   );
   const [automationNotice, setAutomationNotice] = useState<AutomationNotice | null>(null);
+  const [aliasPreviewInputs, setAliasPreviewInputs] = useState<Record<string, string>>({});
+  const [triggerPreviewInputs, setTriggerPreviewInputs] = useState<Record<string, string>>({});
+  const [pendingAutomationDelete, setPendingAutomationDelete] =
+    useState<PendingAutomationDelete | null>(null);
   const [terminalChunks, setTerminalChunks] = useState<string[]>([
     `<span class="terminal-muted">${INITIAL_TERMINAL_TEXT}</span>`,
   ]);
   const [terminalRawChunks, setTerminalRawChunks] = useState<string[]>([INITIAL_TERMINAL_TEXT]);
   const [terminalResetKey, setTerminalResetKey] = useState(0);
+  const [browserOnline, setBrowserOnline] = useState(() =>
+    typeof navigator === 'undefined' ? true : navigator.onLine,
+  );
   const [proxyReady, setProxyReady] = useState(false);
   const [status, setStatus] = useState<ConnectionStatus>('idle');
   const [statusDetail, setStatusDetail] = useState('Awaiting connection.');
@@ -405,17 +392,63 @@ function App() {
   const menuBarRef = useRef<HTMLDivElement | null>(null);
   const ansiConverterRef = useRef(createMudHtmlStreamConverter());
   const triggerBufferRef = useRef('');
+  const triggerBatchDispatchingRef = useRef(false);
   const statusRef = useRef<ConnectionStatus>('idle');
   const aliasesRef = useRef<AliasDefinition[]>(aliases);
   const triggersRef = useRef<TriggerDefinition[]>(triggers);
   const terminalRendererMode = useMemo(() => parseTerminalRendererMode(window.location.search), []);
   const useXtermSpike = isXtermSpikeRenderer(terminalRendererMode);
-  const canConnect = proxyReady && status !== 'connecting';
   const connected = status === 'connected';
+  const connectionInFlight = status === 'connecting';
+  const canStartConnection = browserOnline && proxyReady && !connectionInFlight && !connected;
+  const canConnect = connected || canStartConnection;
+  const networkStatus = useMemo(
+    () =>
+      buildNetworkStatusMessage({
+        browserOnline,
+        proxyReady,
+        connectionStatus: status,
+        statusDetail,
+      }),
+    [browserOnline, proxyReady, status, statusDetail],
+  );
+  const aliasValidationById = useMemo(
+    () => new Map(aliases.map((alias) => [alias.id, validateAlias(alias)])),
+    [aliases],
+  );
+  const triggerValidationById = useMemo(
+    () => new Map(triggers.map((trigger) => [trigger.id, validateTrigger(trigger)])),
+    [triggers],
+  );
+  const resetAutomationMenuState = useCallback((nextMenu: AutomationMenuId | null) => {
+    if (nextMenu !== 'aliases') {
+      setAliasPreviewInputs({});
+    }
+
+    if (nextMenu !== 'triggers') {
+      setTriggerPreviewInputs({});
+    }
+
+    setPendingAutomationDelete(null);
+  }, []);
 
   useEffect(() => {
     document.title = uiSettings.personalization.browserTitle;
   }, [uiSettings.personalization.browserTitle]);
+
+  useEffect(() => {
+    function updateBrowserOnline() {
+      setBrowserOnline(navigator.onLine);
+    }
+
+    updateBrowserOnline();
+    window.addEventListener('online', updateBrowserOnline);
+    window.addEventListener('offline', updateBrowserOnline);
+    return () => {
+      window.removeEventListener('online', updateBrowserOnline);
+      window.removeEventListener('offline', updateBrowserOnline);
+    };
+  }, []);
 
   useEffect(() => {
     statusRef.current = status;
@@ -423,17 +456,15 @@ function App() {
 
   useEffect(() => {
     aliasesRef.current = aliases;
-    saveAliasesToCookies(aliases);
   }, [aliases]);
 
   useEffect(() => {
     triggersRef.current = triggers;
-    saveTriggersToCookies(triggers);
   }, [triggers]);
 
   useEffect(() => {
-    saveClientSettingsToCookies(normalizeClientSettings(clientSettings));
-  }, [clientSettings]);
+    saveClientConfigToLocalStorage({ settings: clientSettings, aliases, triggers });
+  }, [aliases, clientSettings, triggers]);
 
   useEffect(() => {
     saveClientLayoutPreferencesToLocalStorage(layoutPreferences);
@@ -450,6 +481,7 @@ function App() {
       }
 
       setOpenAutomationMenu(null);
+      resetAutomationMenuState(null);
       if (connected) {
         focusCommandInput(commandInputRef.current);
       }
@@ -458,6 +490,7 @@ function App() {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setOpenAutomationMenu(null);
+        resetAutomationMenuState(null);
         if (connected) {
           focusCommandInput(commandInputRef.current);
         }
@@ -470,7 +503,7 @@ function App() {
       window.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [connected, openAutomationMenu]);
+  }, [connected, openAutomationMenu, resetAutomationMenuState]);
 
   useEffect(() => {
     let active = true;
@@ -643,8 +676,15 @@ function App() {
         rememberCommand(trimmed);
       }
 
-      const expandedCommands = expandAliasCommands(trimmed, aliasesRef.current);
-      for (const expandedCommand of expandedCommands) {
+      const expansion = expandAliasCommands(trimmed, aliasesRef.current);
+      if (expansion.notices.length > 0) {
+        setAutomationNotice({
+          kind: 'error',
+          text: formatAutomationNotices(expansion.notices),
+        });
+      }
+
+      for (const expandedCommand of expansion.commands) {
         sendInputLine(expandedCommand);
       }
     },
@@ -700,8 +740,13 @@ function App() {
   useEffect(() => {
     const socket = new WebSocket(getWebSocketUrl());
     socketRef.current = socket;
+    const isCurrentSocket = () => socketRef.current === socket;
 
     socket.addEventListener('open', () => {
+      if (!isCurrentSocket()) {
+        return;
+      }
+
       setProxyReady(true);
       lastSentTerminalDimensionsRef.current = null;
       measureAndQueueTerminalResize({ immediate: true });
@@ -711,6 +756,10 @@ function App() {
     });
 
     socket.addEventListener('close', () => {
+      if (!isCurrentSocket()) {
+        return;
+      }
+
       setProxyReady(false);
       lastSentTerminalDimensionsRef.current = null;
       clearPendingTerminalResize();
@@ -723,20 +772,44 @@ function App() {
     });
 
     socket.addEventListener('message', (event) => {
+      if (!isCurrentSocket()) {
+        return;
+      }
+
       const message = parseServerMessage(event.data);
       if (!message) {
         return;
       }
 
       if (message.type === 'terminal') {
-        const triggerResult = consumeTriggerText(
-          message.text,
-          triggerBufferRef.current,
-          triggersRef.current,
-        );
-        triggerBufferRef.current = triggerResult.buffer;
-        for (const triggerCommand of triggerResult.commands) {
-          dispatchInputText(triggerCommand, { rememberInHistory: false });
+        if (triggerBatchDispatchingRef.current) {
+          setAutomationNotice({
+            kind: 'error',
+            text: 'Skipped trigger automation while another trigger batch was still processing.',
+          });
+        } else {
+          const triggerResult = consumeTriggerText(
+            stripMudFormatting(message.text),
+            triggerBufferRef.current,
+            triggersRef.current,
+            aliasesRef.current,
+          );
+          triggerBufferRef.current = triggerResult.buffer;
+          if (triggerResult.notices.length > 0) {
+            setAutomationNotice({
+              kind: 'error',
+              text: formatAutomationNotices(triggerResult.notices),
+            });
+          }
+
+          triggerBatchDispatchingRef.current = triggerResult.commands.length > 0;
+          try {
+            for (const triggerCommand of triggerResult.commands) {
+              sendInputLine(triggerCommand);
+            }
+          } finally {
+            triggerBatchDispatchingRef.current = false;
+          }
         }
 
         const html = renderMudStreamHtml(message.text, ansiConverterRef.current);
@@ -778,10 +851,12 @@ function App() {
     });
 
     return () => {
+      if (socketRef.current === socket) {
+        socketRef.current = null;
+      }
       socket.close();
-      socketRef.current = null;
     };
-  }, [clearPendingTerminalResize, dispatchInputText, measureAndQueueTerminalResize]);
+  }, [clearPendingTerminalResize, measureAndQueueTerminalResize, sendInputLine]);
 
   useEffect(() => {
     if (terminalRef.current && clientSettings.terminal.autoScroll) {
@@ -793,6 +868,16 @@ function App() {
     () => normalizeMsdpVariableMap(clientSettings.msdp),
     [clientSettings.msdp],
   );
+  const startConnection = useCallback(() => {
+    if (!canStartConnection) {
+      return;
+    }
+
+    statusRef.current = 'connecting';
+    setStatus('connecting');
+    setStatusDetail(`Connecting to ${host}:${port}...`);
+    sendMessage({ type: 'connect', host, port, msdpVariables: activeMsdpVariables });
+  }, [activeMsdpVariables, canStartConnection, host, port, sendMessage]);
   const coreDisplay = useMemo(
     () => buildCoreDisplayModel(mudState, status, activeMsdpVariables),
     [activeMsdpVariables, mudState, status],
@@ -1078,10 +1163,7 @@ function App() {
       return;
     }
 
-    statusRef.current = 'connecting';
-    setStatus('connecting');
-    setStatusDetail(`Connecting to ${host}:${port}...`);
-    sendMessage({ type: 'connect', host, port, msdpVariables: activeMsdpVariables });
+    startConnection();
   }
 
   function handleMudPresetChange(mudId: string) {
@@ -1116,7 +1198,7 @@ function App() {
   function handleCommandSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!connected) {
+    if (!networkStatus.canSendCommand) {
       return;
     }
 
@@ -1132,6 +1214,44 @@ function App() {
     }
 
     setCommand('');
+    focusCommandInput(commandInputRef.current);
+  }
+
+  function handleHistoryPrevious() {
+    if (!connected || commandHistory.length === 0) {
+      return;
+    }
+
+    if (historyIndex === null) {
+      setHistoryDraft(command);
+      setHistoryIndex(commandHistory.length - 1);
+      setCommand(commandHistory[commandHistory.length - 1]);
+      focusCommandInput(commandInputRef.current);
+      return;
+    }
+
+    if (historyIndex > 0) {
+      setHistoryIndex(historyIndex - 1);
+      setCommand(commandHistory[historyIndex - 1]);
+    }
+
+    focusCommandInput(commandInputRef.current);
+  }
+
+  function handleHistoryNext() {
+    if (!connected || commandHistory.length === 0 || historyIndex === null) {
+      return;
+    }
+
+    if (historyIndex < commandHistory.length - 1) {
+      setHistoryIndex(historyIndex + 1);
+      setCommand(commandHistory[historyIndex + 1]);
+      focusCommandInput(commandInputRef.current);
+      return;
+    }
+
+    setHistoryIndex(null);
+    setCommand(historyDraft);
     focusCommandInput(commandInputRef.current);
   }
 
@@ -1203,17 +1323,21 @@ function App() {
     setAliases((current) =>
       current.map((alias) => (alias.id === aliasId ? { ...alias, ...updates } : alias)),
     );
+    setAutomationNotice(null);
   }
 
   function updateTrigger(triggerId: string, updates: Partial<TriggerDefinition>) {
     setTriggers((current) =>
       current.map((trigger) => (trigger.id === triggerId ? { ...trigger, ...updates } : trigger)),
     );
+    setAutomationNotice(null);
   }
 
   function toggleAutomationMenu(menuId: AutomationMenuId) {
     const isClosing = openAutomationMenu === menuId;
-    setOpenAutomationMenu(isClosing ? null : menuId);
+    const nextMenu = isClosing ? null : menuId;
+    setOpenAutomationMenu(nextMenu);
+    resetAutomationMenuState(nextMenu);
     if (isClosing && connected) {
       focusCommandInput(commandInputRef.current);
     }
@@ -1222,11 +1346,43 @@ function App() {
   function handleAddAlias() {
     setAliases((current) => [...current, createEmptyAlias()]);
     setAutomationNotice(null);
+    setPendingAutomationDelete(null);
   }
 
   function handleAddTrigger() {
     setTriggers((current) => [...current, createEmptyTrigger()]);
     setAutomationNotice(null);
+    setPendingAutomationDelete(null);
+  }
+
+  function requestAliasDelete(aliasId: string) {
+    setPendingAutomationDelete({ kind: 'alias', id: aliasId });
+  }
+
+  function requestTriggerDelete(triggerId: string) {
+    setPendingAutomationDelete({ kind: 'trigger', id: triggerId });
+  }
+
+  function confirmAliasDelete(aliasId: string) {
+    setAliases((current) => current.filter((entry) => entry.id !== aliasId));
+    setAliasPreviewInputs((current) => removeRecordKey(current, aliasId));
+    setPendingAutomationDelete(null);
+    setAutomationNotice(null);
+  }
+
+  function confirmTriggerDelete(triggerId: string) {
+    setTriggers((current) => current.filter((entry) => entry.id !== triggerId));
+    setTriggerPreviewInputs((current) => removeRecordKey(current, triggerId));
+    setPendingAutomationDelete(null);
+    setAutomationNotice(null);
+  }
+
+  function updateAliasPreviewInput(aliasId: string, value: string) {
+    setAliasPreviewInputs((current) => ({ ...current, [aliasId]: value }));
+  }
+
+  function updateTriggerPreviewInput(triggerId: string, value: string) {
+    setTriggerPreviewInputs((current) => ({ ...current, [triggerId]: value }));
   }
 
   function updateTerminalSettings(updates: Partial<ClientSettings['terminal']>) {
@@ -1274,13 +1430,23 @@ function App() {
   }
 
   function handleConfigExport() {
-    downloadJsonFile('luminari-web-client-config.json', {
-      type: 'luminari-web-client-config',
-      version: CLIENT_CONFIG_EXPORT_VERSION,
-      settings: normalizeClientSettings(clientSettings),
-      aliases,
-      triggers,
-    });
+    const validationMessage = getFirstAutomationValidationMessage(aliases, triggers);
+    if (validationMessage) {
+      setAutomationNotice({
+        kind: 'error',
+        text: `Fix automation validation errors before saving: ${validationMessage}`,
+      });
+      return;
+    }
+
+    downloadJsonFile(
+      'luminari-web-client-config.json',
+      buildClientConfigPayload({
+        settings: clientSettings,
+        aliases,
+        triggers,
+      }),
+    );
     setOpenAutomationMenu(null);
     if (connected) {
       focusCommandInput(commandInputRef.current);
@@ -1299,15 +1465,17 @@ function App() {
     }
 
     try {
-      const importedConfig = parseClientConfigImport(
-        await file.text(),
-        clientSettings,
+      const importedConfig = parseClientConfigImport(await file.text(), {
+        settings: clientSettings,
         aliases,
         triggers,
-      );
+      });
       setClientSettings(importedConfig.settings);
       setAliases(importedConfig.aliases);
       setTriggers(importedConfig.triggers);
+      setAliasPreviewInputs({});
+      setTriggerPreviewInputs({});
+      setPendingAutomationDelete(null);
       setOpenAutomationMenu(null);
       if (connected) {
         focusCommandInput(commandInputRef.current);
@@ -1454,59 +1622,102 @@ function App() {
                     <p className="automation-empty">No aliases saved yet.</p>
                   ) : (
                     <div className="automation-list">
-                      {aliases.map((alias) => (
-                        <div key={alias.id} className="automation-item">
-                          <div className="automation-item-header">
-                            <label className="automation-toggle">
+                      {aliases.map((alias) => {
+                        const validation = aliasValidationById.get(alias.id);
+                        const issues = validation?.issues ?? [];
+                        const previewInput = aliasPreviewInputs[alias.id] ?? '';
+                        const previewReport = previewInput.trim()
+                          ? previewAliasExpansion(alias, previewInput, aliases)
+                          : null;
+                        const deletePending =
+                          pendingAutomationDelete?.kind === 'alias' &&
+                          pendingAutomationDelete.id === alias.id;
+
+                        return (
+                          <div
+                            key={alias.id}
+                            className={`automation-item${validation?.valid === false ? ' automation-item-invalid' : ''}`}
+                          >
+                            <div className="automation-item-header">
+                              <label className="automation-toggle">
+                                <input
+                                  type="checkbox"
+                                  checked={alias.enabled}
+                                  onChange={(event) =>
+                                    updateAlias(alias.id, { enabled: event.target.checked })
+                                  }
+                                />
+                                <span>{alias.enabled ? 'Enabled' : 'Disabled'}</span>
+                              </label>
+
+                              <button
+                                type="button"
+                                className="automation-delete"
+                                onClick={() => requestAliasDelete(alias.id)}
+                                aria-expanded={deletePending}
+                              >
+                                Delete
+                              </button>
+                            </div>
+
+                            {deletePending ? (
+                              <div className="automation-confirm-row" role="group">
+                                <span>Delete this alias?</span>
+                                <button type="button" onClick={() => confirmAliasDelete(alias.id)}>
+                                  Confirm
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setPendingAutomationDelete(null)}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : null}
+
+                            <div className="automation-fields">
+                              <label>
+                                <span>Pattern</span>
+                                <input
+                                  value={alias.pattern}
+                                  onChange={(event) =>
+                                    updateAlias(alias.id, { pattern: event.target.value })
+                                  }
+                                  aria-invalid={hasFieldIssue(issues, 'pattern')}
+                                  placeholder="k *"
+                                />
+                                {renderAutomationFieldErrors(issues, 'pattern')}
+                              </label>
+
+                              <label>
+                                <span>Expansion</span>
+                                <textarea
+                                  rows={2}
+                                  value={alias.expansion}
+                                  onChange={(event) =>
+                                    updateAlias(alias.id, { expansion: event.target.value })
+                                  }
+                                  aria-invalid={hasFieldIssue(issues, 'expansion')}
+                                  placeholder="kill %1"
+                                />
+                                {renderAutomationFieldErrors(issues, 'expansion')}
+                              </label>
+                            </div>
+
+                            <label className="automation-preview-control">
+                              <span>Test command</span>
                               <input
-                                type="checkbox"
-                                checked={alias.enabled}
+                                value={previewInput}
                                 onChange={(event) =>
-                                  updateAlias(alias.id, { enabled: event.target.checked })
+                                  updateAliasPreviewInput(alias.id, event.target.value)
                                 }
+                                placeholder="k goblin"
                               />
-                              <span>{alias.enabled ? 'Enabled' : 'Disabled'}</span>
                             </label>
-
-                            <button
-                              type="button"
-                              className="automation-delete"
-                              onClick={() =>
-                                setAliases((current) =>
-                                  current.filter((entry) => entry.id !== alias.id),
-                                )
-                              }
-                            >
-                              Delete
-                            </button>
+                            {previewReport ? renderAliasPreview(previewReport.commands, previewReport.notices) : null}
                           </div>
-
-                          <div className="automation-fields">
-                            <label>
-                              <span>Pattern</span>
-                              <input
-                                value={alias.pattern}
-                                onChange={(event) =>
-                                  updateAlias(alias.id, { pattern: event.target.value })
-                                }
-                                placeholder="k *"
-                              />
-                            </label>
-
-                            <label>
-                              <span>Expansion</span>
-                              <textarea
-                                rows={2}
-                                value={alias.expansion}
-                                onChange={(event) =>
-                                  updateAlias(alias.id, { expansion: event.target.value })
-                                }
-                                placeholder="kill %1"
-                              />
-                            </label>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -1552,59 +1763,107 @@ function App() {
                     <p className="automation-empty">No triggers saved yet.</p>
                   ) : (
                     <div className="automation-list">
-                      {triggers.map((trigger) => (
-                        <div key={trigger.id} className="automation-item">
-                          <div className="automation-item-header">
-                            <label className="automation-toggle">
+                      {triggers.map((trigger) => {
+                        const validation = triggerValidationById.get(trigger.id);
+                        const issues = validation?.issues ?? [];
+                        const previewInput = triggerPreviewInputs[trigger.id] ?? '';
+                        const previewReport = previewInput.trim()
+                          ? previewTriggerConsumption(trigger, previewInput, aliases)
+                          : null;
+                        const deletePending =
+                          pendingAutomationDelete?.kind === 'trigger' &&
+                          pendingAutomationDelete.id === trigger.id;
+
+                        return (
+                          <div
+                            key={trigger.id}
+                            className={`automation-item${validation?.valid === false ? ' automation-item-invalid' : ''}`}
+                          >
+                            <div className="automation-item-header">
+                              <label className="automation-toggle">
+                                <input
+                                  type="checkbox"
+                                  checked={trigger.enabled}
+                                  onChange={(event) =>
+                                    updateTrigger(trigger.id, { enabled: event.target.checked })
+                                  }
+                                />
+                                <span>{trigger.enabled ? 'Enabled' : 'Disabled'}</span>
+                              </label>
+
+                              <button
+                                type="button"
+                                className="automation-delete"
+                                onClick={() => requestTriggerDelete(trigger.id)}
+                                aria-expanded={deletePending}
+                              >
+                                Delete
+                              </button>
+                            </div>
+
+                            {deletePending ? (
+                              <div className="automation-confirm-row" role="group">
+                                <span>Delete this trigger?</span>
+                                <button
+                                  type="button"
+                                  onClick={() => confirmTriggerDelete(trigger.id)}
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setPendingAutomationDelete(null)}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : null}
+
+                            <div className="automation-fields">
+                              <label>
+                                <span>Pattern</span>
+                                <input
+                                  value={trigger.pattern}
+                                  onChange={(event) =>
+                                    updateTrigger(trigger.id, { pattern: event.target.value })
+                                  }
+                                  aria-invalid={hasFieldIssue(issues, 'pattern')}
+                                  placeholder="* tells you *"
+                                />
+                                {renderAutomationFieldErrors(issues, 'pattern')}
+                              </label>
+
+                              <label>
+                                <span>Action</span>
+                                <textarea
+                                  rows={2}
+                                  value={trigger.action}
+                                  onChange={(event) =>
+                                    updateTrigger(trigger.id, { action: event.target.value })
+                                  }
+                                  aria-invalid={hasFieldIssue(issues, 'action')}
+                                  placeholder="tell %1 Thanks for the message."
+                                />
+                                {renderAutomationFieldErrors(issues, 'action')}
+                              </label>
+                            </div>
+
+                            <label className="automation-preview-control">
+                              <span>Sample line</span>
                               <input
-                                type="checkbox"
-                                checked={trigger.enabled}
+                                value={previewInput}
                                 onChange={(event) =>
-                                  updateTrigger(trigger.id, { enabled: event.target.checked })
+                                  updateTriggerPreviewInput(trigger.id, event.target.value)
                                 }
+                                placeholder="Ari tells you hello"
                               />
-                              <span>{trigger.enabled ? 'Enabled' : 'Disabled'}</span>
                             </label>
-
-                            <button
-                              type="button"
-                              className="automation-delete"
-                              onClick={() =>
-                                setTriggers((current) =>
-                                  current.filter((entry) => entry.id !== trigger.id),
-                                )
-                              }
-                            >
-                              Delete
-                            </button>
+                            {previewReport
+                              ? renderTriggerPreview(previewReport.commands, previewReport.notices)
+                              : null}
                           </div>
-
-                          <div className="automation-fields">
-                            <label>
-                              <span>Pattern</span>
-                              <input
-                                value={trigger.pattern}
-                                onChange={(event) =>
-                                  updateTrigger(trigger.id, { pattern: event.target.value })
-                                }
-                                placeholder="* tells you '*'"
-                              />
-                            </label>
-
-                            <label>
-                              <span>Action</span>
-                              <textarea
-                                rows={2}
-                                value={trigger.action}
-                                onChange={(event) =>
-                                  updateTrigger(trigger.id, { action: event.target.value })
-                                }
-                                placeholder="tell %1 Thanks for the message."
-                              />
-                            </label>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -1948,9 +2207,20 @@ function App() {
             </form>
           </header>
 
-          <section className="status-row">
+          <section
+            className={`status-row status-row-${networkStatus.kind}`}
+            aria-live="polite"
+          >
             <div className={`status-pill status-${status}`}>{status}</div>
-            <p>{statusDetail}</p>
+            <div className="status-copy">
+              <p>
+                <strong>{networkStatus.title}</strong>
+              </p>
+              <p>{networkStatus.detail}</p>
+            </div>
+            <div className={`browser-network-pill browser-network-${networkStatus.browserState}`}>
+              {networkStatus.browserLabel}
+            </div>
           </section>
         </div>
       ) : null}
@@ -1961,6 +2231,34 @@ function App() {
         data-inspector-density={inspectorDensity}
       >
         <section className="terminal-column panel">
+          <div
+            className={`mobile-status-strip mobile-status-${networkStatus.kind}`}
+            aria-live="polite"
+            data-prevent-command-focus
+          >
+            <div className="mobile-status-item">
+              <span>Network</span>
+              <strong>{networkStatus.browserLabel}</strong>
+            </div>
+            <div className="mobile-status-item">
+              <span>Proxy</span>
+              <strong>{networkStatus.proxyLabel}</strong>
+            </div>
+            <div className="mobile-status-item">
+              <span>MUD</span>
+              <strong>{networkStatus.mudLabel}</strong>
+            </div>
+            <p className="mobile-status-detail">{networkStatus.detail}</p>
+            <button
+              type="button"
+              className="mobile-reconnect-button"
+              onClick={startConnection}
+              disabled={!networkStatus.canUseReconnect || !canStartConnection}
+            >
+              {status === 'idle' ? 'Connect' : 'Reconnect'}
+            </button>
+          </div>
+
           {useXtermSpike ? (
             <XtermTerminalSpike
               autoScroll={clientSettings.terminal.autoScroll}
@@ -2000,12 +2298,40 @@ function App() {
                 setHistoryDraft(event.target.value);
               }}
               onKeyDown={handleCommandKeyDown}
-              placeholder={connected ? 'Type a command...' : 'Connect before sending commands.'}
-              readOnly={!connected}
+              placeholder={
+                networkStatus.canSendCommand
+                  ? 'Type a command...'
+                  : !browserOnline
+                    ? 'Browser offline; commands require network.'
+                  : 'Connect before sending commands.'
+              }
+              readOnly={!networkStatus.canSendCommand}
             />
-            <button type="submit" disabled={!connected}>
-              Send
-            </button>
+            <div className="command-actions" data-prevent-command-focus>
+              <div className="command-history-actions" aria-label="Command history controls">
+                <button
+                  type="button"
+                  className="command-history-button"
+                  onClick={handleHistoryPrevious}
+                  disabled={!connected || commandHistory.length === 0}
+                  aria-label="Previous command"
+                >
+                  Prev
+                </button>
+                <button
+                  type="button"
+                  className="command-history-button"
+                  onClick={handleHistoryNext}
+                  disabled={!connected || historyIndex === null}
+                  aria-label="Next command"
+                >
+                  Next
+                </button>
+              </div>
+              <button type="submit" disabled={!networkStatus.canSendCommand}>
+                Send
+              </button>
+            </div>
           </form>
         </section>
 
@@ -2093,505 +2419,102 @@ function App() {
   );
 }
 
-function createEmptyAlias(): AliasDefinition {
-  return {
-    id: createAutomationId('alias'),
-    pattern: '',
-    expansion: '',
-    enabled: true,
-  };
-}
-
-function createEmptyTrigger(): TriggerDefinition {
-  return {
-    id: createAutomationId('trigger'),
-    pattern: '',
-    action: '',
-    enabled: true,
-  };
-}
-
-function createAutomationId(prefix: string) {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`;
-  }
-
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function expandAliasCommands(text: string, aliases: AliasDefinition[], depth = 0): string[] {
-  const trimmedText = text.trim();
-  if (!trimmedText) {
-    return [];
-  }
-
-  if (depth >= AUTOMATION_RECURSION_LIMIT) {
-    return [trimmedText];
-  }
-
-  for (const alias of aliases) {
-    if (!alias.enabled) {
-      continue;
-    }
-
-    const match = matchAliasPattern(trimmedText, alias.pattern);
-    if (!match) {
-      continue;
-    }
-
-    const expandedText = substituteCaptures(alias.expansion, trimmedText, match.captures);
-    const splitCommands = splitCommandSequence(expandedText);
-    if (splitCommands.length === 0) {
-      return [];
-    }
-
-    return splitCommands.flatMap((command) => expandAliasCommands(command, aliases, depth + 1));
-  }
-
-  return [trimmedText];
-}
-
-function consumeTriggerText(text: string, buffer: string, triggers: TriggerDefinition[]) {
-  const normalizedText = stripMudFormatting(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  const combined = `${buffer}${normalizedText}`;
-  const segments = combined.split('\n');
-  const nextBuffer = segments.pop() ?? '';
-  const commands: string[] = [];
-
-  for (const segment of segments) {
-    const line = segment.trim();
-    if (!line) {
-      continue;
-    }
-
-    for (const trigger of triggers) {
-      if (!trigger.enabled) {
-        continue;
-      }
-
-      const match = matchTriggerPattern(line, trigger.pattern);
-      if (!match) {
-        continue;
-      }
-
-      const actionText = substituteCaptures(trigger.action, line, match.captures);
-      commands.push(...splitCommandSequence(actionText));
-    }
-  }
-
-  return { buffer: nextBuffer, commands };
-}
-
-function matchAliasPattern(text: string, pattern: string) {
-  const trimmedPattern = pattern.trim();
-  if (!trimmedPattern) {
+function renderAutomationFieldErrors(
+  issues: AutomationValidationIssue[],
+  field: AutomationField,
+): ReactNode {
+  const fieldIssues = issues.filter((issue) => issue.field === field);
+  if (fieldIssues.length === 0) {
     return null;
   }
 
-  if (trimmedPattern.includes('*')) {
-    return matchWildcardPattern(text, trimmedPattern);
+  return (
+    <div className="automation-field-errors" role="alert">
+      {fieldIssues.map((issue) => (
+        <p key={issue.message}>{issue.message}</p>
+      ))}
+    </div>
+  );
+}
+
+function renderAliasPreview(commands: string[], notices: AutomationLimitNotice[]): ReactNode {
+  return renderAutomationPreview('Alias preview', commands, notices);
+}
+
+function renderTriggerPreview(commands: string[], notices: AutomationLimitNotice[]): ReactNode {
+  return renderAutomationPreview('Trigger preview', commands, notices);
+}
+
+function renderAutomationPreview(
+  title: string,
+  commands: string[],
+  notices: AutomationLimitNotice[],
+): ReactNode {
+  return (
+    <div className="automation-preview-result" aria-live="polite">
+      <span>{title}</span>
+      {notices.length > 0 ? (
+        <ul className="automation-preview-notices">
+          {notices.slice(0, 3).map((notice) => (
+            <li key={`${notice.kind}:${notice.message}`}>{notice.message}</li>
+          ))}
+        </ul>
+      ) : null}
+      {commands.length > 0 ? (
+        <ol>
+          {commands.slice(0, 5).map((command, index) => (
+            <li key={`${command}:${index}`}>{command}</li>
+          ))}
+        </ol>
+      ) : (
+        <p>No commands would be sent.</p>
+      )}
+      {commands.length > 5 ? <p>{commands.length - 5} more command(s) hidden.</p> : null}
+    </div>
+  );
+}
+
+function hasFieldIssue(issues: AutomationValidationIssue[], field: AutomationField) {
+  return issues.some((issue) => issue.field === field);
+}
+
+function formatAutomationNotices(notices: AutomationLimitNotice[]) {
+  const messages = [...new Set(notices.map((notice) => notice.message))];
+  const visibleMessages = messages.slice(0, 2);
+  return messages.length > visibleMessages.length
+    ? `${visibleMessages.join(' ')} ${messages.length - visibleMessages.length} more automation notice(s).`
+    : visibleMessages.join(' ');
+}
+
+function getFirstAutomationValidationMessage(
+  aliases: AliasDefinition[],
+  triggers: TriggerDefinition[],
+) {
+  for (const alias of aliases) {
+    const issue = validateAlias(alias).issues[0];
+    if (issue) {
+      return `Alias "${alias.pattern || 'untitled'}": ${issue.message}`;
+    }
   }
 
-  const normalizedText = text.toLowerCase();
-  const normalizedPattern = trimmedPattern.toLowerCase();
-  if (normalizedText === normalizedPattern) {
-    return { captures: [''] };
-  }
-
-  if (normalizedText.startsWith(`${normalizedPattern} `)) {
-    return { captures: [text.slice(trimmedPattern.length).trimStart()] };
+  for (const trigger of triggers) {
+    const issue = validateTrigger(trigger).issues[0];
+    if (issue) {
+      return `Trigger "${trigger.pattern || 'untitled'}": ${issue.message}`;
+    }
   }
 
   return null;
 }
 
-function matchTriggerPattern(text: string, pattern: string) {
-  const trimmedPattern = pattern.trim();
-  if (!trimmedPattern) {
-    return null;
-  }
-
-  if (trimmedPattern.includes('*')) {
-    return matchWildcardPattern(text, trimmedPattern);
-  }
-
-  return text.toLowerCase().includes(trimmedPattern.toLowerCase()) ? { captures: [] } : null;
-}
-
-function matchWildcardPattern(text: string, pattern: string) {
-  const escapedSegments = pattern.trim().split('*').map(escapeRegExp);
-  const matcher = new RegExp(`^${escapedSegments.join('(.*?)')}$`, 'i');
-  const match = matcher.exec(text);
-  if (!match) {
-    return null;
-  }
-
-  return { captures: match.slice(1).map((capture) => capture.trim()) };
-}
-
-function substituteCaptures(template: string, source: string, captures: string[]) {
-  return template.replace(/%(\d)/g, (_match, indexText: string) => {
-    const index = Number(indexText);
-    if (index === 0) {
-      return source;
-    }
-
-    return captures[index - 1] ?? '';
-  });
-}
-
-function splitCommandSequence(value: string) {
-  return value
-    .split(/\r?\n|;/)
-    .map((entry) => entry.trim())
-    .filter(Boolean);
-}
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function removeRecordKey(record: Record<string, string>, key: string) {
+  const nextRecord = { ...record };
+  delete nextRecord[key];
+  return nextRecord;
 }
 
 function stripMudFormatting(value: string) {
   return convertLuminariColorCodes(value).replace(ANSI_ESCAPE_PATTERN, '');
-}
-
-function loadAliasesFromCookies() {
-  return parsePersistedAliases(readChunkedCookie(ALIASES_COOKIE_NAME));
-}
-
-function loadTriggersFromCookies() {
-  return parsePersistedTriggers(readChunkedCookie(TRIGGERS_COOKIE_NAME));
-}
-
-function loadClientSettingsFromCookies() {
-  return parsePersistedClientSettings(readChunkedCookie(CLIENT_SETTINGS_COOKIE_NAME));
-}
-
-function saveAliasesToCookies(aliases: AliasDefinition[]) {
-  writeChunkedCookie(ALIASES_COOKIE_NAME, JSON.stringify(aliases));
-}
-
-function saveTriggersToCookies(triggers: TriggerDefinition[]) {
-  writeChunkedCookie(TRIGGERS_COOKIE_NAME, JSON.stringify(triggers));
-}
-
-function saveClientSettingsToCookies(settings: ClientSettings) {
-  writeChunkedCookie(CLIENT_SETTINGS_COOKIE_NAME, JSON.stringify(settings));
-}
-
-function parsePersistedAliases(value: string | null) {
-  if (!value) {
-    return [];
-  }
-
-  try {
-    return normalizeAliases(JSON.parse(value));
-  } catch {
-    return [];
-  }
-}
-
-function parsePersistedTriggers(value: string | null) {
-  if (!value) {
-    return [];
-  }
-
-  try {
-    return normalizeTriggers(JSON.parse(value));
-  } catch {
-    return [];
-  }
-}
-
-function parsePersistedClientSettings(value: string | null) {
-  if (!value) {
-    return DEFAULT_CLIENT_SETTINGS;
-  }
-
-  try {
-    return normalizeClientSettings(JSON.parse(value));
-  } catch {
-    return DEFAULT_CLIENT_SETTINGS;
-  }
-}
-
-function parseAliasImport(content: string) {
-  let parsed: unknown;
-
-  try {
-    parsed = JSON.parse(content);
-  } catch {
-    throw new Error('Alias file is not valid JSON.');
-  }
-
-  return normalizeAliases(
-    extractImportedEntries(parsed, 'aliases'),
-    'Alias file must contain an aliases array.',
-  );
-}
-
-function parseTriggerImport(content: string) {
-  let parsed: unknown;
-
-  try {
-    parsed = JSON.parse(content);
-  } catch {
-    throw new Error('Trigger file is not valid JSON.');
-  }
-
-  return normalizeTriggers(
-    extractImportedEntries(parsed, 'triggers'),
-    'Trigger file must contain a triggers array.',
-  );
-}
-
-function parseClientConfigImport(
-  content: string,
-  currentSettings: ClientSettings,
-  currentAliases: AliasDefinition[],
-  currentTriggers: TriggerDefinition[],
-) {
-  let parsed: unknown;
-
-  try {
-    parsed = JSON.parse(content);
-  } catch {
-    throw new Error('Configuration file is not valid JSON.');
-  }
-
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error('Configuration file must be a JSON object.');
-  }
-
-  const record = parsed as Record<string, unknown>;
-  const type = record.type;
-
-  if ('settings' in record) {
-    return {
-      settings: normalizeClientSettings(
-        record.settings,
-        'Configuration file must contain a settings object.',
-      ),
-      aliases: normalizeAliases(
-        extractImportedEntries(record, 'aliases'),
-        'Configuration file must contain an aliases array.',
-      ),
-      triggers: normalizeTriggers(
-        extractImportedEntries(record, 'triggers'),
-        'Configuration file must contain a triggers array.',
-      ),
-    };
-  }
-
-  if (type === 'luminari-web-client-aliases' || ('aliases' in record && !('triggers' in record))) {
-    return {
-      settings: currentSettings,
-      aliases: parseAliasImport(content),
-      triggers: currentTriggers,
-    };
-  }
-
-  if (type === 'luminari-web-client-triggers' || ('triggers' in record && !('aliases' in record))) {
-    return {
-      settings: currentSettings,
-      aliases: currentAliases,
-      triggers: parseTriggerImport(content),
-    };
-  }
-
-  throw new Error('Configuration file must include settings, aliases, and triggers.');
-}
-
-function extractImportedEntries(parsed: unknown, key: 'aliases' | 'triggers') {
-  if (Array.isArray(parsed)) {
-    return parsed;
-  }
-
-  if (parsed && typeof parsed === 'object' && key in parsed) {
-    const nestedEntries = (parsed as Record<string, unknown>)[key];
-    if (Array.isArray(nestedEntries)) {
-      return nestedEntries;
-    }
-  }
-
-  throw new Error(
-    key === 'aliases'
-      ? 'Alias file must contain an aliases array.'
-      : 'Trigger file must contain a triggers array.',
-  );
-}
-
-function normalizeClientSettings(value: unknown, emptyStateMessage?: string): ClientSettings {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    if (emptyStateMessage) {
-      throw new Error(emptyStateMessage);
-    }
-
-    return DEFAULT_CLIENT_SETTINGS;
-  }
-
-  const record = value as Record<string, unknown>;
-  const terminalValue = record.terminal;
-  if (!terminalValue || typeof terminalValue !== 'object' || Array.isArray(terminalValue)) {
-    if (emptyStateMessage) {
-      throw new Error('Configuration settings must include a terminal object.');
-    }
-
-    return DEFAULT_CLIENT_SETTINGS;
-  }
-
-  const terminalRecord = terminalValue as Record<string, unknown>;
-  const minimapRecord = isObjectRecord(record.minimap) ? record.minimap : null;
-  const sidebarRecord = isObjectRecord(record.sidebar) ? record.sidebar : null;
-
-  return {
-    terminal: {
-      fontSize: clampNumber(
-        readNumericSetting(terminalRecord.fontSize),
-        10,
-        32,
-        DEFAULT_CLIENT_SETTINGS.terminal.fontSize,
-      ),
-      lineHeight: clampNumber(
-        readNumericSetting(terminalRecord.lineHeight),
-        1.2,
-        2.2,
-        DEFAULT_CLIENT_SETTINGS.terminal.lineHeight,
-      ),
-      autoScroll:
-        typeof terminalRecord.autoScroll === 'boolean'
-          ? terminalRecord.autoScroll
-          : DEFAULT_CLIENT_SETTINGS.terminal.autoScroll,
-      wrapLines:
-        typeof terminalRecord.wrapLines === 'boolean'
-          ? terminalRecord.wrapLines
-          : DEFAULT_CLIENT_SETTINGS.terminal.wrapLines,
-    },
-    minimap: {
-      fontSize: clampNumber(
-        readNumericSetting(minimapRecord?.fontSize),
-        10,
-        32,
-        DEFAULT_CLIENT_SETTINGS.minimap.fontSize,
-      ),
-      paneHeight: clampNumber(
-        readNumericSetting(minimapRecord?.paneHeight),
-        10,
-        32,
-        DEFAULT_CLIENT_SETTINGS.minimap.paneHeight,
-      ),
-    },
-    sidebar: {
-      fontFamily: isSidebarFontFamily(sidebarRecord?.fontFamily)
-        ? sidebarRecord.fontFamily
-        : DEFAULT_CLIENT_SETTINGS.sidebar.fontFamily,
-      fontSize: clampNumber(
-        readNumericSetting(sidebarRecord?.fontSize),
-        8,
-        32,
-        DEFAULT_CLIENT_SETTINGS.sidebar.fontSize,
-      ),
-    },
-    msdp: normalizeMsdpVariableMap(record.msdp),
-  };
-}
-
-function normalizeAliases(value: unknown, emptyStateMessage?: string): AliasDefinition[] {
-  if (!Array.isArray(value)) {
-    if (emptyStateMessage) {
-      throw new Error(emptyStateMessage);
-    }
-
-    return [];
-  }
-
-  return value.map((entry, index) => normalizeAliasEntry(entry, index));
-}
-
-function normalizeTriggers(value: unknown, emptyStateMessage?: string): TriggerDefinition[] {
-  if (!Array.isArray(value)) {
-    if (emptyStateMessage) {
-      throw new Error(emptyStateMessage);
-    }
-
-    return [];
-  }
-
-  return value.map((entry, index) => normalizeTriggerEntry(entry, index));
-}
-
-function normalizeAliasEntry(value: unknown, index: number): AliasDefinition {
-  if (!value || typeof value !== 'object') {
-    throw new Error(`Alias ${index + 1} is invalid.`);
-  }
-
-  const record = value as Record<string, unknown>;
-  const pattern = readOptionalString(record, ['pattern', 'name']);
-  const expansion = readOptionalString(record, ['expansion', 'value', 'command']);
-
-  if (!pattern?.trim() || !expansion?.trim()) {
-    throw new Error(`Alias ${index + 1} must include both pattern and expansion.`);
-  }
-
-  return {
-    id: readOptionalString(record, ['id'])?.trim() || createAutomationId('alias'),
-    pattern,
-    expansion,
-    enabled: typeof record.enabled === 'boolean' ? record.enabled : true,
-  };
-}
-
-function normalizeTriggerEntry(value: unknown, index: number): TriggerDefinition {
-  if (!value || typeof value !== 'object') {
-    throw new Error(`Trigger ${index + 1} is invalid.`);
-  }
-
-  const record = value as Record<string, unknown>;
-  const pattern = readOptionalString(record, ['pattern', 'match']);
-  const action = readOptionalString(record, ['action', 'command', 'expansion']);
-
-  if (!pattern?.trim() || !action?.trim()) {
-    throw new Error(`Trigger ${index + 1} must include both pattern and action.`);
-  }
-
-  return {
-    id: readOptionalString(record, ['id'])?.trim() || createAutomationId('trigger'),
-    pattern,
-    action,
-    enabled: typeof record.enabled === 'boolean' ? record.enabled : true,
-  };
-}
-
-function readOptionalString(record: Record<string, unknown>, keys: string[]) {
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === 'string') {
-      return value;
-    }
-  }
-
-  return undefined;
-}
-
-function readNumericSetting(value: unknown) {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value;
-  }
-
-  return undefined;
-}
-
-function clampNumber(
-  value: number | undefined,
-  minimum: number,
-  maximum: number,
-  fallback: number,
-) {
-  if (value === undefined) {
-    return fallback;
-  }
-
-  return Math.min(Math.max(value, minimum), maximum);
 }
 
 function isOverrideOnlyMsdpVariableKey(key: MsdpVariableKey) {
@@ -2607,73 +2530,59 @@ function parsePositiveIntegerInput(value: string) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
-}
-
-function isSidebarFontFamily(value: unknown): value is SidebarFontFamily {
-  return value === 'sans' || value === 'mono' || value === 'serif';
-}
-
-function readChunkedCookie(name: string) {
-  if (typeof document === 'undefined') {
-    return null;
+function loadClientConfigFromLocalStorage(): ClientConfigState {
+  if (typeof window === 'undefined') {
+    return DEFAULT_CLIENT_CONFIG_STATE;
   }
 
-  const cookies = parseCookieMap(document.cookie);
-  const singleValue = cookies.get(name);
-  if (singleValue !== undefined) {
-    return decodeURIComponent(singleValue);
-  }
-
-  const countText = cookies.get(`${name}.count`);
-  if (!countText) {
-    return null;
-  }
-
-  const count = Number(countText);
-  if (!Number.isInteger(count) || count < 1) {
-    return null;
-  }
-
-  let combined = '';
-  for (let index = 0; index < count; index += 1) {
-    const chunk = cookies.get(`${name}.${index}`);
-    if (chunk === undefined) {
-      return null;
+  try {
+    const storedValue = window.localStorage.getItem(CLIENT_CONFIG_STORAGE_KEY);
+    if (storedValue) {
+      return parseStoredClientConfigJson(storedValue);
     }
-
-    combined += chunk;
+  } catch (error) {
+    console.warn('Unable to load client configuration from localStorage.', error);
   }
 
-  return decodeURIComponent(combined);
-}
-
-function writeChunkedCookie(name: string, rawValue: string) {
   if (typeof document === 'undefined') {
-    return;
+    return DEFAULT_CLIENT_CONFIG_STATE;
   }
 
-  clearCookieGroup(name);
-
-  const encodedValue = encodeURIComponent(rawValue);
-  const chunks = [];
-  for (let index = 0; index < encodedValue.length; index += AUTOMATION_COOKIE_CHUNK_SIZE) {
-    chunks.push(encodedValue.slice(index, index + AUTOMATION_COOKIE_CHUNK_SIZE));
+  const migration = parseLegacyClientConfigFromCookieHeader(document.cookie);
+  if (!migration) {
+    return DEFAULT_CLIENT_CONFIG_STATE;
   }
 
-  if (chunks.length <= 1) {
-    setCookieValue(name, encodedValue);
-    return;
+  try {
+    window.localStorage.setItem(
+      CLIENT_CONFIG_STORAGE_KEY,
+      serializeClientConfigPayload(migration.payload),
+    );
+    migration.migratedCookieNames.forEach(clearLegacyCookieGroup);
+  } catch (error) {
+    console.warn('Unable to migrate legacy client configuration to localStorage.', error);
   }
 
-  setCookieValue(`${name}.count`, String(chunks.length));
-  chunks.forEach((chunk, index) => {
-    setCookieValue(`${name}.${index}`, chunk);
-  });
+  for (const issue of migration.issues) {
+    console.warn(issue);
+  }
+
+  return migration.payload;
 }
 
-function clearCookieGroup(name: string) {
+function saveClientConfigToLocalStorage(state: ClientConfigState) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(CLIENT_CONFIG_STORAGE_KEY, serializeClientConfigPayload(state));
+  } catch (error) {
+    console.warn('Unable to save client configuration to localStorage.', error);
+  }
+}
+
+function clearLegacyCookieGroup(name: string) {
   if (typeof document === 'undefined') {
     return;
   }
@@ -2688,10 +2597,6 @@ function clearCookieGroup(name: string) {
       expireCookie(cookieName);
     }
   }
-}
-
-function setCookieValue(name: string, value: string) {
-  document.cookie = `${name}=${value}; max-age=${AUTOMATION_COOKIE_MAX_AGE}; path=/; SameSite=Lax`;
 }
 
 function expireCookie(name: string) {
