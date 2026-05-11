@@ -46,6 +46,12 @@ node --import tsx --test tests/*.test.ts
 - Group display helper coverage for full and partial members, missing names, zero values, movement
   maximums, leader flags, status text, unknown fields, object-like payloads, raw fallback entries,
   disabled mappings, and connection availability states.
+- Affects and inventory display helper coverage for full and partial effects, zero and negative
+  durations, modifiers, grouped and counted inventory, item locations, long names, unknown fields,
+  raw fallback entries, disabled mappings, and connection availability states.
+- Room display helper coverage for full and partial identity, zero room vnum, blank fields,
+  structured `ROOM` fallback, string/array/table/object-like exits, deterministic ordering,
+  unknown fields, raw fallback entries, disabled mappings, and connection availability states.
 
 These tests import shared pure helpers directly from `shared/mud.ts`, `shared/msdp-state.ts`,
 `server/telnet-parser.ts`, and side-effect-free lifecycle modules such as
@@ -74,6 +80,8 @@ lookups, open TCP sockets, or require a live MUD. Focused commands:
 ```sh
 node --import tsx --test tests/msdp-display.test.ts
 node --import tsx --test tests/msdp-group-display.test.ts
+node --import tsx --test tests/msdp-affects-inventory-display.test.ts
+node --import tsx --test tests/msdp-room-display.test.ts
 node --import tsx --test tests/msdp-state-mapping.test.ts
 node --import tsx --test tests/proxy-network.test.ts
 node --import tsx --test tests/proxy-policy.test.ts
@@ -105,6 +113,26 @@ page scrolling, and command input focus returns normally after selecting the gro
 `GROUP` fixtures are synthetic display and parser contracts for a source-confirmed MSDP variable.
 They should not be treated as proof of final live server member field names until source-level
 protocol work confirms the member schema.
+
+For affects and inventory panel checks, use desktop, 390px, and 360px viewports. Verify waiting,
+empty, full, partial, grouped, counted, long-name, raw fallback, unknown-field, disabled, offline,
+and error states remain readable, collection row text wraps inside the sidebar, the Inventory and
+Affects tabs wrap without horizontal page scrolling, and command input focus returns normally after
+selecting either tab.
+
+`AFFECTS` and `INVENTORY` fixtures are synthetic display and parser contracts for source-confirmed
+MSDP variables. They should not be treated as proof of final live server affect or inventory field
+names until source-level protocol work confirms those schemas.
+
+For room panel checks, use desktop, 390px, and 360px viewports. Verify waiting, empty, full,
+partial, table, array, string, long-name, disabled, offline, error, raw fallback, and unknown-field
+states remain readable, room fields and exit rows wrap inside the sidebar, the Room tab wraps
+without horizontal page scrolling, the existing map fallback still works when `MINIMAP` is absent,
+and command input focus returns normally after selecting the Room tab.
+
+`ROOM` and `ROOM_EXITS` fixtures are synthetic display and parser contracts for source-confirmed
+MSDP variables. They should not be treated as proof of final live server room or exit field names,
+and the Room tab must remain separate from unconfirmed live `MINIMAP` behavior.
 
 ## Manual Renderer Notes
 

@@ -11,7 +11,7 @@ The fixtures are intentionally small, synthetic unless explicitly labeled otherw
 | `manifest.json`             | Corpus index, coverage tags, origin metadata, and parser expectation summaries.         |
 | `core-scalars.json`         | Server metadata, character identity, ability scores, and scalar normalization examples. |
 | `combat-and-resources.json` | Resource, experience, combat, tank, position, money, and practice examples.             |
-| `room-and-exits.json`       | Room, area, vnum, exits, world time, and room table examples.                           |
+| `room-and-exits.json`       | Room identity, partial values, exits, world time, empty values, and raw room examples.  |
 | `collections.json`          | Actions, inventory, affects, empty arrays, and simple table examples.                   |
 | `group-data.json`           | Representative group member table, empty, unknown-field, and object-like examples.      |
 | `nested-tables.json`        | Mixed nested table and array payload examples.                                          |
@@ -117,6 +117,17 @@ The PRD source protocol facts confirm these variable groups from Luminari-Source
 | Room/world             | `ROOM`, `AREA_NAME`, `ROOM_EXITS`, `ROOM_NAME`, `ROOM_VNUM`, `WORLD_TIME`                                                      | `room-and-exits.json`, `nested-tables.json`                 |
 | Parser safety          | Skipped leading bytes, truncated values, empty variable names, incomplete tables, incomplete arrays                            | `malformed-payloads.json`                                   |
 
+## Room Fixture Notes
+
+`room-and-exits.json` includes representative display and parser contracts for confirmed room/world variables:
+
+- Room identity scalars with room name, area name, zero room vnum, world time, blank strings, and partial values.
+- `ROOM_EXITS` as a keyed table, scalar string, array of direction labels, object-like rows, explicit empty array, and malformed-looking raw fallback string.
+- `ROOM` as a structured table, explicit empty table, scalar raw fallback, and partial table with unknown fields.
+- Bounded raw fallback cases that preserve useful uncertain data without treating terminal room prose or `MINIMAP` as inputs.
+
+These shapes are synthetic. They verify parser, state-mapping, and display behavior for source-confirmed room variables, but they do not prove final live server room or exit field names.
+
 ## Group Fixture Notes
 
 `group-data.json` confirms parser and display contracts for representative `GROUP` payloads:
@@ -128,6 +139,16 @@ The PRD source protocol facts confirm these variable groups from Luminari-Source
 - Object-like top-level tables that preserve member records and raw entries without claiming final source member identifiers.
 
 These shapes are synthetic. They verify client parser, mapping, and display behavior for a source-confirmed `GROUP` variable, but they do not prove final server member field names.
+
+## Affects And Inventory Fixture Notes
+
+`collections.json` includes representative display contracts for source-confirmed `AFFECTS` and `INVENTORY` payloads:
+
+- Affects arrays with names, zero and nonzero durations, modifier fields, raw string entries, partial records, unknown fields, and object-like top-level tables.
+- Inventory arrays with item records, counts, locations, long names, grouped tables, counted entries, worn-item arrays, scalar raw fallback text, and unknown fields.
+- Explicit empty arrays and tables that remain present data rather than missing variables.
+
+These shapes are synthetic. They verify parser, mapping, and display behavior for source-confirmed collection variables, but they do not prove final live server affect or inventory field names.
 
 ### Override-Only Exclusions
 

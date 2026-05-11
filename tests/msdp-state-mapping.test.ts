@@ -229,6 +229,65 @@ test('preserves structured room and collection payloads without lossy coercion',
   assert.deepEqual(mapMsdpUpdate('QUEST_INFO', questInfo, overrideMap), { questInfo });
 });
 
+test('preserves room fixture variants and ignores disabled room mappings', async () => {
+  const corpus = await loadMsdpFixtureCorpus();
+  const scalarIdentity = readFixturePairs(corpus.fixtures, 'room.scalar.identity');
+  const partialIdentity = readFixturePairs(corpus.fixtures, 'room.partial.identity');
+  const stringExits = readFixturePairValue(corpus.fixtures, 'room.exits.string', 'ROOM_EXITS');
+  const arrayExits = readFixturePairValue(corpus.fixtures, 'room.exits.array', 'ROOM_EXITS');
+  const tableExits = readFixturePairValue(corpus.fixtures, 'room.exits.table', 'ROOM_EXITS');
+  const objectExits = readFixturePairValue(corpus.fixtures, 'room.exits.object.unknown', 'ROOM_EXITS');
+  const emptyRoom = readFixturePairValue(corpus.fixtures, 'room.empty.values', 'ROOM');
+  const emptyExits = readFixturePairValue(corpus.fixtures, 'room.empty.values', 'ROOM_EXITS');
+  const roomUnknown = readFixturePairValue(corpus.fixtures, 'room.room.partial.unknown', 'ROOM');
+  const malformedScalar = readFixturePairValue(
+    corpus.fixtures,
+    'room.exits.malformed.scalar',
+    'ROOM_EXITS',
+  );
+  const disabledMap: MsdpVariableMap = {
+    ...defaultMap,
+    room: '',
+    areaName: '',
+    roomName: '',
+    roomVnum: '',
+    roomExits: '',
+    worldTime: '',
+  };
+
+  assert.deepEqual(mapPairs(scalarIdentity, defaultMap), {
+    roomName: 'Hall of Fixtures',
+    areaName: 'Test Keep',
+    roomVnum: 1001,
+  });
+  assert.deepEqual(mapPairs(partialIdentity, defaultMap), {
+    roomName: '',
+    areaName: 'Partial Keep',
+    roomVnum: 0,
+    worldTime: '',
+  });
+  assert.deepEqual(mapMsdpUpdate('ROOM_EXITS', stringExits, defaultMap), {
+    roomExits: stringExits,
+  });
+  assert.deepEqual(mapMsdpUpdate('ROOM_EXITS', arrayExits, defaultMap), {
+    roomExits: arrayExits,
+  });
+  assert.deepEqual(mapMsdpUpdate('ROOM_EXITS', tableExits, defaultMap), {
+    roomExits: tableExits,
+  });
+  assert.deepEqual(mapMsdpUpdate('ROOM_EXITS', objectExits, defaultMap), {
+    roomExits: objectExits,
+  });
+  assert.deepEqual(mapMsdpUpdate('ROOM', emptyRoom, defaultMap), { room: emptyRoom });
+  assert.deepEqual(mapMsdpUpdate('ROOM_EXITS', emptyExits, defaultMap), { roomExits: emptyExits });
+  assert.deepEqual(mapMsdpUpdate('ROOM', roomUnknown, defaultMap), { room: roomUnknown });
+  assert.deepEqual(mapMsdpUpdate('ROOM_EXITS', malformedScalar, defaultMap), {
+    roomExits: malformedScalar,
+  });
+  assert.deepEqual(mapPairs(scalarIdentity, disabledMap), {});
+  assert.deepEqual(mapMsdpUpdate('ROOM_EXITS', objectExits, disabledMap), {});
+});
+
 test('preserves GROUP fixture variants and ignores disabled GROUP mappings', async () => {
   const corpus = await loadMsdpFixtureCorpus();
   const fullMembers = readFixtureValue(corpus.fixtures, 'group.full.members');
@@ -242,6 +301,74 @@ test('preserves GROUP fixture variants and ignores disabled GROUP mappings', asy
   assert.deepEqual(mapMsdpUpdate('GROUP', emptyGroup, defaultMap), { group: emptyGroup });
   assert.deepEqual(mapMsdpUpdate('GROUP', objectPayload, defaultMap), { group: objectPayload });
   assert.deepEqual(mapMsdpUpdate('GROUP', fullMembers, disabledMap), {});
+});
+
+test('preserves AFFECTS and INVENTORY fixture variants and ignores disabled mappings', async () => {
+  const corpus = await loadMsdpFixtureCorpus();
+  const fullAffects = readFixturePairValue(
+    corpus.fixtures,
+    'collections.affects.full.modifiers',
+    'AFFECTS',
+  );
+  const partialAffects = readFixturePairValue(
+    corpus.fixtures,
+    'collections.affects.partial.unknown',
+    'AFFECTS',
+  );
+  const objectAffects = readFixturePairValue(
+    corpus.fixtures,
+    'collections.affects.object.payload',
+    'AFFECTS',
+  );
+  const emptyAffects = readFixturePairValue(corpus.fixtures, 'collections.empty.values', 'AFFECTS');
+  const itemInventory = readFixturePairValue(
+    corpus.fixtures,
+    'collections.inventory.items.array',
+    'INVENTORY',
+  );
+  const objectInventory = readFixturePairValue(
+    corpus.fixtures,
+    'collections.inventory.object.unknown',
+    'INVENTORY',
+  );
+  const rawInventory = readFixturePairValue(
+    corpus.fixtures,
+    'collections.inventory.raw.string',
+    'INVENTORY',
+  );
+  const emptyInventory = readFixturePairValue(
+    corpus.fixtures,
+    'collections.empty.values',
+    'INVENTORY',
+  );
+  const disabledMap: MsdpVariableMap = { ...defaultMap, affects: '', inventory: '' };
+
+  assert.deepEqual(mapMsdpUpdate('AFFECTS', fullAffects, defaultMap), { affects: fullAffects });
+  assert.deepEqual(mapMsdpUpdate('AFFECTS', partialAffects, defaultMap), {
+    affects: partialAffects,
+  });
+  assert.deepEqual(mapMsdpUpdate('AFFECTS', objectAffects, defaultMap), {
+    affects: objectAffects,
+  });
+  assert.deepEqual(mapMsdpUpdate('AFFECTS', emptyAffects, defaultMap), { affects: emptyAffects });
+  assert.deepEqual(mapMsdpUpdate('AFFECTS', 'raw affects text', defaultMap), {
+    affects: 'raw affects text',
+  });
+  assert.deepEqual(mapMsdpUpdate('AFFECTS', fullAffects, disabledMap), {});
+
+  assert.deepEqual(mapMsdpUpdate('INVENTORY', itemInventory, defaultMap), {
+    inventory: itemInventory,
+  });
+  assert.deepEqual(mapMsdpUpdate('INVENTORY', objectInventory, defaultMap), {
+    inventory: objectInventory,
+  });
+  assert.deepEqual(mapMsdpUpdate('INVENTORY', rawInventory, defaultMap), {
+    inventory: rawInventory,
+  });
+  assert.deepEqual(mapMsdpUpdate('INVENTORY', emptyInventory, defaultMap), {
+    inventory: emptyInventory,
+  });
+  assert.deepEqual(mapMsdpUpdate('INVENTORY', itemInventory, disabledMap), {});
 });
 
 test('ignores unknown variables, blank mappings, and unsupported defaults', () => {
@@ -319,4 +446,25 @@ function readFixtureValue(
   const groupPair = fixture.expectedPairs.find(([variable]) => variable === 'GROUP');
   assert.ok(groupPair, `${fixtureId} should contain a GROUP expected pair`);
   return groupPair[1];
+}
+
+function readFixturePairs(
+  fixtures: Awaited<ReturnType<typeof loadMsdpFixtureCorpus>>['fixtures'],
+  fixtureId: string,
+) {
+  const fixture = fixtures.find((entry) => entry.id === fixtureId);
+  assert.ok(fixture, `${fixtureId} fixture should exist`);
+  return fixture.expectedPairs;
+}
+
+function readFixturePairValue(
+  fixtures: Awaited<ReturnType<typeof loadMsdpFixtureCorpus>>['fixtures'],
+  fixtureId: string,
+  variableName: string,
+) {
+  const fixture = fixtures.find((entry) => entry.id === fixtureId);
+  assert.ok(fixture, `${fixtureId} fixture should exist`);
+  const pair = fixture.expectedPairs.find(([variable]) => variable === variableName);
+  assert.ok(pair, `${fixtureId} should contain a ${variableName} expected pair`);
+  return pair[1];
 }

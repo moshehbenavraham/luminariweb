@@ -199,6 +199,395 @@
       "notes": ["Effect names and durations are synthetic."]
     },
     {
+      "id": "collections.affects.full.modifiers",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from Session 04 affects display requirements.",
+        "sanitized": true
+      },
+      "description": "AFFECTS can include names, durations, modifiers, status text, and unknown fields.",
+      "coverage": [
+        "affects",
+        "array",
+        "table",
+        "numeric-normalization",
+        "unknown-fields"
+      ],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms AFFECTS.",
+        "Session 04 renders representative effect records without claiming final source field names."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "AFFECTS",
+        "VAL",
+        "ARRAY_OPEN",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "name",
+        "VAL",
+        "bless",
+        "VAR",
+        "duration",
+        "VAL",
+        "12",
+        "VAR",
+        "modifier",
+        "VAL",
+        "+1 attack",
+        "VAR",
+        "school",
+        "VAL",
+        "enchantment",
+        "TABLE_CLOSE",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "NAME",
+        "VAL",
+        "stone skin",
+        "VAR",
+        "DURATION",
+        "VAL",
+        "0",
+        "VAR",
+        "MODIFIER",
+        "VAL",
+        "+4 AC",
+        "VAR",
+        "source",
+        "VAL",
+        "synthetic fixture",
+        "TABLE_CLOSE",
+        "ARRAY_CLOSE"
+      ],
+      "expectedPairs": [
+        [
+          "AFFECTS",
+          [
+            {
+              "name": "bless",
+              "duration": 12,
+              "modifier": "+1 attack",
+              "school": "enchantment"
+            },
+            {
+              "NAME": "stone skin",
+              "DURATION": 0,
+              "MODIFIER": "+4 AC",
+              "source": "synthetic fixture"
+            }
+          ]
+        ]
+      ],
+      "notes": [
+        "Effect field names are representative display contracts and not a final source schema claim."
+      ]
+    },
+    {
+      "id": "collections.affects.partial.unknown",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from Session 04 partial affects display requirements.",
+        "sanitized": true
+      },
+      "description": "AFFECTS tolerates partial records, zero-like values, negative durations, and raw string entries.",
+      "coverage": [
+        "affects",
+        "array",
+        "table",
+        "partial-data",
+        "raw-fallback",
+        "numeric-normalization",
+        "unknown-fields"
+      ],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms AFFECTS.",
+        "Session 04 requires partial and raw fallback affect display without overclaiming schema semantics."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "AFFECTS",
+        "VAL",
+        "ARRAY_OPEN",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "name",
+        "VAL",
+        "",
+        "VAR",
+        "duration",
+        "VAL",
+        "-1",
+        "VAR",
+        "magnitude",
+        "VAL",
+        "2",
+        "VAR",
+        "note",
+        "VAL",
+        "partial synthetic effect",
+        "TABLE_CLOSE",
+        "VAL",
+        "raw concentration note",
+        "ARRAY_CLOSE"
+      ],
+      "expectedPairs": [
+        [
+          "AFFECTS",
+          [
+            {
+              "name": "",
+              "duration": -1,
+              "magnitude": 2,
+              "note": "partial synthetic effect"
+            },
+            "raw concentration note"
+          ]
+        ]
+      ],
+      "notes": [
+        "The blank name, negative duration, and raw string are synthetic edge cases for display resilience."
+      ]
+    },
+    {
+      "id": "collections.affects.object.payload",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from parser table behavior and Session 04 object-like affects fallback requirements.",
+        "sanitized": true
+      },
+      "description": "AFFECTS can be preserved as an object-like top-level table.",
+      "coverage": ["affects", "table", "object-like", "raw-fallback"],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms AFFECTS.",
+        "Session 04 requires object-like AFFECTS payloads to render conservatively."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "AFFECTS",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "bless",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "duration",
+        "VAL",
+        "12",
+        "VAR",
+        "modifier",
+        "VAL",
+        "+1 attack",
+        "TABLE_CLOSE",
+        "VAR",
+        "ambient",
+        "VAL",
+        "warm glow",
+        "TABLE_CLOSE"
+      ],
+      "expectedPairs": [
+        [
+          "AFFECTS",
+          {
+            "bless": {
+              "duration": 12,
+              "modifier": "+1 attack"
+            },
+            "ambient": "warm glow"
+          }
+        ]
+      ],
+      "notes": [
+        "Top-level keys are synthetic parser keys and not confirmed source affect identifiers."
+      ]
+    },
+    {
+      "id": "collections.inventory.items.array",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from Session 04 inventory item display requirements.",
+        "sanitized": true
+      },
+      "description": "INVENTORY can include item records with names, counts, locations, and unknown fields.",
+      "coverage": [
+        "inventory",
+        "array",
+        "table",
+        "partial-data",
+        "numeric-normalization",
+        "unknown-fields"
+      ],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms INVENTORY.",
+        "Session 04 renders representative inventory item records without claiming final source field names."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "INVENTORY",
+        "VAL",
+        "ARRAY_OPEN",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "name",
+        "VAL",
+        "healing potion",
+        "VAR",
+        "count",
+        "VAL",
+        "2",
+        "VAR",
+        "location",
+        "VAL",
+        "backpack",
+        "VAR",
+        "weight",
+        "VAL",
+        "1",
+        "TABLE_CLOSE",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "item_name",
+        "VAL",
+        "very long synthetic item name for wrapping checks",
+        "VAR",
+        "quantity",
+        "VAL",
+        "0",
+        "TABLE_CLOSE",
+        "ARRAY_CLOSE"
+      ],
+      "expectedPairs": [
+        [
+          "INVENTORY",
+          [
+            {
+              "name": "healing potion",
+              "count": 2,
+              "location": "backpack",
+              "weight": 1
+            },
+            {
+              "item_name": "very long synthetic item name for wrapping checks",
+              "quantity": 0
+            }
+          ]
+        ]
+      ],
+      "notes": [
+        "Item names and fields are synthetic display contracts for parser and UI tests."
+      ]
+    },
+    {
+      "id": "collections.inventory.object.unknown",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from parser table behavior and Session 04 grouped inventory fallback requirements.",
+        "sanitized": true
+      },
+      "description": "INVENTORY can be preserved as grouped tables, counted entries, arrays, and unknown fields.",
+      "coverage": [
+        "inventory",
+        "table",
+        "array",
+        "grouped",
+        "counted",
+        "object-like",
+        "unknown-fields",
+        "numeric-normalization"
+      ],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms INVENTORY.",
+        "Session 04 requires grouped and counted inventory fallbacks while source schema remains representative."
+      ],
+      "payloadTokens": [
+        "VAR",
+        "INVENTORY",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "backpack",
+        "VAL",
+        "TABLE_OPEN",
+        "VAR",
+        "NAME",
+        "VAL",
+        "iron ration",
+        "VAR",
+        "COUNT",
+        "VAL",
+        "5",
+        "VAR",
+        "slot",
+        "VAL",
+        "side pouch",
+        "TABLE_CLOSE",
+        "VAR",
+        "coins",
+        "VAL",
+        "42",
+        "VAR",
+        "worn",
+        "VAL",
+        "ARRAY_OPEN",
+        "VAL",
+        "practice robe",
+        "ARRAY_CLOSE",
+        "TABLE_CLOSE"
+      ],
+      "expectedPairs": [
+        [
+          "INVENTORY",
+          {
+            "backpack": {
+              "NAME": "iron ration",
+              "COUNT": 5,
+              "slot": "side pouch"
+            },
+            "coins": 42,
+            "worn": ["practice robe"]
+          }
+        ]
+      ],
+      "notes": [
+        "Group labels and item fields are synthetic and should not be treated as final INVENTORY schema."
+      ]
+    },
+    {
+      "id": "collections.inventory.raw.string",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from Session 04 raw inventory fallback requirements.",
+        "sanitized": true
+      },
+      "description": "INVENTORY scalar text remains displayable through a bounded raw fallback.",
+      "coverage": ["inventory", "scalar", "raw-fallback"],
+      "sourceFacts": [
+        "PRD Source Protocol Facts confirms INVENTORY.",
+        "Session 04 requires raw fallback display when payload shape is uncertain."
+      ],
+      "payloadTokens": ["VAR", "INVENTORY", "VAL", "unparsed inventory text"],
+      "expectedPairs": [["INVENTORY", "unparsed inventory text"]],
+      "notes": ["The scalar value is synthetic and exists only to exercise raw fallback display."]
+    },
+    {
       "id": "collections.empty.values",
       "version": 1,
       "origin": {

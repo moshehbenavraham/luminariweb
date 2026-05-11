@@ -9,6 +9,17 @@ import type {
 import type { ReactNode } from 'react';
 import { appSettings } from '../shared/app-settings.ts';
 import type { AppSettings } from '../shared/app-settings.ts';
+import {
+  buildAffectsDisplayModel,
+  buildInventoryDisplayModel,
+} from '../shared/msdp-affects-inventory-display.ts';
+import type {
+  AffectRowModel,
+  AffectsDisplayModel,
+  InventoryDisplayModel,
+  InventoryGroupModel,
+  InventoryItemModel,
+} from '../shared/msdp-affects-inventory-display.ts';
 import { buildCombatDisplayModel } from '../shared/msdp-combat-display.ts';
 import type {
   ActionEconomyModel,
@@ -25,6 +36,13 @@ import type {
   GroupMemberModel,
   GroupResourceModel,
 } from '../shared/msdp-group-display.ts';
+import { buildRoomDisplayModel } from '../shared/msdp-room-display.ts';
+import type {
+  RoomDetailModel,
+  RoomDisplayModel,
+  RoomExitModel,
+  RoomIdentityFieldModel,
+} from '../shared/msdp-room-display.ts';
 import {
   defaultMsdpVariables,
   normalizeMsdpVariableMap,
@@ -112,7 +130,14 @@ const NUMPAD_COMMANDS: Record<string, string> = {
   NumpadDecimal: 'out',
 };
 
-type SidebarTabId = 'character' | 'combat' | 'quests' | 'group' | 'affects';
+type SidebarTabId =
+  | 'character'
+  | 'room'
+  | 'combat'
+  | 'quests'
+  | 'group'
+  | 'inventory'
+  | 'affects';
 
 type SidebarTab = {
   id: SidebarTabId;
@@ -484,9 +509,11 @@ const MSDP_VARIABLE_GROUPS: Array<{
 
 const SIDEBAR_TABS: SidebarTab[] = [
   { id: 'character', label: 'Character' },
+  { id: 'room', label: 'Room' },
   { id: 'combat', label: 'Combat' },
   { id: 'quests', label: 'Quests' },
   { id: 'group', label: 'Group' },
+  { id: 'inventory', label: 'Inventory' },
   { id: 'affects', label: 'Affects' },
 ];
 
@@ -920,6 +947,40 @@ function App() {
     () => buildGroupDisplayModel({ group: mudState.group }, status, activeMsdpVariables),
     [activeMsdpVariables, mudState.group, status],
   );
+  const roomDisplay = useMemo(
+    () =>
+      buildRoomDisplayModel(
+        {
+          room: mudState.room,
+          roomName: mudState.roomName,
+          areaName: mudState.areaName,
+          roomVnum: mudState.roomVnum,
+          roomExits: mudState.roomExits,
+          worldTime: mudState.worldTime,
+        },
+        status,
+        activeMsdpVariables,
+      ),
+    [
+      activeMsdpVariables,
+      mudState.areaName,
+      mudState.room,
+      mudState.roomExits,
+      mudState.roomName,
+      mudState.roomVnum,
+      mudState.worldTime,
+      status,
+    ],
+  );
+  const affectsDisplay = useMemo(
+    () => buildAffectsDisplayModel({ affects: mudState.affects }, status, activeMsdpVariables),
+    [activeMsdpVariables, mudState.affects, status],
+  );
+  const inventoryDisplay = useMemo(
+    () =>
+      buildInventoryDisplayModel({ inventory: mudState.inventory }, status, activeMsdpVariables),
+    [activeMsdpVariables, mudState.inventory, status],
+  );
   const terminalOutputStyle = useMemo<CSSProperties>(
     () => ({
       fontSize: `${clientSettings.terminal.fontSize}px`,
@@ -966,16 +1027,6 @@ function App() {
         activeMsdpVariables,
       ),
     [activeMsdpVariables, mudState.questInfo, status],
-  );
-  const affectsNotice = useMemo(
-    () =>
-      getMudValueAvailabilityNotice(
-        mudState.affects,
-        OPTIONAL_DATA_DESCRIPTORS.affects,
-        status,
-        activeMsdpVariables,
-      ),
-    [activeMsdpVariables, mudState.affects, status],
   );
   const handleXtermFitDimensions = useCallback(
     (dimensions: TerminalDimensions) => {
@@ -1930,6 +1981,8 @@ function App() {
                   type="button"
                   role="tab"
                   aria-selected={activeSidebarTab === tab.id}
+                  aria-controls={`sidebar-panel-${tab.id}`}
+                  id={`sidebar-tab-${tab.id}`}
                   className={`tab-button${activeSidebarTab === tab.id ? ' tab-button-active' : ''}`}
                   onClick={() => handleSidebarTabClick(tab.id)}
                 >
@@ -1938,7 +1991,13 @@ function App() {
               ))}
             </div>
 
-            <div className="tab-panel" role="tabpanel" style={sidebarPanelStyle}>
+            <div
+              className="tab-panel"
+              id={`sidebar-panel-${activeSidebarTab}`}
+              role="tabpanel"
+              aria-labelledby={`sidebar-tab-${activeSidebarTab}`}
+              style={sidebarPanelStyle}
+            >
               {activeSidebarTab === 'character' ? (
                 <>
                   <div className="identity-block">
@@ -1995,6 +2054,8 @@ function App() {
                 <CombatInspectorPanel combat={combatDisplay} />
               ) : null}
 
+              {activeSidebarTab === 'room' ? <RoomPanel room={roomDisplay} /> : null}
+
               {activeSidebarTab === 'quests' ? (
                 questInfoNotice ? (
                   <AvailabilityNoticeBlock notice={questInfoNotice} />
@@ -2005,16 +2066,11 @@ function App() {
 
               {activeSidebarTab === 'group' ? <GroupPanel group={groupDisplay} /> : null}
 
-              {activeSidebarTab === 'affects' ? (
-                affectsNotice ? (
-                  <AvailabilityNoticeBlock notice={affectsNotice} />
-                ) : (
-                  <MudValuePanel
-                    value={mudState.affects}
-                    emptyMessage="No active affects reported."
-                  />
-                )
+              {activeSidebarTab === 'inventory' ? (
+                <InventoryPanel inventory={inventoryDisplay} />
               ) : null}
+
+              {activeSidebarTab === 'affects' ? <AffectsPanel affects={affectsDisplay} /> : null}
             </div>
           </section>
         </aside>
@@ -2946,11 +3002,6 @@ type StatProps = {
   value?: string | number;
 };
 
-type MudValuePanelProps = {
-  value?: MudValue;
-  emptyMessage: string;
-};
-
 function Stat({ label, value }: StatProps) {
   if (typeof value === 'string') {
     return (
@@ -3017,8 +3068,126 @@ function AvailabilityValue({ notice }: { notice: AvailabilityNotice }) {
   );
 }
 
-function EmptyTabMessage({ message }: { message: string }) {
-  return <p className="tab-empty-message">{message}</p>;
+type RoomPanelProps = {
+  room: RoomDisplayModel;
+};
+
+function RoomPanel({ room }: RoomPanelProps) {
+  const hasRoomContent =
+    room.identityFields.length > 0 ||
+    room.details.length > 0 ||
+    room.exits.length > 0 ||
+    Boolean(room.rawRoomText);
+  const showExitsSection =
+    room.state !== 'disabled' && room.state !== 'offline' && room.state !== 'error';
+
+  return (
+    <div className={`room-panel room-panel-${room.state}`} aria-label={room.ariaLabel}>
+      <AvailabilityNoticeBlock notice={room.availability} compact={hasRoomContent} />
+
+      {room.identityFields.length > 0 ? (
+        <dl className="room-field-grid" aria-label="Room identity">
+          {room.identityFields.map((field) => (
+            <RoomIdentityField key={field.id} field={field} />
+          ))}
+        </dl>
+      ) : null}
+
+      {room.details.length > 0 ? (
+        <section className="room-section" aria-labelledby="room-details-heading">
+          <h3 id="room-details-heading">Details</h3>
+          <dl className="room-detail-grid">
+            {room.details.map((detail) => (
+              <RoomDetail key={detail.id} detail={detail} />
+            ))}
+          </dl>
+        </section>
+      ) : null}
+
+      {showExitsSection ? (
+        <section className="room-section" aria-labelledby="room-exits-heading">
+          <h3 id="room-exits-heading">Exits</h3>
+          <AvailabilityNoticeBlock notice={room.exitsAvailability} compact />
+          {room.exits.length > 0 ? (
+            <div className="room-exit-list" role="list" aria-label="Room exits">
+              {room.exits.map((exit) => (
+                <RoomExitRow key={exit.id} exit={exit} />
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      {room.rawRoomText ? (
+        <section className="room-section" aria-labelledby="room-raw-heading">
+          <h3 id="room-raw-heading">Raw room</h3>
+          <p className="room-raw-text">{room.rawRoomText}</p>
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+function RoomIdentityField({ field }: { field: RoomIdentityFieldModel }) {
+  return (
+    <div className={`room-field room-field-${field.availability.kind}`}>
+      <dt>{field.label}</dt>
+      <dd aria-label={field.ariaLabel} title={field.ariaLabel}>
+        {field.availability.kind === 'present' ? (
+          <span dangerouslySetInnerHTML={{ __html: renderMudHtml(field.valueText) }} />
+        ) : (
+          <AvailabilityValue notice={field.availability} />
+        )}
+      </dd>
+    </div>
+  );
+}
+
+function RoomDetail({ detail }: { detail: RoomDetailModel }) {
+  return (
+    <div className="room-detail-line" aria-label={detail.ariaLabel}>
+      <dt>{detail.label}</dt>
+      <dd>{detail.valueText}</dd>
+    </div>
+  );
+}
+
+function RoomExitRow({ exit }: { exit: RoomExitModel }) {
+  const className = [
+    'room-exit',
+    `room-exit-${exit.kind}`,
+    exit.isDirectionMissing ? 'room-exit-missing-direction' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <article className={className} role="listitem" aria-label={exit.ariaLabel}>
+      <div className="room-exit-header">
+        <span className="room-exit-direction">{exit.directionText}</span>
+        {exit.statusText ? <span className="room-exit-status">{exit.statusText}</span> : null}
+      </div>
+
+      {exit.destinationText ? (
+        <RoomExitDetailLine label="Destination" value={exit.destinationText} />
+      ) : null}
+
+      {exit.rawText ? <p className="room-raw-text">{exit.rawText}</p> : null}
+
+      {exit.unknownFieldsText ? (
+        <p className="room-unknown-fields">Other: {exit.unknownFieldsText}</p>
+      ) : null}
+    </article>
+  );
+}
+
+function RoomExitDetailLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="room-exit-detail-line">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
 }
 
 type GroupPanelProps = {
@@ -3100,6 +3269,138 @@ function GroupResource({ resource }: { resource: GroupResourceModel }) {
   );
 }
 
+type AffectsPanelProps = {
+  affects: AffectsDisplayModel;
+};
+
+function AffectsPanel({ affects }: AffectsPanelProps) {
+  if (affects.state !== 'present' && affects.state !== 'raw') {
+    return <AvailabilityNoticeBlock notice={affects.availability} />;
+  }
+
+  return (
+    <div
+      className={`collection-panel affects-panel collection-panel-${affects.state}`}
+      role="list"
+      aria-label={affects.ariaLabel}
+    >
+      {affects.rows.map((row) => (
+        <AffectRow key={row.id} row={row} />
+      ))}
+    </div>
+  );
+}
+
+function AffectRow({ row }: { row: AffectRowModel }) {
+  const className = [
+    'affect-row',
+    `affect-row-${row.kind}`,
+    row.isNameMissing ? 'collection-row-missing-name' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <article className={className} role="listitem" aria-label={row.ariaLabel}>
+      <div className="collection-row-header">
+        <span className="collection-row-name">{row.nameText}</span>
+        {row.durationText ? (
+          <span
+            className={`affect-duration${row.isDurationMissing ? ' affect-duration-missing' : ''}`}
+          >
+            {row.durationText}
+          </span>
+        ) : null}
+      </div>
+
+      {row.modifierText ? (
+        <CollectionDetailLine label="Modifiers" value={row.modifierText} />
+      ) : null}
+
+      {row.statusText ? <CollectionDetailLine label="Status" value={row.statusText} /> : null}
+
+      {row.rawText ? <p className="collection-raw-text">{row.rawText}</p> : null}
+
+      {row.unknownFieldsText ? (
+        <p className="collection-unknown-fields">Other: {row.unknownFieldsText}</p>
+      ) : null}
+    </article>
+  );
+}
+
+type InventoryPanelProps = {
+  inventory: InventoryDisplayModel;
+};
+
+function InventoryPanel({ inventory }: InventoryPanelProps) {
+  if (inventory.state !== 'present' && inventory.state !== 'raw') {
+    return <AvailabilityNoticeBlock notice={inventory.availability} />;
+  }
+
+  return (
+    <div
+      className={`collection-panel inventory-panel collection-panel-${inventory.state}`}
+      role="list"
+      aria-label={inventory.ariaLabel}
+    >
+      {inventory.groups.map((group) => (
+        <InventoryGroup key={group.id} group={group} />
+      ))}
+    </div>
+  );
+}
+
+function InventoryGroup({ group }: { group: InventoryGroupModel }) {
+  return (
+    <section className="inventory-group" role="listitem" aria-label={group.ariaLabel}>
+      <h3 className="inventory-group-title">{group.label}</h3>
+      <div className="inventory-group-items" role="list">
+        {group.items.map((item) => (
+          <InventoryItem key={item.id} item={item} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function InventoryItem({ item }: { item: InventoryItemModel }) {
+  const className = [
+    'inventory-item',
+    `inventory-item-${item.kind}`,
+    item.isNameMissing ? 'collection-row-missing-name' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <article className={className} role="listitem" aria-label={item.ariaLabel}>
+      <div className="collection-row-header">
+        <span className="collection-row-name">{item.nameText}</span>
+        {item.countText ? <span className="inventory-count">x{item.countText}</span> : null}
+      </div>
+
+      {item.locationText ? <CollectionDetailLine label="Location" value={item.locationText} /> : null}
+
+      {item.detailText ? <CollectionDetailLine label="Details" value={item.detailText} /> : null}
+
+      {item.rawText ? <p className="collection-raw-text">{item.rawText}</p> : null}
+
+      {item.unknownFieldsText ? (
+        <p className="collection-unknown-fields">Other: {item.unknownFieldsText}</p>
+      ) : null}
+    </article>
+  );
+}
+
+function CollectionDetailLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="collection-detail-line">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
 type QuestInfoPanelProps = {
   value: MudValue;
 };
@@ -3109,15 +3410,6 @@ function QuestInfoPanel({ value }: QuestInfoPanelProps) {
   return (
     <div className="tab-inline-output quest-html-output">{renderQuestNode(normalizedValue)}</div>
   );
-}
-
-function MudValuePanel({ value, emptyMessage }: MudValuePanelProps) {
-  if (value === undefined || value === null) {
-    return <EmptyTabMessage message={emptyMessage} />;
-  }
-
-  const text = formatMudValueAsText(value);
-  return <div className="tab-inline-output">{text || emptyMessage}</div>;
 }
 
 function formatMudValueAsText(value: MudValue): string {

@@ -73,7 +73,7 @@ test('parses malformed payload fixtures without throwing and with documented par
   const corpus = await loadMsdpFixtureCorpus();
   const fixtures = findFixturesByCoverage(corpus.fixtures, ['malformed']);
 
-  assert.equal(fixtures.length, 5);
+  assert.equal(fixtures.length, 6);
 
   for (const fixture of fixtures) {
     assert.doesNotThrow(() => parseFixture(fixture), `${fixture.id} should not throw`);

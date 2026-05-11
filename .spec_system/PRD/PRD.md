@@ -737,7 +737,7 @@ Acceptance:
 
 Objective: turn confirmed Luminari data into useful game UI panels while keeping fallbacks explicit for data that requires future server support.
 
-Status: in progress. Phase 02 artifacts were created for six right-sized implementation sessions, and sessions 01 and 02 are complete.
+Status: in progress. Phase 02 artifacts were created for six right-sized implementation sessions, and sessions 01 through 05 are complete.
 
 ### P2-S1: Core HUD and Character Panel
 
@@ -794,6 +794,8 @@ Acceptance:
 - Missing values do not break row layout.
 - Group rendering can be validated without live MUD access.
 
+Status: complete. Session 03 was validated and marked complete on 2026-05-11.
+
 ### P2-S4: Affects and Inventory Panels
 
 Clear objective: render temporary effects and inventory data from structured MSDP values.
@@ -811,6 +813,8 @@ Acceptance:
 - Unknown fields are visible enough for debugging without overwhelming players.
 - Fixtures cover representative payloads.
 
+Status: complete. Session 04 was validated and marked complete on 2026-05-11.
+
 ### P2-S5: Room Context Panel
 
 Clear objective: show current room identity and exits using confirmed room variables.
@@ -827,6 +831,8 @@ Acceptance:
 - Room panel updates when room MSDP values change.
 - Exit display handles strings, arrays, and table-like structures as needed.
 - Room context does not depend on `MINIMAP`.
+
+Status: complete. Session 05 was validated and marked complete on 2026-05-11.
 
 ### P2-S6: Map and Quest Fallback Strategy
 
