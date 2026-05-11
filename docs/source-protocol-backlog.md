@@ -1,0 +1,151 @@
+# Source Protocol Backlog
+
+This backlog ranks source-level protocol work for Phase 04. It is based on a
+read-only audit of `/home/aiwithapex/projects/Luminari-Source` at commit
+`60cbeff6` and the current Luminari Web protocol boundary.
+
+Accepted items authorize future scoped planning and validation. They do not
+mean Luminari Web supports the feature today. Deferred items need more source,
+proxy, product, or validation work before implementation should start.
+Rejected items should not be implemented on the current product path.
+
+## Evidence Baseline
+
+| Input | What It Contributed |
+| ----- | ------------------- |
+| `/home/aiwithapex/projects/Luminari-Source/docs/project-management-zusuk/PROTOCOL_TODO.md` | Source protocol security and parser hardening backlog. |
+| `/home/aiwithapex/projects/Luminari-Source/src/protocol.c` | MSDP variable table, parser behavior, negotiation, GMCP fallback, MCCP stubs, MSSP, MXP, MSP, and string-building paths. |
+| `/home/aiwithapex/projects/Luminari-Source/src/protocol.h` | Protocol constants, enums, protocol state, public helpers, and source-level documentation comments. |
+| `/home/aiwithapex/projects/Luminari-Source/src/comm.c` | Live MSDP emission paths for character, room, combat, group, affects, actions, and inventory data. |
+| `/home/aiwithapex/projects/Luminari-Source/docs/systems/PROTOCOL_SYSTEMS.md` | Maintainer-facing source protocol claims and architecture notes. |
+| `/home/aiwithapex/projects/Luminari-Source/docs/systems/MSDP_VARIABLES.md` | Source MSDP variable catalog and documented update expectations. |
+| [Protocol Feature Checklist](protocol-feature-checklist.md) | Current Luminari Web support, rejected, deferred, and validation-gap boundaries. |
+| [Bridge Deployment Options](bridge-deployment-options.md) | Supported public transport boundary for the integrated `/ws` proxy. |
+| [Tests README](../tests/README.md) | Existing fixture and protocol test coverage in Luminari Web. |
+
+## Ranking Rules
+
+| Score | Player Value | Source Risk | Testability |
+| ----- | ------------ | ----------- | ----------- |
+| High | Improves reliability, connection safety, or visible first-party panels. | Touches parser, compression, transport, or high-frequency game loop behavior. | Can be covered with automated fixtures, harnesses, sanitizers, or documented repeatable checks. |
+| Medium | Improves a secondary panel or maintainer workflow. | Touches source emissions or proxy contracts without transport replacement. | Needs a focused source or web fixture but does not require live private data. |
+| Low | Nice-to-have, server-listing, cosmetic, or reference-only behavior. | Documentation-only or isolated behavior. | Manual review is enough for the current phase. |
+
+## Accepted Candidates
+
+The accepted list is the source-level work worth taking into later Phase 04
+sessions after the required validation is in place.
+
+### Parser and Security Work
+
+| Rank | Candidate | Player Value | Source Risk | Validation Requirement | Fallback Expectation | Evidence |
+| ---- | --------- | ------------ | ----------- | ---------------------- | -------------------- | -------- |
+| A1 | Harden `ProtocolInput` adjacent-byte reads and subnegotiation boundaries. | High - prevents malformed Telnet/MXP/IAC input from destabilizing real player sessions. | High - touches the central input parser used before normal command processing. | Session 02 source harness must cover split IAC, doubled IAC, incomplete subnegotiation, MXP escape starts at packet end, malformed MSDP, NAWS, TTYPE, and rejected options before source behavior changes. | No user-visible feature change; malformed protocol input should fail closed or be ignored without dropping safe text. | `PROTOCOL_TODO.md`; `src/protocol.c` `ProtocolInput`, `PerformSubnegotiation`, `ParseMSDP`, `ParseGMCP`; [Telnet parser tests](../tests/telnet-parser-edge-cases.test.ts). |
+| A2 | Replace unsafe or fragile fixed-buffer string assembly in protocol response paths. | High - protects status/list responses and server advertisement paths that can be reached by capable clients. | High - affects MSDP list replies, MSSP replies, MXP notices, copyover strings, and debug/error messages. | Source tests or sanitizer checks must cover long variable names, long values, full `SENDABLE_VARIABLES`, `REPORTED_VARIABLES`, `CONFIGURABLE_VARIABLES`, `GUI_VARIABLES`, MSSP payloads, and MXP tags. | Existing supported clients should receive the same successful replies; overlong payloads should produce bounded, logged failures. | `PROTOCOL_TODO.md`; `src/protocol.c` `MSDPSend*`, `ExecuteMSDPPair`, `SendMSSP`, `MXPCreateTag`, `MXPSendTag`, `CopyoverGet`. |
+| A3 | Align allocation, null-checking, and error-return behavior with the documented protocol API. | Medium - reduces crash and leak risk during connect, disconnect, copyover, and client capability negotiation. | Medium - mostly lifecycle and helper paths, but mistakes can affect every connection. | Source harness plus static analysis should verify `ProtocolCreate` allocation failures, `ProtocolDestroy(NULL)`, missing `pProtocol`, missing variable storage, and failed string allocation paths. | On allocation or null-input failure, connections should close or degrade with stable logs; Luminari Web keeps its normal connection-status fallback. | `PROTOCOL_TODO.md`; `src/protocol.h` `protocol_error_t`; `src/protocol.c` `ProtocolCreate`, `ProtocolDestroy`, `MSDPSet*`. |
+| A4 | Add source-level parser validation before enabling any new protocol behavior. | High - gives maintainers a repeatable safety net before changing parser, compression, GMCP, or MSDP emissions. | Medium - can start as harness/test-only work with no runtime behavior change. | Session 02 must document the local source command or manual harness and keep fixtures free of commands, credentials, private hosts, and transcripts. | No Luminari Web support claim changes until harness results and web fixtures exist. | Phase 04 Session 02 PRD; `PROTOCOL_TODO.md` testing requirements; [Tests README](../tests/README.md). |
+
+### Missing MSDP Candidates
+
+| Rank | Candidate | Player Value | Source Risk | Payload Contract Needed | Older-Server Fallback | Evidence |
+| ---- | --------- | ------------ | ----------- | ----------------------- | --------------------- | -------- |
+| A5 | Add `TITLE` as a source-owned MSDP string. | Medium - fills the character panel title row without user overrides. | Low - title already exists in player data and score/who display paths. | String value, empty string for no title, explicit color-code policy, maximum length, update timing, and whether immortal titles are included. | Keep Luminari Web title unavailable unless `TITLE` is emitted or user-configured override is present. | `src/utils.h` `GET_TITLE`; `src/players.c` title load/save; `src/act.informative.c` score/who title display; `shared/mud.ts` `title` override-only map. |
+| A6 | Add `FORTITUDE`, `REFLEX`, and `WILLPOWER` as source-owned MSDP numbers. | High - completes the current character sheet panel with core saving throws. | Low to medium - values are computed in display code today, but emit timing and naming need a stable contract. | Three integer variables, source names, whether values include temporary modifiers, update timing, and fixture cases for zero, positive, negative, and buffed values. | Keep save rows in explicit unavailable state on older servers; do not infer from ability scores. | `src/act.informative.c` `compute_mag_saves` displays; `src/structs.h` saving throw apply constants; `shared/mud.ts` save fields are override-only. |
+| A7 | Re-enable or replace live `DAMAGE_BONUS` emission with a side-effect-free calculation. | Medium - improves combat panel accuracy for attacks and equipment changes. | Medium to high - current source comment says the damage helper can send messages randomly, so direct use in the game pulse is unsafe. | Integer value scope for primary, ranged, and offhand attacks; whether situational target-specific bonuses are excluded; no side-effect guarantee; fixture coverage for weapon modes and unarmed state. | Keep Luminari Web damage bonus unavailable unless the source emits a validated value. | `src/protocol.c` declares `DAMAGE_BONUS`; `src/comm.c` commented `DAMAGE_BONUS` block; `src/fight.c` damage helpers; `shared/mud.ts` damage bonus is override-only. |
+
+## Deferred Candidates
+
+Deferred work may be valid later, but it should not be implemented until the
+listed preconditions are satisfied.
+
+### Missing MSDP Deferrals
+
+| Candidate | Why Deferred | Preconditions | Fallback |
+| --------- | ------------ | ------------- | -------- |
+| `MINIMAP` | The source enum and docs list it, but audited emission paths did not populate it. Room and exit data already provide a safe webclient map fallback. | Define whether payload is plain ASCII, coordinate grid, wilderness-only, local-room radius, or structured room graph; add source fixtures; add Luminari Web parser, mapping, and map display fixtures. | Keep using `ROOM`/`ROOM_EXITS` mapper fallback and only render live `MINIMAP` when explicitly configured or source-backed. |
+| `QUEST_INFO` | No source enum/table entry was found, and quest systems are varied enough that free-form command output would be brittle. | Add source variable, choose array/table payload shape, define active/completed/failed/timed quest visibility, redact private text, and add fixtures for empty, partial, nested, malformed, and reconnect cases. | Keep Quests tab in default unavailable state; allow only explicit user override payloads from servers that already emit structured data. |
+| `WORLD_TIME` contract cleanup | Source docs list `WORLD_TIME`, and Luminari Web maps it, but audited emission paths did not show a clear live update. This is lower value than title/saves/combat panel gaps. | Confirm whether source emits it elsewhere, decide number vs string contract, and add fixture coverage if keeping it as a default requested field. | Missing `WORLD_TIME` should remain absent without blocking room, map, or character panels. |
+
+### Transport and Non-MSDP Follow-Ups
+
+| Rank | Feature | Current Decision | Player Value | Risk | Validation Requirement | Evidence |
+| ---- | ------- | ---------------- | ------------ | ---- | ---------------------- | -------- |
+| O1 | MCCP | Keep rejected in Luminari Web until Session 04 decides whether to implement source compression and proxy decompression. | Medium - can reduce bandwidth, but current app works without it. | High - changes byte stream framing and failure handling across source, proxy, and client transport. | Source compression tests, proxy decompression tests, compressed and uncompressed reconnect fixtures, timeout/failure behavior, and sanitized error boundaries. | `src/protocol.c` `CompressStart`/`CompressEnd`; `src/protocol.h` MCCP framework notes; [Protocol Feature Checklist](protocol-feature-checklist.md). |
+| O2 | GMCP | Deferred to Session 04; source fallback does not equal a web-supported module API. | Medium - could provide modern structured modules if schemas are designed. | High - requires source module schemas, proxy parser support, client contracts, fixtures, and overlap decisions with MSDP. | Schema versioning, source parser tests, proxy GMCP parsing tests, client mapping tests, and migration notes for data already supplied by MSDP. | `src/protocol.c` `ParseGMCP` and `SendGMCP`; `src/protocol.h` GMCP comments; [Protocol Feature Checklist](protocol-feature-checklist.md). |
+| O3 | Native source WebSocket | Deferred to Session 05; integrated `/ws` proxy remains the supported path. | Medium - may simplify one deployment topology later. | High - would move browser validation, origin policy, routing, rate limits, and app message contracts into or beside source. | Threat model, application-message contract, origin and destination policy, rate-limit behavior, typed client compatibility, and rollback plan. | [Bridge Deployment Options](bridge-deployment-options.md); [HTTP and WebSocket Contracts](api/http-and-websocket.md). |
+| O4 | MXP | Keep rejected for the first-party web client. Reconsider only with a safe parser and UI trust design. | Low to medium - clickable links could help, but unsafe markup is not needed for current panels. | High - turns server text into interactive browser UI unless aggressively constrained. | Source MXP parser tests, proxy rejection/allowlist policy, browser rendering threat model, and accessibility checks before any UI path. | `src/protocol.c` MXP negotiation and tag handling; [Protocol Feature Checklist](protocol-feature-checklist.md). |
+| O5 | MSP | Deferred until product requirements define browser audio behavior. | Low - no current first-party audio UX requirement. | Medium - browser autoplay, asset trust, volume, and user consent need design. | Product decision, asset allowlist policy, mute controls, fixture coverage, and no transcript/command persistence. | `src/protocol.c` `SoundSend`; `src/protocol.h` MSP comments; [Protocol Feature Checklist](protocol-feature-checklist.md). |
+| O6 | MSSP | Validation gap; do not add client consumption unless a concrete UI need appears. | Low - server listing data does not improve the connected play panels today. | Low to medium - mostly parser/UI work, but static server metadata can be stale or campaign-specific. | Decide app surface, parse MSSP safely in proxy if needed, and add tests for campaign variants and stale/missing fields. | `src/protocol.c` `SendMSSP`; [Protocol Feature Checklist](protocol-feature-checklist.md). |
+| O7 | CHARSET | Keep rejected in Luminari Web; UTF-8 decoding remains fixed. | Low - current source and web path already assume UTF-8. | Medium - alternate encodings complicate parser state and browser rendering. | Only revisit with source/proxy encoding policy, fixtures for negotiation accept/reject, and non-UTF-8 text decoding tests. | `src/protocol.c` CHARSET negotiation; [Protocol Feature Checklist](protocol-feature-checklist.md). |
+| O8 | TTYPE | Supported in Luminari Web; keep as parser-harness coverage, not new feature work. | Medium - stable client identity avoids noisy negotiation behavior. | Low to medium - edge cases are parser-boundary focused. | Keep existing web tests and add source harness cases for SEND responses, repeated TTYPE cycling, and malformed subnegotiation. | `src/protocol.c` TTYPE negotiation; [Telnet parser tests](../tests/telnet-parser-edge-cases.test.ts). |
+| O9 | NAWS | Supported in Luminari Web; keep as parser-harness coverage, not new feature work. | High - terminal sizing directly affects play ergonomics. | Low to medium - resize races and reconnects are the main concern. | Keep web lifecycle tests and add source harness cases for short NAWS payloads, repeated resize, disconnect, and copyover state. | `src/protocol.c` NAWS negotiation; [Proxy lifecycle tests](../tests/proxy-lifecycle.test.ts). |
+
+## Rejected Candidates
+
+Rejected work is out of the current product path because it weakens the
+application boundary, overclaims support, or relies on unreliable data.
+
+| Candidate | Rejection |
+| --------- | --------- |
+| Claiming current MCCP support | Rejected because source compression functions are stubs and the web proxy rejects MCCP rather than decompressing it. |
+| Claiming current GMCP support | Rejected because the web client and proxy have no GMCP module contract, parser, or fixtures. |
+| Treating source MXP as trusted browser UI | Rejected because source-authored markup cannot enter the React UI without a safe parser and explicit product design. |
+| Treating CHARSET as browser encoding negotiation | Rejected because the current proxy decodes UTF-8 and deliberately rejects CHARSET. |
+| Replacing `/ws` with a blind bridge | Rejected because a byte bridge cannot validate browser JSON messages, emit typed state, enforce current app status semantics, or preserve proxy policy controls. |
+
+## Webclient-Only Alternatives
+
+Some user value can be preserved in Luminari Web without changing
+Luminari-Source.
+
+| Alternative | Use When | Boundary |
+| ----------- | -------- | -------- |
+| Room/exits mapper fallback | Source does not emit `MINIMAP`, but `ROOM`, `ROOM_EXITS`, and room identity fields are available. | Do not label this as live source minimap support. It is a client-side map built from room transitions and MSDP room facts. |
+| Quest unavailable and override-only states | Source does not emit a structured `QUEST_INFO` payload. | Do not parse free-form quest command text. Only render quest data from explicit structured overrides or a future source-owned payload. |
+| Character-field unavailable states | Source does not emit `TITLE`, saves, or side-effect-free `DAMAGE_BONUS`. | Keep fields explicit rather than inferring values from nearby text, ability scores, or combat messages. |
+| Protocol inspector documentation | A feature is deferred or rejected but maintainers still need visibility into the decision. | Keep status labels tied to [Protocol Feature Checklist](protocol-feature-checklist.md) and do not imply runtime negotiation support. |
+| Integrated proxy deployment path | Public browser access needs validated JSON messages, typed state, and current status semantics. | Keep `/ws` as the supported first-party path until a native source WebSocket session defines equivalent validation and rollback behavior. |
+
+## Follow-Up Session Map
+
+Future sessions should select from the accepted backlog without repeating this
+audit.
+
+| Follow-Up | Candidate IDs | Selection Notes |
+| --------- | ------------- | --------------- |
+| Session 02 - Protocol Parser Test Harness | A1, A2, A3, A4, O8, O9 | Build source harness coverage before parser, negotiation, compression, GMCP, or MSDP behavior changes. Include malformed, split, doubled, short, and oversized payloads. |
+| Session 03 - Missing MSDP Variables | A5, A6, A7 | Start with `TITLE` and saves if Session 02 gives enough confidence for emission changes. Take `DAMAGE_BONUS` only if a side-effect-free calculation exists or is created in scope. |
+| Session 04 - MCCP and GMCP Decision | O1, O2 | Decide pursue, defer, or reject. Do not implement runtime support unless source, proxy, client, and test responsibilities fit the session or are split into new specs. |
+| Session 05 - Native WebSocket Feasibility | O3 | Compare source-native transport against the current integrated proxy. Preserve `/ws` until a typed, validated, and operable migration path exists. |
+| Future source hardening phase | A2, A3, O4, O5, O6, O7 | Use only after Session 02 and product decisions identify concrete value. These are not required to complete the current web client protocol path. |
+| Future mapper or quest phase | `MINIMAP`, `QUEST_INFO` | Revisit after source payload contracts exist. Until then, keep room/exits mapper fallback and quest unavailable/override states. |
+
+## Candidate Summary
+
+| Candidate | Status | Primary Session | Current Web Claim |
+| --------- | ------ | --------------- | ----------------- |
+| `ProtocolInput` hardening | Accepted | Session 02 | No support-claim change. |
+| Protocol string/allocation/error cleanup | Accepted | Session 02 or future hardening | No support-claim change. |
+| Source parser harness | Accepted | Session 02 | No support-claim change. |
+| `TITLE` | Accepted | Session 03 | Override-only/unavailable until emitted and tested. |
+| `FORTITUDE`, `REFLEX`, `WILLPOWER` | Accepted | Session 03 | Override-only/unavailable until emitted and tested. |
+| `DAMAGE_BONUS` | Accepted with side-effect-free precondition | Session 03 or future | Override-only/unavailable until emitted and tested. |
+| `MINIMAP` | Deferred | Future mapper or Session 03 reconsideration | Override-only/unavailable; room/exits fallback remains supported. |
+| `QUEST_INFO` | Deferred | Future quest or Session 03 reconsideration | Override-only/unavailable; no free-form quest parsing. |
+| MCCP | Deferred decision, rejected today | Session 04 | Rejected. |
+| GMCP | Deferred decision | Session 04 | Deferred. |
+| Native source WebSocket | Deferred decision | Session 05 | Deferred; integrated proxy remains supported. |
+| MXP | Rejected today; possible future parser/UI design | Future | Rejected. |
+| MSP | Deferred | Future | Deferred. |
+| MSSP | Validation gap | Future | Validation gap. |
+| CHARSET | Rejected today | Future | Rejected. |
+| TTYPE | Harness coverage | Session 02 | Supported. |
+| NAWS | Harness coverage | Session 02 | Supported. |
+
+## Claim Boundaries
+
+- Do not claim MCCP support while source compression and proxy decompression are absent.
+- Do not claim GMCP support without source module schemas, a proxy parser contract, client mappings, and tests.
+- Do not claim live `TITLE`, saves, `DAMAGE_BONUS`, `MINIMAP`, or `QUEST_INFO` support until Luminari-Source emits the values and Luminari Web has fixtures.
+- Do not replace the first-party `/ws` application protocol with a blind WebSocket-to-TCP bridge.
+- Do not parse free-form quest command output as structured quest data.

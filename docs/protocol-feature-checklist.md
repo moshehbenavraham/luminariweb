@@ -31,7 +31,7 @@ tests, or documented runtime contracts.
 | ------- | --------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | TTYPE   | Supported | Proxy agrees to TTYPE and replies to SEND with a fixed web client name.                          | [`server/telnet-parser.ts`](../server/telnet-parser.ts), [`tests/telnet-parser-edge-cases.test.ts`](../tests/telnet-parser-edge-cases.test.ts)                                                 | Keep TTYPE negotiation tests passing.                              |
 | NAWS    | Supported | Proxy negotiates NAWS and sends bounded dimensions after support is known.                       | [`server/telnet-parser.ts`](../server/telnet-parser.ts), [`tests/proxy-lifecycle.test.ts`](../tests/proxy-lifecycle.test.ts)                                                                   | Keep lifecycle and resize tests passing.                           |
-| MXP     | Rejected  | Proxy rejects MXP; server markup is not trusted UI input.                                        | [`server/telnet-parser.ts`](../server/telnet-parser.ts), [Phase 03 session 06](../.spec_system/PRD/phase_03/session_06_protocol_feature_checklist.md)                                          | Keep rejected until a safe parser/UI design exists.                |
+| MXP     | Rejected  | Proxy rejects MXP; server markup is not trusted UI input.                                        | [`server/telnet-parser.ts`](../server/telnet-parser.ts), [Phase 03 session 06](../.spec_system/specs/phase03-session06-protocol-feature-checklist/implementation-notes.md)                  | Keep rejected until a safe parser/UI design exists.                |
 | MCCP    | Rejected  | Proxy rejects MCCP; source compression is recorded as stubbed and proxy decompression is absent. | [`server/telnet-parser.ts`](../server/telnet-parser.ts), [`tests/telnet-parser-edge-cases.test.ts`](../tests/telnet-parser-edge-cases.test.ts), [PRD source facts](../.spec_system/PRD/PRD.md) | Decide MCCP direction in Phase 04 before implementation.           |
 | CHARSET | Rejected  | Proxy rejects CHARSET and keeps UTF-8 decoding fixed.                                            | [`server/telnet-parser.ts`](../server/telnet-parser.ts), [`tests/telnet-parser-edge-cases.test.ts`](../tests/telnet-parser-edge-cases.test.ts)                                                 | Defer alternate encodings until tested source/proxy policy exists. |
 
@@ -40,7 +40,7 @@ tests, or documented runtime contracts.
 | Feature                   | Status         | Current boundary                                                                                     | Evidence                                                                                                                                                                                                      | Next action                                                           |
 | ------------------------- | -------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | MSDP                      | Supported      | MSDP is the current structured game-state path for source-confirmed values and configured overrides. | [`shared/mud.ts`](../shared/mud.ts), [`tests/README.md`](../tests/README.md)                                                                                                                                  | Use Phase 04 for missing variables and live schema confirmation.      |
-| Override-only MSDP fields | Validation gap | `TITLE`, saves, live `DAMAGE_BONUS`, `MINIMAP`, and `QUEST_INFO` are not requested by default.       | [`shared/mud.ts`](../shared/mud.ts), [PRD mismatches](../.spec_system/PRD/PRD.md), [quest follow-up](../.spec_system/specs/phase02-session06-map-and-quest-fallback-strategy/phase04-quest-msdp-follow-up.md) | Add only selected source-owned variables with fixtures and fallbacks. |
+| Override-only MSDP fields | Validation gap | `TITLE`, saves, live `DAMAGE_BONUS`, `MINIMAP`, and `QUEST_INFO` are not requested by default.       | [`shared/mud.ts`](../shared/mud.ts), [PRD mismatches](../.spec_system/PRD/PRD.md), [quest follow-up](../.spec_system/archive/sessions/phase02-session06-map-and-quest-fallback-strategy/phase04-quest-msdp-follow-up.md) | Add only selected source-owned variables with fixtures and fallbacks. |
 
 ## Source-Level Follow-Ups
 
@@ -53,11 +53,12 @@ tests, or documented runtime contracts.
 
 ## Phase 04 Inputs
 
-Phase 04 should use
+Phase 04 should use the
+[Source Protocol Backlog](source-protocol-backlog.md) together with
 [the protocol follow-up handoff](../.spec_system/specs/phase03-session06-protocol-feature-checklist/phase04-protocol-follow-up.md)
 to split source work into:
 
-- `p4-source-todo-audit` - Re-read Luminari-Source protocol TODOs and rank source changes.
+- `p4-source-todo-audit` - Re-read Luminari-Source protocol TODOs and rank source changes; current audit output is [Source Protocol Backlog](source-protocol-backlog.md).
 - `p4-parser-harness` - Add source-level protocol parser fixtures before changing behavior.
 - `p4-missing-msdp-variables` - Decide and implement only selected source-owned MSDP variables.
 - `p4-mccp-gmcp-decision` - Decide whether MCCP and GMCP become real supported features.

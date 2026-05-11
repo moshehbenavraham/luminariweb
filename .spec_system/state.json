@@ -2,7 +2,7 @@
   "version": "2.0",
   "project_name": "Luminari Web",
   "description": "First-party React and Node web MUD client for LuminariMUD-compatible games with an MSDP-driven HUD and WebSocket-to-Telnet proxy.",
-  "current_phase": 3,
+  "current_phase": 4,
   "current_session": null,
   "monorepo": false,
   "phases": {
@@ -32,7 +32,8 @@
     },
     "4": {
       "name": "Source-Level Protocol Path",
-      "status": "not_started",
+      "description": "Define and implement only the source-level protocol changes justified after the web client, proxy, and protocol inventory are stable.",
+      "status": "in_progress",
       "session_count": 5
     }
   },
@@ -245,6 +246,16 @@
     {
       "date": "2026-05-11",
       "session": "phase03-session06-protocol-feature-checklist",
+      "status": "completed"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase04-session01-luminari-source-protocol-todo-audit",
+      "status": "planned"
+    },
+    {
+      "date": "2026-05-11",
+      "session": "phase04-session01-luminari-source-protocol-todo-audit",
       "status": "completed"
     }
   ]
