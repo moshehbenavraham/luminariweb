@@ -91,11 +91,10 @@ Current high-level boundaries:
 - Client and proxy support ANSI terminal rendering, UTF-8 decoding, TTYPE,
   NAWS, and MSDP for the documented app workflow.
 - The proxy rejects MCCP, MXP, and CHARSET today.
-- GMCP, MSP, MSSP consumption, native source WebSocket, and missing MSDP
-  variables remain source-level or validation-gap work.
-- `TITLE`, saves, live `DAMAGE_BONUS`, `MINIMAP`, and `QUEST_INFO` must stay
-  explicit unavailable, override-only, or future-source states until
-  Luminari-Source emits and tests them.
+- GMCP, MSP, MSSP consumption, native source WebSocket, live `DAMAGE_BONUS`,
+  and structured `QUEST_INFO` remain source-level or validation-gap work.
+- `TITLE`, saves, and `MINIMAP` are source-backed MSDP defaults, but older
+  servers may still omit them and must keep explicit fallback states.
 
 The UI can expose these boundaries as static protocol status. It must not infer
 live negotiation state unless the browser already receives reliable state for

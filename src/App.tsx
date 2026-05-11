@@ -236,12 +236,12 @@ const SIDEBAR_FONT_FAMILIES: Record<SidebarFontFamily, string> = {
 };
 const OVERRIDE_ONLY_MSDP_VARIABLE_KEYS = new Set<MsdpVariableKey>(overrideOnlyMsdpVariableKeys);
 const MSDP_FIELD_SUPPORT_NOTES: Partial<Record<MsdpVariableKey, string>> = {
-  title: 'Future server support or explicit override required.',
-  fortitude: 'Future server support or explicit override required.',
-  reflex: 'Future server support or explicit override required.',
-  willpower: 'Future server support or explicit override required.',
+  title: 'Source-backed in current Luminari-Source; older servers may omit it.',
+  fortitude: 'Source-backed in current Luminari-Source; older servers may omit it.',
+  reflex: 'Source-backed in current Luminari-Source; older servers may omit it.',
+  willpower: 'Source-backed in current Luminari-Source; older servers may omit it.',
   damageBonus: 'Unconfirmed live data; use only with a server override.',
-  minimap: 'Unconfirmed live data; room fallback remains supported.',
+  minimap: 'Source-backed in current Luminari-Source; room fallback remains supported.',
   questInfo: 'Structured quest data requires future server support or an override.',
 };
 const MSDP_VARIABLE_GROUPS: Array<{
@@ -252,7 +252,7 @@ const MSDP_VARIABLE_GROUPS: Array<{
   {
     title: 'Server and character',
     description:
-      'Source-confirmed server metadata and character profile variables, with title left override-only.',
+      'Source-confirmed server metadata and character profile variables, including title.',
     fields: [
       { key: 'serverId', label: 'Server ID' },
       { key: 'serverTime', label: 'Server time' },
@@ -271,7 +271,7 @@ const MSDP_VARIABLE_GROUPS: Array<{
   {
     title: 'Resources and attributes',
     description:
-      'Source-confirmed bars, ability scores, and combat summary variables; saves and damage bonus need overrides.',
+      'Source-confirmed bars, ability scores, saving throws, and combat summary variables; damage bonus needs an override.',
     fields: [
       { key: 'health', label: 'Health' },
       { key: 'healthMax', label: 'Health max' },
@@ -298,7 +298,7 @@ const MSDP_VARIABLE_GROUPS: Array<{
   },
   {
     title: 'Room and world',
-    description: 'Source-confirmed room context with minimap left as an override-only slot.',
+    description: 'Source-confirmed room context with source-backed minimap and room fallback.',
     fields: [
       { key: 'room', label: 'Room' },
       { key: 'areaName', label: 'Area name' },

@@ -170,9 +170,9 @@ Partial MUD state update:
 }
 ```
 
-Blank MSDP mapping values are override-only slots. They are normalized and preserved in browser settings, but the proxy filters them out before sending MSDP `REPORT` or `SEND` requests.
+Blank MSDP mapping values disable requests for that client field. They are normalized and preserved in browser settings, but the proxy filters them out before sending MSDP `REPORT` or `SEND` requests.
 
-The browser renders room, map, and quest panels from the resulting `state` messages. `ROOM`, `ROOM_EXITS`, `MINIMAP`, and `QUEST_INFO` remain explicit fallback or override-only paths until the server emits the corresponding live values.
+The browser renders room, map, and quest panels from the resulting `state` messages. `ROOM`, `ROOM_EXITS`, and `MINIMAP` use explicit source-backed or fallback paths; `QUEST_INFO` remains override-only until the server emits a structured live value.
 
 ## Validation
 

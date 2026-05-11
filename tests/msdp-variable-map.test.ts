@@ -50,7 +50,7 @@ test('trims string inputs and preserves user overrides', () => {
   assert.equal(normalized.title, 'TITLE');
   assert.equal(normalized.fortitude, 'FORTITUDE');
   assert.equal(normalized.movement, defaultMsdpVariables.movement);
-  assert.equal(normalized.minimap, '');
+  assert.equal(normalized.minimap, defaultMsdpVariables.minimap);
 });
 
 test('filters blank configured variables and prevents duplicate requests', () => {

@@ -14,6 +14,7 @@ test('maps metadata and character scalar fields', () => {
       ['SERVER_TIME', 1710000000],
       ['SNIPPET_VERSION', 8],
       ['CHARACTER_NAME', 'Fixture Tester'],
+      ['TITLE', 'the Careful'],
       ['LEVEL', '17'],
       ['RACE', 'human'],
       ['CLASS', 'wizard'],
@@ -23,12 +24,16 @@ test('maps metadata and character scalar fields', () => {
       ['INT', 18],
       ['WIS', 16],
       ['CHA', 14],
+      ['FORTITUDE', -2],
+      ['REFLEX', 0],
+      ['WILLPOWER', 12],
     ]),
     {
       serverId: 'LuminariMUD',
       serverTime: 1710000000,
       snippetVersion: 8,
       characterName: 'Fixture Tester',
+      title: 'the Careful',
       level: 17,
       race: 'human',
       className: 'wizard',
@@ -38,6 +43,9 @@ test('maps metadata and character scalar fields', () => {
       intelligence: 18,
       wisdom: 16,
       charisma: 14,
+      fortitude: -2,
+      reflex: 0,
+      willpower: 12,
     },
   );
 });
@@ -100,6 +108,7 @@ test('maps core panel scalar fixture into confirmed MudState fields', async () =
   assert.ok(fixture, 'core.panel.confirmed.scalars fixture should exist');
   assert.deepEqual(mapPairs(fixture.expectedPairs, defaultMap), {
     characterName: 'Fixture Hero',
+    title: 'of the Test Keep',
     level: 17,
     race: 'Human',
     className: 'Wizard',
@@ -113,6 +122,9 @@ test('maps core panel scalar fixture into confirmed MudState fields', async () =
     pspMax: 44,
     movement: 91,
     movementMax: 110,
+    fortitude: -2,
+    reflex: 0,
+    willpower: 12,
     experience: 451200,
     experienceMax: 500000,
     experienceTnl: 48800,
@@ -249,6 +261,7 @@ test('preserves room fixture variants and ignores disabled room mappings', async
     'room.exits.malformed.scalar',
     'ROOM_EXITS',
   );
+  const minimap = readFixturePairValue(corpus.fixtures, 'room.minimap.scalar', 'MINIMAP');
   const disabledMap: MsdpVariableMap = {
     ...defaultMap,
     room: '',
@@ -257,6 +270,7 @@ test('preserves room fixture variants and ignores disabled room mappings', async
     roomVnum: '',
     roomExits: '',
     worldTime: '',
+    minimap: '',
   };
 
   assert.deepEqual(mapPairs(scalarIdentity, defaultMap), {
@@ -288,8 +302,10 @@ test('preserves room fixture variants and ignores disabled room mappings', async
   assert.deepEqual(mapMsdpUpdate('ROOM_EXITS', malformedScalar, defaultMap), {
     roomExits: malformedScalar,
   });
+  assert.deepEqual(mapMsdpUpdate('MINIMAP', minimap, defaultMap), { minimap });
   assert.deepEqual(mapPairs(scalarIdentity, disabledMap), {});
   assert.deepEqual(mapMsdpUpdate('ROOM_EXITS', objectExits, disabledMap), {});
+  assert.deepEqual(mapMsdpUpdate('MINIMAP', minimap, disabledMap), {});
 });
 
 test('preserves GROUP fixture variants and ignores disabled GROUP mappings', async () => {
@@ -375,23 +391,20 @@ test('preserves AFFECTS and INVENTORY fixture variants and ignores disabled mapp
   assert.deepEqual(mapMsdpUpdate('INVENTORY', itemInventory, disabledMap), {});
 });
 
-test('ignores unknown variables, blank mappings, and unsupported defaults', () => {
+test('maps selected source-backed variables and ignores deferred defaults', () => {
   assert.deepEqual(mapMsdpUpdate('UNKNOWN_VARIABLE', 1, defaultMap), {});
-  assert.deepEqual(mapMsdpUpdate('TITLE', 'the brave', defaultMap), {});
-  assert.deepEqual(mapMsdpUpdate('FORTITUDE', 10, defaultMap), {});
+  assert.deepEqual(mapMsdpUpdate('TITLE', 'the brave', defaultMap), { title: 'the brave' });
+  assert.deepEqual(mapMsdpUpdate('FORTITUDE', 10, defaultMap), { fortitude: 10 });
+  assert.deepEqual(mapMsdpUpdate('REFLEX', 0, defaultMap), { reflex: 0 });
+  assert.deepEqual(mapMsdpUpdate('WILLPOWER', -1, defaultMap), { willpower: -1 });
+  assert.deepEqual(mapMsdpUpdate('MINIMAP', 'map text', defaultMap), { minimap: 'map text' });
   assert.deepEqual(mapMsdpUpdate('DAMAGE_BONUS', 3, defaultMap), {});
-  assert.deepEqual(mapMsdpUpdate('MINIMAP', 'map text', defaultMap), {});
   assert.deepEqual(mapMsdpUpdate('QUEST_INFO', { title: 'ignored' }, defaultMap), {});
 });
 
-test('maps override-only variables when settings explicitly configure them', () => {
+test('maps deferred variables when settings explicitly configure them', () => {
   const overrideMap = withOverrides({
-    title: 'TITLE',
-    fortitude: 'FORTITUDE',
-    reflex: 'REFLEX',
-    willpower: 'WILLPOWER',
     damageBonus: 'DAMAGE_BONUS',
-    minimap: 'MINIMAP',
     questInfo: 'QUEST_INFO',
   });
   const questInfo = {
@@ -402,23 +415,13 @@ test('maps override-only variables when settings explicitly configure them', () 
   assert.deepEqual(
     mapPairs(
       [
-        ['TITLE', 'the brave'],
-        ['FORTITUDE', '9'],
-        ['REFLEX', 8],
-        ['WILLPOWER', 7],
         ['DAMAGE_BONUS', 4],
-        ['MINIMAP', 'map text'],
         ['QUEST_INFO', questInfo],
       ],
       overrideMap,
     ),
     {
-      title: 'the brave',
-      fortitude: 9,
-      reflex: 8,
-      willpower: 7,
       damageBonus: 4,
-      minimap: 'map text',
       questInfo,
     },
   );

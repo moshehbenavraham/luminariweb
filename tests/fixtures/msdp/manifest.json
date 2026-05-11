@@ -5,8 +5,8 @@
   "updatedAt": "2026-05-11",
   "totals": {
     "fixtureFiles": 7,
-    "fixtures": 45,
-    "syntheticFixtures": 45,
+    "fixtures": 46,
+    "syntheticFixtures": 46,
     "realCaptureFixtures": 0
   },
   "controlTokens": {
@@ -39,6 +39,7 @@
     "metadata": 1,
     "missing-marker": 1,
     "mixed-array-table": 1,
+    "minimap": 1,
     "money": 2,
     "nested-table": 1,
     "movement-max": 1,
@@ -51,7 +52,7 @@
     "room": 6,
     "room-exits": 8,
     "raw-fallback": 6,
-    "scalar": 17,
+    "scalar": 18,
     "status": 3,
     "table": 19,
     "tank": 3,
@@ -113,7 +114,7 @@
     },
     {
       "file": "room-and-exits.json",
-      "fixtureCount": 11,
+      "fixtureCount": 12,
       "originTypes": ["synthetic"],
       "coverage": [
         "room",
@@ -128,6 +129,7 @@
         "unknown-fields",
         "raw-fallback",
         "object-like",
+        "minimap",
         "malformed"
       ],
       "fixtureIds": [
@@ -135,6 +137,7 @@
         "room.exits.table",
         "room.room.table",
         "room.world.time",
+        "room.minimap.scalar",
         "room.partial.identity",
         "room.exits.string",
         "room.exits.array",

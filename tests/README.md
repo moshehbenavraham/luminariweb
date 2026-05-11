@@ -41,8 +41,9 @@ node --import tsx --test tests/*.test.ts
   Luminari caret/RGB color conversion, reset handling, and streaming output.
 - xterm spike helper coverage for query-parameter fallback, option defaults, accessibility settings,
   scrollback, and bounded fit dimensions.
-- Core MSDP display helper coverage for HUD bars, XP/TNL progress, character stats, zero values,
-  negative values, missing max values, unavailable fields, and override-only waiting states.
+- Core MSDP display helper coverage for HUD bars, XP/TNL progress, character stats, source-backed
+  saves, zero values, negative values, missing max values, unavailable fields, and override-only
+  waiting states.
 - Combat display helper coverage for opponent and tank status, zero and partial health values,
   quiet inactive states, `ACTIONS` arrays and fallback payloads, and override-only damage bonus
   availability.
@@ -56,7 +57,7 @@ node --import tsx --test tests/*.test.ts
   structured `ROOM` fallback, string/array/table/object-like exits, deterministic ordering,
   unknown fields, raw fallback entries, disabled mappings, and connection availability states.
 - Map display helper coverage for fallback room/exits summaries, current-room mapper nodes,
-  deterministic directional branch placement, raw malformed exit fallback, live override-only
+  deterministic directional branch placement, raw malformed exit fallback, source-backed live
   `MINIMAP`, disabled mappings, loading, empty, offline, and error states.
 - Quest display helper coverage for default unavailable `QUEST_INFO`, configured waiting, empty,
   structured override, scalar override, offline, and error states without free-form quest parsing.
@@ -161,7 +162,7 @@ and terminal rendering still behave normally.
 
 For core HUD and character panel checks, use desktop, 390px, and 360px viewports. Verify there is no
 horizontal page scrolling, the command dock remains usable, HP/PSP/movement/XP bars show visible
-text, character stats wrap inside the sidebar, unavailable title/saves/damage states remain
+text, character stats wrap inside the sidebar, selected title/save and deferred damage states remain
 explicit, and terminal resize updates do not visibly interrupt input.
 
 For combat panel checks, use desktop, 390px, and 360px viewports. Verify inactive combat stays quiet,
@@ -196,10 +197,10 @@ and command input focus returns normally after selecting the Room tab.
 
 `ROOM` and `ROOM_EXITS` fixtures are synthetic display and parser contracts for source-confirmed
 MSDP variables. They should not be treated as proof of final live server room or exit field names,
-and the Room tab must remain separate from unconfirmed live `MINIMAP` behavior.
+and the Room tab must remain separate from empty or missing `MINIMAP` behavior.
 
 For map and quest panel checks, use desktop, 390px, and 360px viewports. Verify map loading, empty,
-disabled, offline, error, room/exits fallback, and configured live `MINIMAP` override states remain
+disabled, offline, error, room/exits fallback, and source-backed live `MINIMAP` states remain
 readable without horizontal page scrolling. For room/exits fallback, verify the compact mapper keeps
 the current-room node highlighted, compass exits placed around it, vertical/custom exits listed
 below it, raw malformed exits preserved as fallback text, and the command input unobstructed. Verify
@@ -208,8 +209,8 @@ Luminari-Source structured quest data is unavailable, configured `QUEST_INFO` ov
 render inside the tab, large payloads scroll inside the panel, and command input focus returns
 normally after selecting the Quests tab.
 
-`MINIMAP` and `QUEST_INFO` remain override-only client fields until source-level protocol work
-confirms live population and fixture-backed schemas.
+`QUEST_INFO` remains override-only until source-level protocol work confirms live population and a
+fixture-backed schema.
 
 For inspector layout checks, use desktop, 390px, and 360px viewports. Verify the Map, Room,
 Character, Combat, Group, Inventory, Affects, Quests, and Protocol tabs are reachable from one
@@ -222,8 +223,8 @@ form remains reachable without being covered by the inspector.
 
 For Protocol tab checks, verify status counts, status badges, evidence links, Phase 04 follow-up
 labels, and long support-boundary notes wrap inside the panel at desktop, 390px, and 360px widths.
-Confirm MCCP, GMCP, MXP, MSP, MSSP, CHARSET, `MINIMAP`, `QUEST_INFO`, `TITLE`, saves, and live
-`DAMAGE_BONUS` are not presented as complete live support.
+Confirm MCCP, GMCP, MXP, MSP, MSSP, CHARSET, `QUEST_INFO`, and live `DAMAGE_BONUS` are not
+presented as complete live support.
 
 For mobile/PWA checks, use desktop, 390px, and 360px viewports. Verify the header and mobile status
 strip distinguish browser network, proxy readiness, and MUD connection state. Toggle browser

@@ -76,30 +76,30 @@ test('builds a deterministic room and exits fallback when MINIMAP is absent', ()
   assert.match(model.fallback?.mapper?.ariaLabel ?? '', /3 directional exits available/);
 });
 
-test('uses live MINIMAP only when a configured override provides text', () => {
-  const unconfigured = buildMapDisplayModel(
+test('uses source-backed live MINIMAP when default mapping provides text', () => {
+  const disabledMinimapMap: MsdpVariableMap = { ...defaultMap, minimap: '' };
+  const disabled = buildMapDisplayModel(
     {
       minimap: 'server minimap',
     },
     'connected',
-    defaultMap,
+    disabledMinimapMap,
   );
-  const configuredMap: MsdpVariableMap = { ...defaultMap, minimap: 'MINIMAP' };
-  const configured = buildMapDisplayModel(
+  const sourceBacked = buildMapDisplayModel(
     {
       minimap: 'server minimap\n  north',
     },
     'connected',
-    configuredMap,
+    defaultMap,
   );
 
-  assert.notEqual(unconfigured.state, 'liveOverride');
-  assert.equal(unconfigured.state, 'loading');
-  assert.equal(unconfigured.fallback, undefined);
-  assert.equal(configured.state, 'liveOverride');
-  assert.equal(configured.source, 'minimapOverride');
-  assert.equal(configured.minimapText, 'server minimap\n  north');
-  assert.equal(configured.fallback, undefined);
+  assert.notEqual(disabled.state, 'liveOverride');
+  assert.equal(disabled.state, 'loading');
+  assert.equal(disabled.fallback, undefined);
+  assert.equal(sourceBacked.state, 'liveOverride');
+  assert.equal(sourceBacked.source, 'minimapOverride');
+  assert.equal(sourceBacked.minimapText, 'server minimap\n  north');
+  assert.equal(sourceBacked.fallback, undefined);
 });
 
 test('keeps disabled, loading, empty, offline, and error map states distinct', () => {

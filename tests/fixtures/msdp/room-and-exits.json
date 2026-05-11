@@ -157,6 +157,25 @@
       "notes": ["The text value is synthetic and used only for parser and mapping coverage."]
     },
     {
+      "id": "room.minimap.scalar",
+      "version": 1,
+      "origin": {
+        "type": "synthetic",
+        "capturedAt": null,
+        "source": "Constructed from Phase 04 Session 03 source-backed MINIMAP contract.",
+        "sanitized": true
+      },
+      "description": "MINIMAP parses as plain display text after source color stripping.",
+      "coverage": ["minimap", "scalar"],
+      "sourceFacts": [
+        "Luminari-Source commit 7dbddcd1 emits MINIMAP from automap data after color stripping.",
+        "Phase 04 Session 03 maps MINIMAP by default while preserving room/exits fallback for missing or empty map text."
+      ],
+      "payloadTokens": ["VAR", "MINIMAP", "VAL", "  N\nW @ E\n  S"],
+      "expectedPairs": [["MINIMAP", "  N\nW @ E\n  S"]],
+      "notes": ["The minimap text is synthetic and does not include live room geometry."]
+    },
+    {
       "id": "room.partial.identity",
       "version": 1,
       "origin": {

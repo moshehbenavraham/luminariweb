@@ -127,8 +127,8 @@ export function buildMapDisplayModel(
 
   if (minimapConfigured && minimapText) {
     const availability = createMapNotice('present', {
-      title: 'Live MINIMAP override',
-      detail: 'A configured MINIMAP override produced server map text.',
+      title: 'Live MINIMAP',
+      detail: 'Source-backed MINIMAP produced server map text.',
     });
 
     return {
@@ -163,14 +163,14 @@ export function buildMapDisplayModel(
   if (!roomMappingsConfigured && !minimapConfigured) {
     return buildUnavailableMapModel('disabled', {
       title: 'Map data disabled',
-      detail: 'Room MSDP mappings and MINIMAP override are not currently requested.',
+      detail: 'Room MSDP mappings and MINIMAP are not currently requested.',
     });
   }
 
   if (minimapConfigured && mudState.minimap !== undefined && !minimapText) {
     return buildUnavailableMapModel('empty', {
       title: 'Minimap empty',
-      detail: 'The configured MINIMAP override arrived, but it did not contain displayable text.',
+      detail: 'The source MINIMAP value arrived, but it did not contain displayable text.',
     });
   }
 
@@ -184,8 +184,8 @@ export function buildMapDisplayModel(
 
   if (!roomMappingsConfigured && minimapConfigured) {
     return buildUnavailableMapModel('loading', {
-      title: 'Waiting for MINIMAP override',
-      detail: 'A MINIMAP override is configured, but no live map payload has arrived.',
+      title: 'Waiting for MINIMAP',
+      detail: 'MINIMAP is requested, but no live map payload has arrived.',
     });
   }
 

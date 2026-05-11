@@ -59,9 +59,10 @@ Treat protocol claims conservatively:
 
 - Source facts prove source capability, not automatic web client support.
 - Synthetic fixtures prove parser and client contracts, not live server schema.
-- `TITLE`, saves, live `DAMAGE_BONUS`, `MINIMAP`, and `QUEST_INFO` remain
-  unavailable, override-only, or future-source work until source support is
-  implemented and tested.
+- `TITLE`, `FORTITUDE`, `REFLEX`, `WILLPOWER`, text `ALIGNMENT`, and `MINIMAP`
+  are source-backed defaults with fixture coverage.
+- Live `DAMAGE_BONUS` and `QUEST_INFO` remain unavailable or override-only
+  until side-effect-free damage and structured quest source contracts exist.
 - MCCP and GMCP stay unsupported until Phase 04 documents and tests real server
   and proxy behavior.
 - Native source WebSocket remains deferred until Phase 04 validates a source-

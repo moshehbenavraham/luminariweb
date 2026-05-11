@@ -124,36 +124,39 @@ test('builds character fields from confirmed values and preserves zero and negat
   assert.equal(findField(character.abilityScores, 'INT').valueText, '18');
 });
 
-test('keeps unsupported title, saves, and damage bonus explicit by default', () => {
+test('keeps missing selected values and deferred damage bonus explicit by default', () => {
   const character = buildCoreDisplayModel(
     { characterName: 'Fixture Hero' },
     'connected',
     defaultMap,
   ).character;
 
-  assert.equal(character.identity.titleNotice?.kind, 'unavailable');
-  assert.equal(character.identity.titleNotice?.title, 'Title unavailable');
-  assert.equal(findField(character.savingThrows, 'Fort').notice?.kind, 'unavailable');
-  assert.equal(findField(character.savingThrows, 'Refl').notice?.kind, 'unavailable');
-  assert.equal(findField(character.savingThrows, 'Will').notice?.kind, 'unavailable');
+  assert.equal(character.identity.titleNotice?.kind, 'loading');
+  assert.equal(character.identity.titleNotice?.title, 'Waiting for title');
+  assert.equal(findField(character.savingThrows, 'Fort').notice?.kind, 'loading');
+  assert.equal(findField(character.savingThrows, 'Refl').notice?.kind, 'loading');
+  assert.equal(findField(character.savingThrows, 'Will').notice?.kind, 'loading');
   assert.equal(findField(character.stats, 'Damage').notice?.kind, 'unavailable');
 });
 
-test('uses waiting for override-only values when the user configures a variable override', () => {
-  const overrideMap = normalizeMsdpVariableMap({
-    ...defaultMsdpVariables,
-    title: 'TITLE',
-    fortitude: 'FORTITUDE',
+test('keeps disabled selected mappings distinct from configured deferred overrides', () => {
+  const disabledSelectedMap = {
+    ...defaultMap,
+    title: '',
+    fortitude: '',
+    reflex: '',
+    willpower: '',
     damageBonus: 'DAMAGE_BONUS',
-  });
-  const character = buildCharacterDisplayModel({}, 'connected', overrideMap);
+  };
+  const character = buildCharacterDisplayModel({}, 'connected', disabledSelectedMap);
 
-  assert.equal(character.identity.titleNotice?.kind, 'loading');
-  assert.equal(findField(character.savingThrows, 'Fort').notice?.kind, 'loading');
+  assert.equal(character.identity.titleNotice?.kind, 'unavailable');
+  assert.equal(character.identity.titleNotice?.title, 'Title mapping disabled');
+  assert.equal(findField(character.savingThrows, 'Fort').notice?.kind, 'unavailable');
   assert.equal(findField(character.stats, 'Damage').notice?.kind, 'loading');
 });
 
-test('renders reported override-only values when present', () => {
+test('renders reported selected and override-only values when present', () => {
   const overrideState: MudState = {
     title: 'the Brave',
     fortitude: 9,

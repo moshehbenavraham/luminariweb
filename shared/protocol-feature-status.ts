@@ -406,20 +406,20 @@ export const protocolFeatureRecords = [
   },
   {
     id: 'override-only-msdp-fields',
-    name: 'Override-only MSDP fields',
+    name: 'Selected and deferred MSDP fields',
     groupId: 'state',
     status: 'validation-gap',
     scope: 'client configuration and future source variables',
     summary:
-      '`TITLE`, saves, live `DAMAGE_BONUS`, `MINIMAP`, and `QUEST_INFO` are not requested by default.',
+      '`TITLE`, saves, and `MINIMAP` are selected default mappings; live `DAMAGE_BONUS` and `QUEST_INFO` remain deferred or override-only.',
     detail:
-      'These fields are kept as explicit disabled mappings or source gaps so UI panels do not claim server support without source confirmation.',
+      'Selected fields require source emission plus web fixtures before broader support claims. Deferred fields stay explicit disabled mappings or source gaps.',
     nextAction:
-      'Use Phase 04 missing-variable work for any selected source additions and payload fixtures.',
+      'Keep Phase 04 selected-variable fixtures passing and defer damage or quest support until source contracts exist.',
     evidence: [
       {
         kind: 'code',
-        label: 'Override-only MSDP variable keys',
+        label: 'Default and override-only MSDP variable keys',
         path: 'shared/mud.ts',
       },
       {
@@ -429,8 +429,8 @@ export const protocolFeatureRecords = [
       },
       {
         kind: 'doc',
-        label: 'Quest MSDP follow-up',
-        path: '.spec_system/specs/phase02-session06-map-and-quest-fallback-strategy/phase04-quest-msdp-follow-up.md',
+        label: 'Source protocol backlog',
+        path: 'docs/source-protocol-backlog.md',
       },
     ],
     followUpTags: ['p4-missing-msdp-variables'],

@@ -54,13 +54,18 @@
       "description": "Character identity fields parse as scalars while level normalizes to a number.",
       "coverage": ["character", "scalar", "numeric-normalization"],
       "sourceFacts": [
-        "PRD Source Protocol Facts confirms CHARACTER_NAME, LEVEL, RACE, CLASS, and ALIGNMENT."
+        "PRD Source Protocol Facts confirms CHARACTER_NAME, LEVEL, RACE, CLASS, and text ALIGNMENT.",
+        "Phase 04 Session 03 confirms TITLE as a source-backed string."
       ],
       "payloadTokens": [
         "VAR",
         "CHARACTER_NAME",
         "VAL",
         "Fixture Hero",
+        "VAR",
+        "TITLE",
+        "VAL",
+        "the Patient",
         "VAR",
         "LEVEL",
         "VAL",
@@ -80,6 +85,7 @@
       ],
       "expectedPairs": [
         ["CHARACTER_NAME", "Fixture Hero"],
+        ["TITLE", "the Patient"],
         ["LEVEL", 17],
         ["RACE", "Human"],
         ["CLASS", "Wizard"],
@@ -205,13 +211,18 @@
       ],
       "sourceFacts": [
         "PRD Source Protocol Facts confirms HEALTH, HEALTH_MAX, PSP, PSP_MAX, MOVEMENT, MOVEMENT_MAX, EXPERIENCE, EXPERIENCE_MAX, EXPERIENCE_TNL, CHARACTER_NAME, LEVEL, RACE, CLASS, POSITION, ALIGNMENT, MONEY, PRACTICE, ATTACK_BONUS, and AC.",
-        "TITLE, FORTITUDE, REFLEX, WILLPOWER, and DAMAGE_BONUS remain absent from default core panel fixtures because they require future server support or explicit overrides."
+        "Phase 04 Session 03 confirms TITLE, FORTITUDE, REFLEX, and WILLPOWER as source-backed default mappings.",
+        "DAMAGE_BONUS remains absent from default core panel fixtures because live source emission is deferred."
       ],
       "payloadTokens": [
         "VAR",
         "CHARACTER_NAME",
         "VAL",
         "Fixture Hero",
+        "VAR",
+        "TITLE",
+        "VAL",
+        "of the Test Keep",
         "VAR",
         "LEVEL",
         "VAL",
@@ -265,6 +276,18 @@
         "VAL",
         "110",
         "VAR",
+        "FORTITUDE",
+        "VAL",
+        "-2",
+        "VAR",
+        "REFLEX",
+        "VAL",
+        "0",
+        "VAR",
+        "WILLPOWER",
+        "VAL",
+        "12",
+        "VAR",
         "EXPERIENCE",
         "VAL",
         "451200",
@@ -287,6 +310,7 @@
       ],
       "expectedPairs": [
         ["CHARACTER_NAME", "Fixture Hero"],
+        ["TITLE", "of the Test Keep"],
         ["LEVEL", 17],
         ["RACE", "Human"],
         ["CLASS", "Wizard"],
@@ -300,6 +324,9 @@
         ["PSP_MAX", 44],
         ["MOVEMENT", 91],
         ["MOVEMENT_MAX", 110],
+        ["FORTITUDE", -2],
+        ["REFLEX", 0],
+        ["WILLPOWER", 12],
         ["EXPERIENCE", 451200],
         ["EXPERIENCE_MAX", 500000],
         ["EXPERIENCE_TNL", 48800],
@@ -308,7 +335,7 @@
       ],
       "notes": [
         "This fixture intentionally combines the core panel scalars that the HUD and character display helpers consume.",
-        "Zero health, zero money, zero AC, and negative attack bonus verify that the fixture corpus does not collapse reported numeric values into missing values."
+        "Zero health, zero money, zero reflex, zero AC, negative Fortitude, and negative attack bonus verify that the fixture corpus does not collapse reported numeric values into missing values."
       ]
     }
   ]

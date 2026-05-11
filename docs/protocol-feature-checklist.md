@@ -40,7 +40,8 @@ tests, or documented runtime contracts.
 | Feature                   | Status         | Current boundary                                                                                     | Evidence                                                                                                                                                                                                      | Next action                                                           |
 | ------------------------- | -------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | MSDP                      | Supported      | MSDP is the current structured game-state path for source-confirmed values and configured overrides. | [`shared/mud.ts`](../shared/mud.ts), [`tests/README.md`](../tests/README.md)                                                                                                                                  | Use Phase 04 for missing variables and live schema confirmation.      |
-| Override-only MSDP fields | Validation gap | `TITLE`, saves, live `DAMAGE_BONUS`, `MINIMAP`, and `QUEST_INFO` are not requested by default.       | [`shared/mud.ts`](../shared/mud.ts), [PRD mismatches](../.spec_system/PRD/PRD.md), [quest follow-up](../.spec_system/archive/sessions/phase02-session06-map-and-quest-fallback-strategy/phase04-quest-msdp-follow-up.md) | Add only selected source-owned variables with fixtures and fallbacks. |
+| Selected MSDP additions   | Partial        | `TITLE`, `FORTITUDE`, `REFLEX`, `WILLPOWER`, source-backed `MINIMAP`, and text `ALIGNMENT` are selected from source facts with web fixture coverage; older servers may still omit them. | [`shared/mud.ts`](../shared/mud.ts), [Source Protocol Backlog](source-protocol-backlog.md), [`tests/fixtures/msdp/README.md`](../tests/fixtures/msdp/README.md) | Keep source harness and web fixtures aligned before marking fully supported. |
+| Deferred MSDP fields      | Deferred       | Live `DAMAGE_BONUS` and `QUEST_INFO` stay unavailable or override-only by default.                  | [`shared/mud.ts`](../shared/mud.ts), [Source Protocol Backlog](source-protocol-backlog.md), [quest follow-up](../.spec_system/archive/sessions/phase02-session06-map-and-quest-fallback-strategy/phase04-quest-msdp-follow-up.md) | Add only after side-effect-free source damage and structured quest contracts exist. |
 
 ## Source-Level Follow-Ups
 
@@ -91,7 +92,8 @@ to split source work into:
 
 - Do not claim MCCP support while source compression functions are stubs and proxy decompression is absent.
 - Do not claim GMCP support without a source module API, proxy parser, client contract, and tests.
-- Do not claim live `MINIMAP`, `QUEST_INFO`, `TITLE`, saves, or `DAMAGE_BONUS` support from synthetic fixtures alone.
+- Do not claim live `DAMAGE_BONUS` or `QUEST_INFO` support from synthetic fixtures alone.
+- Do not claim full support for selected `TITLE`, saves, or `MINIMAP` without source emission, web mapping fixtures, and older-server fallback coverage.
 - Do not treat a blind WebSocket-to-TCP bridge as an implementation of the `/ws` application protocol.
 - Do not parse free-form quest command output as structured quest data.
 

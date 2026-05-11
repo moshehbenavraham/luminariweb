@@ -2,7 +2,8 @@
 
 This backlog ranks source-level protocol work for Phase 04. It is based on a
 read-only audit of `/home/aiwithapex/projects/Luminari-Source` at commit
-`60cbeff6` and the current Luminari Web protocol boundary.
+`60cbeff6`, Session 03 verification at source commit `0cd5036e`, and the
+current Luminari Web protocol boundary.
 
 Accepted items authorize future scoped planning and validation. They do not
 mean Luminari Web supports the feature today. Deferred items need more source,
@@ -48,6 +49,23 @@ claims for MCCP, GMCP modules, MXP browser UI, live `MINIMAP`, `QUEST_INFO`,
 | Unsupported options | Harness verifies unknown `WILL` and `DO` options produce deterministic rejections. | Preserve no-support behavior for rejected web features. |
 | Oversized responses | Harness covers oversized MSDP list rejection, overlong MXP tag passthrough, bounded copyover strings, and bounded MSSP output. | Full string/allocation hardening remains A2/A3 follow-up work. |
 
+## Session 03 Source Contract Update
+
+Session 03 re-verified the source tree at `0cd5036e`, which includes upstream
+commit `7dbddcd1` and the Session 02 parser harness. The selected contract for
+this session is intentionally narrow:
+
+| Variable | Session 03 Decision | Payload Contract | Older-Server Fallback |
+| -------- | ------------------- | ---------------- | --------------------- |
+| `TITLE` | Selected for source emission. | Read-only string. Emit the player title stripped of source color codes, or an empty string when no title is available. | Character title remains explicit unavailable or uses a user override when the server does not emit `TITLE`. |
+| `FORTITUDE` | Selected for source emission. | Read-only signed integer from `compute_mag_saves(ch, SAVING_FORT, 0)`. | Save row remains unavailable; do not infer from ability scores. |
+| `REFLEX` | Selected for source emission. | Read-only signed integer from `compute_mag_saves(ch, SAVING_REFL, 0)`. | Save row remains unavailable; do not infer from ability scores. |
+| `WILLPOWER` | Selected for source emission. | Read-only signed integer from `compute_mag_saves(ch, SAVING_WILL, 0)`. | Save row remains unavailable; do not infer from ability scores. |
+| `MINIMAP` | Confirmed upstream source-backed. | Read-only plain string from `get_map_string()` after source color stripping, or an empty string when unavailable. | Use room and exits fallback when `MINIMAP` is missing or empty. |
+| `ALIGNMENT` | Confirmed upstream source-backed as text. | Read-only string from `get_align_by_num(GET_ALIGNMENT(ch))`. | Accept old numeric fixtures during transition; display should not fail closed on older numeric values. |
+| `DAMAGE_BONUS` | Deferred. | No live source payload is selected because the existing source path still depends on a side-effect-prone damage helper. | Keep unavailable or override-only. |
+| `QUEST_INFO` | Deferred. | No source-owned structured quest payload exists in this session. | Keep quest data unavailable or explicit override-only; never parse free-form quest command output. |
+
 ## Ranking Rules
 
 | Score | Player Value | Source Risk | Testability |
@@ -74,8 +92,8 @@ sessions after the required validation is in place.
 
 | Rank | Candidate | Player Value | Source Risk | Payload Contract Needed | Older-Server Fallback | Evidence |
 | ---- | --------- | ------------ | ----------- | ----------------------- | --------------------- | -------- |
-| A5 | Add `TITLE` as a source-owned MSDP string. | Medium - fills the character panel title row without user overrides. | Low - title already exists in player data and score/who display paths. | String value, empty string for no title, explicit color-code policy, maximum length, update timing, and whether immortal titles are included. | Keep Luminari Web title unavailable unless `TITLE` is emitted or user-configured override is present. | `src/utils.h` `GET_TITLE`; `src/players.c` title load/save; `src/act.informative.c` score/who title display; `shared/mud.ts` `title` override-only map. |
-| A6 | Add `FORTITUDE`, `REFLEX`, and `WILLPOWER` as source-owned MSDP numbers. | High - completes the current character sheet panel with core saving throws. | Low to medium - values are computed in display code today, but emit timing and naming need a stable contract. | Three integer variables, source names, whether values include temporary modifiers, update timing, and fixture cases for zero, positive, negative, and buffed values. | Keep save rows in explicit unavailable state on older servers; do not infer from ability scores. | `src/act.informative.c` `compute_mag_saves` displays; `src/structs.h` saving throw apply constants; `shared/mud.ts` save fields are override-only. |
+| A5 | Add `TITLE` as a source-owned MSDP string. | Medium - fills the character panel title row without user overrides. | Low - title already exists in player data and score/who display paths. | String value, empty string for no title, explicit color-code policy, maximum length, update timing, and whether immortal titles are included. | Keep Luminari Web title unavailable unless `TITLE` is emitted or user-configured override is present. | `src/utils.h` `GET_TITLE`; `src/players.c` title load/save; `src/act.informative.c` score/who title display; `shared/mud.ts` default `title` map. |
+| A6 | Add `FORTITUDE`, `REFLEX`, and `WILLPOWER` as source-owned MSDP numbers. | High - completes the current character sheet panel with core saving throws. | Low to medium - values are computed in display code today, but emit timing and naming need a stable contract. | Three integer variables, source names, whether values include temporary modifiers, update timing, and fixture cases for zero, positive, negative, and buffed values. | Keep save rows in explicit unavailable state on older servers; do not infer from ability scores. | `src/act.informative.c` `compute_mag_saves` displays; `src/structs.h` saving throw apply constants; `shared/mud.ts` default save maps. |
 | A7 | Re-enable or replace live `DAMAGE_BONUS` emission with a side-effect-free calculation. | Medium - improves combat panel accuracy for attacks and equipment changes. | Medium to high - current source comment says the damage helper can send messages randomly, so direct use in the game pulse is unsafe. | Integer value scope for primary, ranged, and offhand attacks; whether situational target-specific bonuses are excluded; no side-effect guarantee; fixture coverage for weapon modes and unarmed state. | Keep Luminari Web damage bonus unavailable unless the source emits a validated value. | `src/protocol.c` declares `DAMAGE_BONUS`; `src/comm.c` commented `DAMAGE_BONUS` block; `src/fight.c` damage helpers; `shared/mud.ts` damage bonus is override-only. |
 
 ## Deferred Candidates
@@ -87,7 +105,7 @@ listed preconditions are satisfied.
 
 | Candidate | Why Deferred | Preconditions | Fallback |
 | --------- | ------------ | ------------- | -------- |
-| `MINIMAP` | The source enum and docs list it, but audited emission paths did not populate it. Room and exit data already provide a safe webclient map fallback. | Define whether payload is plain ASCII, coordinate grid, wilderness-only, local-room radius, or structured room graph; add source fixtures; add Luminari Web parser, mapping, and map display fixtures. | Keep using `ROOM`/`ROOM_EXITS` mapper fallback and only render live `MINIMAP` when explicitly configured or source-backed. |
+| `DAMAGE_BONUS` | Session 03 did not prove a side-effect-free source calculation. The existing `msdp_update()` block is still commented out because the damage helper can send messages from the game pulse. | Add or expose a side-effect-free damage bonus helper with source coverage for primary, offhand, ranged, unarmed, and no-target states. | Keep damage bonus unavailable or override-only; do not compute it in Luminari Web from combat text. |
 | `QUEST_INFO` | No source enum/table entry was found, and quest systems are varied enough that free-form command output would be brittle. | Add source variable, choose array/table payload shape, define active/completed/failed/timed quest visibility, redact private text, and add fixtures for empty, partial, nested, malformed, and reconnect cases. | Keep Quests tab in default unavailable state; allow only explicit user override payloads from servers that already emit structured data. |
 | `WORLD_TIME` contract cleanup | Source docs list `WORLD_TIME`, and Luminari Web maps it, but audited emission paths did not show a clear live update. This is lower value than title/saves/combat panel gaps. | Confirm whether source emits it elsewhere, decide number vs string contract, and add fixture coverage if keeping it as a default requested field. | Missing `WORLD_TIME` should remain absent without blocking room, map, or character panels. |
 
@@ -143,7 +161,7 @@ audit.
 | Session 04 - MCCP and GMCP Decision | O1, O2 | Decide pursue, defer, or reject. Do not implement runtime support unless source, proxy, client, and test responsibilities fit the session or are split into new specs. |
 | Session 05 - Native WebSocket Feasibility | O3 | Compare source-native transport against the current integrated proxy. Preserve `/ws` until a typed, validated, and operable migration path exists. |
 | Future source hardening phase | A2, A3, O4, O5, O6, O7 | Use only after Session 02 and product decisions identify concrete value. These are not required to complete the current web client protocol path. |
-| Future mapper or quest phase | `MINIMAP`, `QUEST_INFO` | Revisit after source payload contracts exist. Until then, keep room/exits mapper fallback and quest unavailable/override states. |
+| Future mapper or quest phase | `QUEST_INFO` and richer mapper contracts | Revisit quest data after a source payload contract exists. Keep room/exits fallback alongside source-backed `MINIMAP` for older servers and empty map payloads. |
 
 ## Candidate Summary
 
@@ -152,10 +170,10 @@ audit.
 | `ProtocolInput` hardening | Accepted | Session 02 | No support-claim change. |
 | Protocol string/allocation/error cleanup | Accepted | Session 02 or future hardening | No support-claim change. |
 | Source parser harness | Accepted | Session 02 | No support-claim change. |
-| `TITLE` | Accepted | Session 03 | Override-only/unavailable until emitted and tested. |
-| `FORTITUDE`, `REFLEX`, `WILLPOWER` | Accepted | Session 03 | Override-only/unavailable until emitted and tested. |
-| `DAMAGE_BONUS` | Accepted with side-effect-free precondition | Session 03 or future | Override-only/unavailable until emitted and tested. |
-| `MINIMAP` | Deferred | Future mapper or Session 03 reconsideration | Override-only/unavailable; room/exits fallback remains supported. |
+| `TITLE` | Selected for source emission | Session 03 | Source-backed after source emission and web fixtures pass; unavailable on older servers. |
+| `FORTITUDE`, `REFLEX`, `WILLPOWER` | Selected for source emission | Session 03 | Source-backed after source emission and web fixtures pass; unavailable on older servers. |
+| `DAMAGE_BONUS` | Deferred until side-effect-free source calculation exists | Future | Override-only/unavailable until emitted and tested. |
+| `MINIMAP` | Confirmed upstream source-backed | Session 03 | Source-backed after web fixtures pass; room/exits fallback remains supported. |
 | `QUEST_INFO` | Deferred | Future quest or Session 03 reconsideration | Override-only/unavailable; no free-form quest parsing. |
 | MCCP | Deferred decision, rejected today | Session 04 | Rejected. |
 | GMCP | Deferred decision | Session 04 | Deferred. |
@@ -171,6 +189,7 @@ audit.
 
 - Do not claim MCCP support while source compression and proxy decompression are absent.
 - Do not claim GMCP support without source module schemas, a proxy parser contract, client mappings, and tests.
-- Do not claim live `TITLE`, saves, `DAMAGE_BONUS`, `MINIMAP`, or `QUEST_INFO` support until Luminari-Source emits the values and Luminari Web has fixtures.
+- Do not claim web support for source-selected `TITLE`, saves, or `MINIMAP` until Luminari Web requests the values and has fixtures.
+- Do not claim live `DAMAGE_BONUS` or `QUEST_INFO` support until Luminari-Source emits side-effect-free structured values and Luminari Web has fixtures.
 - Do not replace the first-party `/ws` application protocol with a blind WebSocket-to-TCP bridge.
 - Do not parse free-form quest command output as structured quest data.

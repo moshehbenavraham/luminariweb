@@ -75,17 +75,16 @@ const OPTIONAL_FIELD_DESCRIPTORS = {
     key: 'title',
     label: 'Title',
     unsupported: {
-      title: 'Title unavailable',
-      detail:
-        'Current Luminari-Source does not emit TITLE. Use an override only when a server provides it.',
+      title: 'Title mapping disabled',
+      detail: 'TITLE is source-backed, but the client is not currently requesting it.',
     },
     waiting: {
       title: 'Waiting for title',
-      detail: 'A TITLE override is configured, but no value has arrived in this session.',
+      detail: 'TITLE is requested, but no title value has arrived in this session.',
     },
     empty: {
       title: 'Title empty',
-      detail: 'The server reported a blank title.',
+      detail: 'The source reported a blank title.',
     },
     offline: {
       title: 'Title offline',
@@ -664,16 +663,16 @@ function createSavingThrowDescriptor(
     key,
     label,
     unsupported: {
-      title: 'Future server',
-      detail: `${label} requires ${variableName} support from the server or an explicit override.`,
+      title: `${label} mapping disabled`,
+      detail: `${variableName} is source-backed, but the client is not currently requesting it.`,
     },
     waiting: {
-      title: 'Waiting',
-      detail: `${variableName} is configured, but no ${label.toLowerCase()} value has arrived.`,
+      title: `Waiting for ${label.toLowerCase()}`,
+      detail: `${variableName} is requested, but no ${label.toLowerCase()} value has arrived.`,
     },
     empty: {
-      title: 'Empty',
-      detail: `The server reported a blank ${label.toLowerCase()} value.`,
+      title: `${label} empty`,
+      detail: `The source reported a blank ${label.toLowerCase()} value.`,
     },
     offline: {
       title: 'Offline',

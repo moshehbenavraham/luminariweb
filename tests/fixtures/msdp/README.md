@@ -109,12 +109,12 @@ The PRD source protocol facts confirm these variable groups from Luminari-Source
 | Source Group           | Confirmed Variables Covered                                                                                                    | Fixture Files                                               |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
 | Server/client metadata | `SERVER_ID`, `SERVER_TIME`, `SNIPPET_VERSION`                                                                                  | `core-scalars.json`                                         |
-| Character              | `CHARACTER_NAME`, `LEVEL`, `RACE`, `CLASS`, `POSITION`, `ALIGNMENT`, `MONEY`, `PRACTICE`                                       | `core-scalars.json`, `combat-and-resources.json`            |
+| Character              | `CHARACTER_NAME`, `TITLE`, `LEVEL`, `RACE`, `CLASS`, `POSITION`, `ALIGNMENT`, `MONEY`, `PRACTICE`, `FORTITUDE`, `REFLEX`, `WILLPOWER` | `core-scalars.json`, `combat-and-resources.json`            |
 | Resources              | `HEALTH`, `HEALTH_MAX`, `PSP`, `PSP_MAX`, `MOVEMENT`, `MOVEMENT_MAX`, `EXPERIENCE`, `EXPERIENCE_MAX`, `EXPERIENCE_TNL`         | `combat-and-resources.json`                                 |
 | Combat                 | `ATTACK_BONUS`, `AC`, `OPPONENT_NAME`, `OPPONENT_HEALTH`, `OPPONENT_HEALTH_MAX`, `TANK_NAME`, `TANK_HEALTH`, `TANK_HEALTH_MAX` | `combat-and-resources.json`                                 |
 | Ability scores         | `STR`, `INT`, `WIS`, `DEX`, `CON`, `CHA`                                                                                       | `core-scalars.json`                                         |
 | Collections            | `ACTIONS`, `INVENTORY`, `AFFECTS`, `GROUP`                                                                                     | `collections.json`, `group-data.json`, `nested-tables.json` |
-| Room/world             | `ROOM`, `AREA_NAME`, `ROOM_EXITS`, `ROOM_NAME`, `ROOM_VNUM`, `WORLD_TIME`                                                      | `room-and-exits.json`, `nested-tables.json`                 |
+| Room/world             | `ROOM`, `AREA_NAME`, `ROOM_EXITS`, `ROOM_NAME`, `ROOM_VNUM`, `WORLD_TIME`, `MINIMAP`                                           | `room-and-exits.json`, `nested-tables.json`                 |
 | Parser safety          | Skipped leading bytes, truncated values, empty variable names, incomplete tables, incomplete arrays                            | `malformed-payloads.json`                                   |
 
 ## Room Fixture Notes
@@ -124,11 +124,12 @@ The PRD source protocol facts confirm these variable groups from Luminari-Source
 - Room identity scalars with room name, area name, zero room vnum, world time, blank strings, and partial values.
 - `ROOM_EXITS` as a keyed table, scalar string, array of direction labels, object-like rows, explicit empty array, and malformed-looking raw fallback string.
 - `ROOM` as a structured table, explicit empty table, scalar raw fallback, and partial table with unknown fields.
-- Bounded raw fallback cases that preserve useful uncertain data without treating terminal room prose or `MINIMAP` as inputs.
+- `MINIMAP` as plain source-backed display text.
+- Bounded raw fallback cases that preserve useful uncertain data without treating terminal room prose as live minimap input.
 
 These shapes are synthetic. They verify parser, state-mapping, and display behavior for source-confirmed room variables, but they do not prove final live server room or exit field names.
 
-Phase 03 mapper tests also use these synthetic room and exit shapes to verify the bounded current-room mapper display. That mapper coverage is limited to current room identity, deterministic directional exit branches, vertical and custom exit summaries, raw malformed fallback text, and override-only `MINIMAP` separation. It does not define persistent world-map storage, destination discovery, coordinate schemas, or source-confirmed live `MINIMAP` support.
+Phase 03 mapper tests also use these synthetic room and exit shapes to verify the bounded current-room mapper display. That mapper coverage is limited to current room identity, deterministic directional exit branches, vertical and custom exit summaries, raw malformed fallback text, and source-backed `MINIMAP` fallback separation. It does not define persistent world-map storage, destination discovery, coordinate schemas, or a richer minimap schema.
 
 ## Group Fixture Notes
 
@@ -156,12 +157,7 @@ These shapes are synthetic. They verify parser, mapping, and display behavior fo
 
 The default client preserves some user-configurable override slots without treating them as source-backed emitted values. This corpus excludes source-backed fixtures for:
 
-- `TITLE`
-- `FORTITUDE`
-- `REFLEX`
-- `WILLPOWER`
 - `DAMAGE_BONUS`
-- `MINIMAP`
 - `QUEST_INFO`
 
 Those names may appear in future fixtures only when the fixture is explicitly testing override behavior, unsupported-data behavior, or a later source-level protocol change.
